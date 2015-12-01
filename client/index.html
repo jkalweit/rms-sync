@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+   <meta charset="utf-8" />
+   <title>SyncNode App</title>
+   <link rel="stylesheet" href="app.css" type="text/css" />
+
+   <script type="text/javascript" src="bower_components/sync-node-client/socket.io.js"></script>
+   <script type="text/javascript" src="bower_components/sync-node-client/SyncNode.js"></script>
+   <script type="text/javascript" src="bower_components/sync-node-client/SyncNodeSocket.js"></script>
+   <script type="text/javascript" src="bower_components/riot/riot+compiler.js"></script>
+   <script type="text/javascript" src="app/Utils.js"></script>
+   <script type="text/javascript" src="app/elements.js"></script>
+</head>
+<body>
+   <h1>Todo</h1>
+   <todo-list sync="{sync}"></todo-list>
+</body>
+</html>
+
+<script>
+   window.onload = function (e) {
+      
+      var data = {};
+      this.sync =  new SyncNodeSocket.SyncNodeSocket('data', data);
+      
+      riot.mount('*');
+   }
+</script>

@@ -1,0 +1,14 @@
+{
+  "name": "sync-node-client",
+  "homepage": "https://github.com/jkalweit/sync-node-client",
+  "_release": "f053e15b3c",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "f053e15b3c819e8da5af1914ed88835237fe460c"
+  },
+  "_source": "git://github.com/jkalweit/sync-node-client.git",
+  "_target": "*",
+  "_originalSource": "jkalweit/sync-node-client",
+  "_direct": true
+}
