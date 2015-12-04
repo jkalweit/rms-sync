@@ -14,17 +14,14 @@
    <script type="text/javascript" src="app/elements.js"></script>
 </head>
 <body>
-   <h1>Todo</h1>
-   <todo-list sync="{sync}"></todo-list>
+
+   <app />
+
 </body>
 </html>
 
 <script>
    window.onload = function (e) {
-      
-      var data = {};
-      this.sync =  new SyncNodeSocket.SyncNodeSocket('data', data);
-      
-      riot.mount('*');
+   	riot.mount('*');
    }
 </script>

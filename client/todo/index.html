@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
+    <script type="text/javascript" src="/app/syncviews.js"></script>
+    <script type="text/javascript" src="/app/Utils.js"></script>
+</head>
+
+<body>
+    <div style="max-width: 400px; border-right: 1px solid #CCCCCC; padding: 5px;">
+        <h1>Todos</h1>
+        <form onsubmit="addTodo(); return false;">
+            <input id="newTodo" />
+            <input type="submit" value="Add Todo" />
+        </form>
+
+        <div id="todos">
+        </div>
+
+
+    </div>
+
+
+    <style>
+        x-todo h1 {
+            font-size: 14px;
+            color: #00aa00;
+            margin: 5px;
+        }
+    </style>
+    <template id="x-todo">
+        <button style="float: right" onclick="removeTodo('{key}')">X</button>
+        <h1><a href="/todo/edit.html?key={key}">{text}</a></h1>
+    </template>
+
+
+    <script>
+        "use strict"
+
+        var XTodo = createElement('x-todo');
+
+        var todoViews = {};
+        var onupdated = () => {
+            populateList(id('todos'), XTodo, todoViews, this.db.todos);
+        };
+
+        var addTodo = () => {
+            var newTodo = id('newTodo');
+            var todo = {
+                key: new Date().toISOString(),
+                text: newTodo.value,
+                items: {}
+            };
+            newTodo.value = '';
+            newTodo.focus();
+            this.db.todos.set(todo.key, todo);
+        };
+
+
+        var removeTodo = (key) => {
+            this.db.todos.remove(key);
+        }
+    </script>
+
+</body>
+
+</html>

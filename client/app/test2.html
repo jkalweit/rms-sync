@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
+    <script type="text/javascript" src="/app/Utils.js"></script>
+</head>
+
+<body>
+
+    <h1 id="title">Hello!</h1>
+    <div id="test"></div>
+    <div id="todos">
+        Loading...
+    </div>
+
+    <button onclick="addTodo()">Add Todo</button>
+
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+
+    <div id="data">
+    </div>
+
+
+    <script>
+        "use strict"
+
+        var id = (id, context) => {
+            context = context || document;
+            return context.getElementById(id);
+        };
+    </script>
+
+    <template id="x-todo">
+        <h1 id="text"></h1>
+        <div id="items"></div>
+    </template>
+
+    <template id="x-new-todo">
+        <h1 id="text">Fuck yeah!</h1>
+    </template>
+
+
+    <script>
+        "use strict"
+
+        function createElement(name) {
+
+            var proto = Object.create(HTMLElement.prototype);
+
+            proto.template = id(name);
+            
+            proto.createdCallback = function() {
+                this.innerHTML = '';
+                var clone = document.importNode(this.template.content, true);
+                this.appendChild(clone);
+            };
+
+
+            var ctor = document.registerElement(name, {
+                prototype: proto
+            });
+            return ctor;
+        }
+
+        var XNewTodo = createElement('x-new-todo');
+        var inst = new XNewTodo();
+        id('test').appendChild(inst);
+
+        class XTodoElement extends HTMLElement {
+            createdCallback() {
+                this.template = id('x-todo');
+            }
+            set todo(value) {
+                this.innerHTML = '';
+                var clone = document.importNode(this.template.content, true);
+                id('text', clone).innerHTML = value.text;
+                var items = id('items', clone);
+                var itemsHTML = '';
+                Utils.toArray(value.items).forEach((item) => {
+                    var instance = document.createElement('x-todo-item');
+                    instance.item = item;
+                    items.appendChild(instance);
+                });
+                this.appendChild(clone);
+            }
+        }
+        var XTodo = document.registerElement('x-todo', XTodoElement);
+    </script>
+
+    <template id="x-todo-item">
+        <style>
+            #text {
+                color: #00FF00;
+            }
+        </style>
+        <span id="text"></span>
+    </template>
+
+    <script>
+        "use strict"
+        class XTodoItemElement extends HTMLElement {
+            createdCallback() {
+                this.template = id('x-todo-item');
+                this.shadow = this.createShadowRoot();
+            }
+            set item(value) {
+                this.shadow.innerHTML = '';
+                var clone = document.importNode(this.template.content, true);
+                id('text', clone).innerHTML = value.text;
+                this.shadow.appendChild(clone);
+            }
+        }
+        document.registerElement('x-todo-item', XTodoItemElement);
+
+
+
+        this.db = null;
+        var sync = new SyncNodeSocket.SyncNodeSocket('data', {});
+
+
+        window.onload = () => {
+
+            sync.onUpdated((updated) => {
+                this.db = updated;
+                id('title').innerHTML = 'Updated';
+                id('data').innerHTML = JSON.stringify(updated);
+
+                var todos = Utils.toArray(this.db.todos);
+                var container = id('todos');
+                container.innerHTML = '';
+
+                todos.forEach((todo) => {
+                    var instance = new XTodo(); //document.createElement('x-todo');
+                    instance.todo = todo;
+                    container.appendChild(instance);
+                });
+
+            });
+
+        };
+
+
+        var addTodo = () => {
+            var todo = {
+                key: new Date().toISOString(),
+                text: 'New Todod!'
+            };
+            console.log('4sadfasdfasd HERE');
+            this.db.todos.set(todo.key, todo);
+        };
+
+
+
+
+
+        var reloader = io();
+        reloader.on('connect', () => {
+            console.log('connected')
+        });
+        reloader.on('reload', function() {
+            console.log('               reload!!!!');
+            location.reload();
+        });
+    </script>
+
+</body>
+
+</html>

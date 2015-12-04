@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
+    <script type="text/javascript" src="/app/syncviews.js"></script>
+    <script type="text/javascript" src="/app/Utils.js"></script>
+</head>
+
+<body>
+    <div style="max-width: 400px; border-right: 1px solid #CCCCCC; padding: 5px;">
+        <h3>Edit Todo</h3>
+        <form>
+            <input id="todoText" onblur="updateTodo()" />
+        </form>
+        <div id="items"></div> 
+        <form onsubmit="addItem(); return false;" style="clear: both">
+            <input id="newItemText" />
+            <input type="submit" value="Add Item" />
+        </form>
+        <div id="data" style="margin-top: 40px"></div>
+    </div>
+
+    <style>
+        x-todo-item h1 {
+            font-size: 14px;
+            color: #00AA00;
+            margin: 5px;
+        }
+    </style>
+    <template id="x-todo-item">
+        <div style="clear: both">
+            <input style="float: left" value="{text}" onblur="updateItem('{key}')" id='item-{key}' />
+            <button style="float: right" onclick="removeItem('{key}')">X</button>
+        </div>
+    </template>
+
+
+    <script>
+        "use strict"
+
+
+        var XTodoItem = createElement('x-todo-item');
+
+        var key = param('key');
+
+        var todo = {};
+        var itemViews = {};
+        var onupdated = () => {
+            if(!hasChanged(todo, this.db.todos[key])) return;
+            todo = this.db.todos[key];
+            if(!todo) { window.history.back(); return; }
+	        id('todoText').value = todo.text;
+            id('data').innerHTML = JSON.stringify(todo);
+            populateList(id('items'), XTodoItem, itemViews, todo.items);
+        };
+
+        var updateTodo = () => {
+            todo.set('text', id('todoText').value);
+        };
+
+        var updateItem = (key) => {
+            var input = id('item-' + key);
+            todo.items[key].set('text', input.value);
+        };
+
+        var removeItem = (key) => {
+            todo.items.remove(key);
+        };
+
+        var addItem = () => {
+            var text = id('newItemText');
+            var item = {
+                key: new Date().toISOString(),
+                text: text.value,
+                iscomplete: false
+            };
+            todo.items.set(item.key, item);
+            text.value = '';
+            text.focus();
+        };
+    </script>
+
+</body>
+
+</html>
