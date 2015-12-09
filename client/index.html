@@ -4,24 +4,22 @@
 <head>
    <meta charset="utf-8" />
    <title>SyncNode App</title>
-   <link rel="stylesheet" href="app.css" type="text/css" />
-
-   <script type="text/javascript" src="bower_components/sync-node-client/socket.io.js"></script>
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" type="text/css" href="/app.css">
    <script type="text/javascript" src="bower_components/sync-node-client/SyncNode.js"></script>
+   <script type="text/javascript" src="bower_components/sync-node-client/socket.io.js"></script>
    <script type="text/javascript" src="bower_components/sync-node-client/SyncNodeSocket.js"></script>
-   <script type="text/javascript" src="bower_components/riot/riot+compiler.js"></script>
-   <script type="text/javascript" src="app/Utils.js"></script>
-   <script type="text/javascript" src="app/elements.js"></script>
+   <script type="text/javascript" src="/syncviews.js"></script>
 </head>
 <body>
 
-   <app />
+    <h1>Home</h1>
+    <a href="/todo">Todo</a>     
+
+<script>
+</script>
 
 </body>
 </html>
 
-<script>
-   window.onload = function (e) {
-   	riot.mount('*');
-   }
-</script>
+
