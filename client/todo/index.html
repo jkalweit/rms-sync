@@ -3,6 +3,8 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/app.css">
     <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
     <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
     <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
@@ -11,59 +13,91 @@
 </head>
 
 <body>
-    <div style="max-width: 400px; border-right: 1px solid #CCCCCC; padding: 5px;">
-        <h1>Todos</h1>
-        <form onsubmit="addTodo(); return false;">
-            <input id="newTodo" />
-            <input type="submit" value="Add Todo" />
-        </form>
-
-        <div id="todos">
-        </div>
-
-
+    <div id="container">
     </div>
-
-
-    <style>
-        x-todo h1 {
-            font-size: 14px;
-            color: #00aa00;
-            margin: 5px;
-        }
-    </style>
-    <template id="x-todo">
-        <button style="float: right" onclick="removeTodo('{key}')">X</button>
-        <h1><a href="/todo/edit.html?key={key}">{text}</a></h1>
-    </template>
-
 
     <script>
         "use strict"
 
-        var XTodo = createElement('x-todo');
-
-        var todoViews = {};
-        var onupdated = () => {
-            populateList(id('todos'), XTodo, todoViews, this.db.todos);
-        };
-
-        var addTodo = () => {
-            var newTodo = id('newTodo');
-            var todo = {
-                key: new Date().toISOString(),
-                text: newTodo.value,
-                items: {}
-            };
-            newTodo.value = '';
-            newTodo.focus();
-            this.db.todos.set(todo.key, todo);
-        };
-
-
-        var removeTodo = (key) => {
-            this.db.todos.remove(key);
+        class TodoList extends SyncView {
+            constructor() {
+                super();
+                var node = el('div', { innerHTML: `<h1 class="light">Todos</h1>` });
+                this.node = node;
+                this.newForm = el('form', { 
+                        parent: node, 
+                        events: { submit: (e) => { this.addTodo(); e.preventDefault(); } } 
+                });
+                this.newInput = el('input', { parent: this.newForm,
+                        style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
+                this.newButton = el('input', { parent: this.newForm, type: 'submit', value: 'Add',
+                        style: { width: '80px', fontSize: '2em' } });
+                this.todos = el('div', { parent: node });
+                this.todoViews = {};
+            }
+            addTodo() {
+                var todo = {
+                    key: new Date().toISOString(),
+                    text: this.newInput.value,
+                    items: {}
+                }; 
+                this.data.set(todo.key, todo);
+                location.href = '/todo/edit.html?key=' + todo.key;
+            } 
+            render() { 
+                updateViews(this.todos, this.todoViews, Todo, this.data);
+            }
         }
+
+        
+        class Todo extends SyncView {
+            constructor() {
+                super();
+                this.node = el('div');
+                this.text = el('div', {parent: this.node}); 
+                this.items = el('div', {parent: this.node}); 
+                this.template = `<a href="/todo/edit.html?key={{key}}"><h1 class="light">{{text}}</h1></a>`;
+                this.itemViews = {};
+            }
+            render() { 
+                this.text.innerHTML = inject(this.template, this.data);
+                updateViews(this.items, this.itemViews, TodoItem, this.data.items);
+            }
+        }
+
+
+        class TodoItem extends SyncView{
+            constructor() {
+                super();
+                this.node = el('div');
+                this.checkbox = el('input', { parent: this.node, type: 'checkbox', 
+                                    style: { float: 'left', width: '25px', height: '25px', marginRight: '20px' },
+                                    events: { change: () => { this.toggleIsComplete(); } } });
+                this.text = el('div', {parent: this.node, style: { width: 'calc(100% - 30px)' }}); 
+                this.template = `<h2>{{text}}</h2>`;
+            }
+            toggleIsComplete() {
+                this.data.set('isComplete', this.checkbox.checked);
+            }
+            render(data) { 
+                this.text.innerHTML = inject(this.template, this.data);
+                this.checkbox.checked = this.data.isComplete;
+                this.text.style.textDecoration = this.data.isComplete? 'line-through' : 'none';
+            }
+        }
+
+
+
+        var t = new TodoList();
+        id('container').appendChild(t.node);
+        t.newInput.focus();
+
+        var onupdated = () => {
+            t.update(this.db.todos); 
+        };
+
+
+
     </script>
 
 </body>

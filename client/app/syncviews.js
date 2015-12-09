@@ -5,13 +5,31 @@ var id = (id, context) => {
     return context.getElementById(id);
 };
 
+function getProperty(obj, path) {
+    return getPropertyHelper(obj, path.split('.'));
+}
+
+function getPropertyHelper(obj, split) {
+    if(split.length === 1) return obj[split[0]];	
+    return getPropertyHelper(obj[split[0]], split.slice(1, split.length));
+}
 
 function inject(template, data) {
-    return template.replace(/{(\w*)}/g, function(m, key) {
-        return data.hasOwnProperty(key) ? data[key] : "";
+
+    template = template.replace(/checked="{{([\w\.]*)}}"/g, function(m, key) {
+        return getProperty(data, key) ? 'checked' : '';
+    });
+
+
+    return template.replace(/{{([\w\.]*)}}/g, function(m, key) {
+        return getProperty(data, key);
     });
 }
 
+function hasChanged(syncnode1, syncnode2) {
+    if((syncnode1 && !syncnode2) || (!syncnode1 && syncnode2)) return true;  
+    return syncnode1.lastModified !== syncnode2.lastModified;
+}
 
 function createElement(name) {
 
@@ -32,37 +50,31 @@ function createElement(name) {
     }
 
     proto.refreshUI = function() {
-	var html = this.template.innerHTML;
-	html = inject(html, this.data);
-	this.innerHTML = html;
-
-	//var frag = document.createDocumentFragment();
-
-	//var elem = document.createElement('div');
-	//elem.innerHTML = html;
-
-	//while(elem.childNodes[0]) {
-	//	frag.appendChild(elem.childNodes[0]);
-	//}
-	
-	//this.innerHTML = '';
-	//this.appendChild(document.importNode(frag, true));	
-
-	//var clone = document.importNode(this.template.content, true);
-	//clone.innerHTML = inject(clone, this.data);	
-	//this.shadow.innerHTML = '';
-	//this.shadow.appendChild(clone);	
-
-
-	//var scripts = this.shadow.querySelector("script");
-	//console.log('scripts', scripts);
-	//console.log('scripts.length', scripts.length);
-	//eval(scripts.text);
-	//for(var i = 0; i < scripts.length; i++) {
-//		console.log('here');	
-//		eval(scripts[i].text);
-//		console.log('evaled', scripts[i].text);	
-//	}
+        var clone = document.importNode(this.template.content, true);
+        var forloops = clone.querySelectorAll('for');
+        for(var i = 0; i < forloops.length; i++) {
+            var df = document.createDocumentFragment();
+            var loopElem = forloops[i];
+            var loopAttrib = loopElem.getAttribute('loop');
+            var matches = /([\w]*),\s([\w]*)\sin\s([\w\.]*)/.exec(loopAttrib);
+            var items = getProperty(this.data, matches[3]);
+            var arr = toArray(items);
+            console.log('items', arr);
+            arr.forEach((item) => {
+                var loopClone = document.importNode(loopElem, true);
+                //var looped = inject(forloops[i].innerHtml, item);
+                console.log('loopClone', inject(loopClone.innerHTML, item));
+                df.innerHTML += inject(loopClone.innerHTML, item);
+            });
+            console.log('df', df.innerHTML);
+            //clone.replaceChild(clone, df);
+        }
+        console.log('forloops', forloops); 
+        this.innerHTML = '';
+        this.appendChild(clone);
+        var html = this.innerHTML;
+        html = inject(html, this.data);
+        this.innerHTML = html;
     }
 
     var ctor = document.registerElement(name, {
@@ -80,14 +92,14 @@ function createElement(name) {
 function populateList(container, factory, views, items, itemsArray) {
     itemsArray = itemsArray || Utils.toArray(items);
     itemsArray.forEach((item) => {
-	var view = views[item.key];
-	if(!view) {
-	    view = factory(item);
-	    views[item.key] = view;
-	    container.appendChild(view);
-	} else {
-	    view.update(item);
-	}
+        var view = views[item.key];
+        if(!view) {
+            view = factory(item);
+            views[item.key] = view;
+            container.appendChild(view);
+        } else {
+            view.update(item);
+        }
     });
 
     // remove unused views
@@ -158,6 +170,68 @@ function param(variable) {
 }
 
 function hasChanged(syncnode1, syncnode2) {
-    	if(syncnode1 && !syncnode2 || !syncnode1 && syncnode2) return true;
+    if(!syncnode1 && !syncnode2) return false;
+    if(syncnode1 && !syncnode2 || !syncnode1 && syncnode2) return true;
 	return syncnode1.lastModified !== syncnode2.lastModified;
 }
+
+
+
+function updateViews(parent, views, ctor, items, itemsArr) {
+    itemsArr = itemsArr || toArray(items);
+    itemsArr.forEach((item) => {
+        var view  = views[item.key];
+        if(!view) {
+            view = new ctor();
+            views[item.key] = view;
+            parent.appendChild(view.node);
+        }
+        view.update(item);
+    });
+    Object.keys(views).forEach((key) => {
+        var view = views[key];
+        if(!items[view.data.key]) {
+            parent.removeChild(view.node);
+            delete views[view.data.key];
+        }
+    });
+}
+
+
+
+
+
+
+
+
+function el(name, opts) {
+    opts = opts || {};
+    var elem = document.createElement(name);
+    if(opts.className) elem.className = opts.className;
+    if(opts.innerHTML) elem.innerHTML = opts.innerHTML;
+    if(opts.type) elem.type = opts.type;
+    if(opts.value) elem.value = opts.value;
+    if(opts.events) {
+        Object.keys(opts.events).forEach((key) => {
+            elem.addEventListener(key, opts.events[key]);
+        });
+    }
+    if(opts.style) {
+        Object.keys(opts.style).forEach((key) => {
+            elem.style[key] = opts.style[key];
+        });
+    }
+    if(opts.parent) opts.parent.appendChild(elem);
+    return elem;
+}
+
+
+class SyncView {
+    update(data) {
+         if(hasChanged(this.data, data)) {
+            this.data = data;
+            this.render();
+        }
+    }
+}
+

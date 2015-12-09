@@ -55,6 +55,7 @@ function watch(filename) {
 
 watch('todo/index.html');
 watch('todo/edit.html');
+watch('app/syncviews.js');
 
 
 
