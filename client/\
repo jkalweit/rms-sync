@@ -1,0 +1,106 @@
+"use strict"
+
+
+
+class Timeclock extends SyncView {
+	constructor() {
+		super();
+		el('h1', { parent: this.node, innerHTML: 'Timeclock', className: 'light' });
+		this.mainView = el('div', { parent: this.node });
+		el('button', { parent: this.mainView, innerHTML: 'Clock In', 
+			style: { position: 'absolute', top: '30px', left: '250px',
+		       		fontSize: '2em' },
+			events: { click: this.clockIn.bind(this) } });
+		this.timespans = el('div', { parent: this.mainView });
+		this.timespanViews = {};
+	
+
+		this.clockinView = el('div', { parent: this.node,
+	       		style: { display: 'none'  } });
+		el('h1', { parent: this.clockinView, innerHTML: 'Clock In' });
+		this.nameSelect = el('div', { parent: this.clockinView });
+	}
+	clockIn() {
+		this.mainView.style.display = 'none';
+		this.clockinView.style.display = 'block';
+	}
+	doClockIn(employee) {
+		this.mainView.style.display = 'block';
+		this.clockinView.style.display = 'none';
+		var timespan = {
+			key: new Date().toISOString(),
+			name: employee.name,
+			clockIn: new Date().toISOString(),
+			note: ''
+		};
+		this.data.timespans.set(timespan.key, timespan);		
+	}
+	render() {
+		if(!this.data.timespans) { this.data.set('timespans', {}); return; };
+		var existingVal = this.nameSelect.value;
+		this.nameSelect.innerHTML = '';
+		SV.toArray(this.data.employees, 'name').forEach((employee) => {
+			if(employee.name === '[open]') return;
+			el('button', { parent: this.nameSelect, innerHTML: employee.name, 
+				style: { fontSize: '1.5em', margin: '5px' },
+				events: { click: () => { this.doClockIn(employee);  } } });
+		});
+		SV.updateViews(this.timespans, this.timespanViews, Timespan, 
+				this.data.timespans);
+	}
+}
+
+
+class Timespan extends SyncView {
+	constructor() {
+		super();
+	        this.node.style.marginTop = '5px';	
+		this.header = el('div', { parent: this.node,
+	       		style: { display: 'inline-block', width: '120px' }});	
+		this.clockText = el('div', { parent: this.node,
+	       		style: { display: 'inline-block', width: '150px' }});	
+		this.clockOutButton = el('button', { parent: this.node, innerHTML: 'Clock Out',
+			events: { click: this.clockOut.bind(this) } });
+		this.duration = el('div', { parent: this.node,
+	       		style: { display: 'inline-block' }});	
+		el('button', { parent: this.node, innerHTML: 'X', 
+			style: { float: 'right' },
+			events: { click: () => { 
+				if(confirm('Delete?')) this.data.parent.remove(this.data.key); 
+			} }});
+	}
+	clockOut() {
+		this.data.set('clockOut', new Date().toISOString());
+	}
+	render() {
+		this.header.innerHTML = this.data.name;
+		var clockIn = moment(this.data.clockIn);
+		var text = clockIn.format('hh:mma') + ' - ';
+		if(this.data.clockOut) {
+			var clockOut = moment(this.data.clockOut);
+			text += clockOut.format('hh:mma');
+			var duration = moment.duration(clockOut.diff(clockIn));
+			this.duration.innerHTML = duration.asHours().toFixed(2).toString();
+		}
+		this.clockOutButton.style.display = this.data.clockOut ? 'none' : 'inline';
+		this.clockText.innerHTML = text;
+	}
+}
+
+
+
+SV.startReloader();
+
+var el = SV.el;
+
+var t = new Timeclock();
+SV.id('container').appendChild(t.node);
+
+
+var sv = new SV();
+sv.onupdated = () => {
+	console.log('update!', this.db.shifts);
+	t.update(this.db.shifts);
+};
+
+sv.startSync();

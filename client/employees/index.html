@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/app.css">
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
+    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
+    <script type="text/javascript" src="/syncviews.js"></script>
+</head>
+
+<body>
+    <div id="container">
+    </div>
+
+    <script>
+        "use strict"
+
+        class EmployeesList extends SyncView {
+            constructor() {
+                super();
+                var node = el('div', { innerHTML: `<h1 class="light">Employees</h1>` });
+                this.node = node;
+                this.newForm = el('form', { 
+                        parent: node, 
+                        events: { submit: (e) => { this.addEmployee(); e.preventDefault(); } } 
+                });
+                this.newInput = el('input', { parent: this.newForm,
+                        style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
+                this.newButton = el('input', { parent: this.newForm, type: 'submit', value: 'Add',
+                        style: { width: '80px', fontSize: '2em' } });
+                this.employees = el('div', { parent: node });
+                this.employeeViews = {};
+            }
+            addEmployee() {
+                var employee = { key: new Date().toISOString(), name: this.newInput.value };
+                this.data.set(employee.key, employee);
+            }
+            render() { 
+                console.log('rendering', this.data);
+                updateViews(this.employees, this.employeeViews, Employee, this.data, toArray(this.data, 'name'));
+            }
+        }
+
+        class Employee extends SyncView {
+            constructor() {
+                super();
+                var node = el('div');
+                this.node = node;
+                this.removeButton = el('button', { parent: node, innerHTML: 'X',
+                        style: { float: 'right', width: '40px', fontSize: '2em'},
+                        events: { click: () => { this.remove(); } } });
+                this.name = el('div', { parent: node, style: { width: 'calc(100% - 45px)' } });
+                this.template = '<h1>{{name}}</h1>'; 
+            }
+            remove() { if(confirm(`Delete ${this.data.name}?`)) this.data.parent.remove(this.data.key); }
+            render() {
+                this.name.innerHTML = inject(this.template, this.data);
+            }
+        }
+       
+        var t = new EmployeesList();
+        id('container').appendChild(t.node);
+
+        var onupdated = () => {
+            if(!this.db.shifts) {
+                this.db.set('shifts', { employees: {} });
+            }else if(!this.db.shifts.employees) {
+                this.db.shifts.set('employees', {});
+            } else {
+                t.update(this.db.shifts.employees); 
+            }
+        };
+
+
+
+    </script>
+
+</body>
+
+</html>

@@ -6,7 +6,7 @@ var socketio = require('socket.io');
 var Sync = require('sync-node');
 var app = express();
 var server = http.createServer(app);
-var fs = require('fs');
+var chokidar = require('chokidar');
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -46,21 +46,18 @@ app.get('/test', function (req, res) {
 });
 
 
-function watch(filename) {
-	fs.watchFile(path.join(__dirname, 'client', filename), () => {
-		console.log('     Changed!');
+
+
+
+/* For Debugging, send signal when file changes */
+chokidar.watch('./client', { depth: 99 }).on('change', (path) => {
+	if(path.match(/\.js$/i) !== null) {
+		console.log('js file changed', path);
 		io.emit('reload');
-	});
-}
-
-watch('todo/index.html');
-watch('todo/edit.html');
-watch('app/syncviews.js');
+	};
+});
 
 
-
-/* Debugging */
-console.log('ioNamespace', syncServer.namespace);
 
 server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
