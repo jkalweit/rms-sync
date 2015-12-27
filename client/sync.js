@@ -252,7 +252,21 @@ class SV {
 		elem.classList.add('flash');
 		setTimeout(() => { elem.classList.remove('flash'); }, 500);
 	}
+
+
+	static sendText(msg) {
+		io().emit('send text', msg);
+	}
+
+	static sendToAdmin(body) {
+		SV.sendText({ phone: '8035261064', body: body });
+	}
+
+	static normalizePhone(phone) {
+		return phone.replace('-', '').replace('(', '').replace(')', '').replace('.', '').replace(' ', '').toLowerCase();
+	}
 }
+
 
 
 
@@ -282,11 +296,16 @@ class SyncView {
 		if(this.hasChanged(data)) {
 			this.data = data;
 			if(this.render) this.render();
+			if(this.doFlash) this.flash(); 
 		}
 	}
 	hasChanged(newData) {
 		if(!this.data && !newData) return false;
 		if((this.data && !newData) || (!this.data && newData)) return true;
+		if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
+			console.log('direct comparison', this.data, newData);
+			return this.data === newData;
+		}
 		if(!this.data.lastModified || !newData.lastModified) return true;
 		return this.data.lastModified !== newData.lastModified;
 	}
@@ -312,6 +331,8 @@ class SyncView {
 class SimpleEditInput extends SyncView {
 	constructor(prop, label, validator, formatter) {
 		super();
+		this.doFlash = true;
+		
 		this.prop = prop;
 
 		this.editView = el('div', { parent: this.node });
@@ -333,8 +354,13 @@ class SimpleEditInput extends SyncView {
 				}
 			}}});
 	}
+	hasChanged(newData) {
+		// custom hasChanged overrides super class
+		console.log('custom hasChanged', this.data, newData);
+		if(this.data && newData) return this.data[this.prop] !== newData[this.prop];
+		else return this.data !== newData;
+	}
 	render() {
-		this.flash();
 		this.input.value = this.data[this.prop] || '';
 	}
 }

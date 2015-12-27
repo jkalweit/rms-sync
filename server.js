@@ -8,6 +8,9 @@ var app = express();
 var server = http.createServer(app);
 var chokidar = require('chokidar');
 
+
+
+
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -44,6 +47,44 @@ app.get('/data/reset', function (req, res) {
 app.get('/test', function (req, res) {
     res.send('Test response!');
 });
+
+
+
+
+
+
+
+
+// Your accountSid and authToken from twilio.com/user/account
+var accountSid = 'AC600d9e435f0dbbf9df043ba8c860bd6a';
+var authToken = "984c52da67bca40b816b94eb928f70e7";
+var twilio = require('twilio')(accountSid, authToken);
+
+
+io.on('connection', (socket) => {
+	console.log('connection!');
+	socket.on('send text', (msg) => {	
+		twilio.messages.create({
+		    body: msg.body,
+		    to: '+1' + msg.phone,
+		    from: "+18032237643"
+		}, (err, message) => {
+			if(err) console.log('Error sending txt: ' + JSON.stringify(err));
+		    	else console.log('Sent text message: ' + JSON.stringify(message));
+		});
+
+
+	});
+
+});
+
+
+
+
+
+
+
+
 
 
 
