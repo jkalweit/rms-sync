@@ -5,9 +5,9 @@ class TodoList extends SyncView {
 		super();
 		var node = el('div', { innerHTML: `<h1 class="light">Todos</h1>` });
 		this.node = node;
-		this.newForm = el('form', { 
-			parent: node, 
-			events: { submit: (e) => { this.addTodo(); e.preventDefault(); } } 
+		this.newForm = el('form', {
+			parent: node,
+			events: { submit: (e) => { this.addTodo(); e.preventDefault(); } }
 		});
 		this.newInput = el('input', { parent: this.newForm,
 			style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
@@ -21,10 +21,10 @@ class TodoList extends SyncView {
 			key: new Date().toISOString(),
 			text: this.newInput.value,
 			items: {}
-		}; 
+		};
 		this.data.set(todo.key, todo);
-	} 
-	render() { 
+	}
+	render() {
 		updateViews(this.todos, this.todoViews, Todo, this.data);
 	}
 }
@@ -41,9 +41,9 @@ class EditInput extends SyncView {
 		this.prop = prop;
 
 		this.mainView = el('div', { parent: this.node,
-			events: { click: () => { 
-				this.isEditing = true; 
-				this.render(); 
+			events: { click: () => {
+				this.isEditing = true;
+				this.render();
 				this.input.focus();
 			} } });
 		this.display = display;
@@ -51,8 +51,8 @@ class EditInput extends SyncView {
 
 		this.editView = el('div', { parent: this.node });
 		this.input = el('input', { parent: this.editView,
-			events: { blur: () => { 
-				this.data.set(this.prop, this.input.value);  
+			events: { blur: () => {
+				this.data.set(this.prop, this.input.value);
 				this.isEditing = false;
 				this.render();
 			} } });
@@ -79,31 +79,31 @@ class Todo extends SyncView {
 			events: { click: () => { this.remove();  } } });
 		el('button', { parent: this.mainView, innerHTML: '+',
 			style: { width: '45px', fontSize: '2em', float: 'right' },
-			events: { click: () => { this.isEditing = true; 
+			events: { click: () => { this.isEditing = true;
 				this.render(); this.addItemInput.focus();  } } });
-		this.editableText = new EditInput(el('h1', { className: 'light' }), 
+		this.editableText = new EditInput(el('h1', { className: 'light' }),
 				'text', { fontSize: '2em' });
 		this.node.appendChild(this.editableText.node);
 
 
 		this.editView = el('div', { parent: this.node });
-		
-		this.newForm = el('form', { 
-                        parent: this.editView, 
-                        events: { submit: (e) => { this.addItem(); e.preventDefault(); } } 
+
+		this.newForm = el('form', {
+                        parent: this.editView,
+                        events: { submit: (e) => { this.addItem(); e.preventDefault(); } }
                 });
 		this.addItemInput = el('input', { parent: this.newForm,
-			style: { fontSize: '1.5em', width: 'calc(100% - 100px)', 
+			style: { fontSize: '1.5em', width: 'calc(100% - 100px)',
 				marginBottom: '20px' } });
 		el('button', { parent: this.newForm, innerHTML: '-', type: 'button',
 			style: { width: '45px', fontSize: '1.5em', float: 'right' },
-			events: { click: (ev) => { this.isEditing = false; 
+			events: { click: (ev) => { this.isEditing = false;
 				this.render(); ev.preventDefault(); } } });
 		el('input', { parent: this.newForm, type: 'submit', value: '+',
 			style: { width: '45px', fontSize: '1.5em' } });
 
 
-		this.items = el('div', {parent: this.node }); 
+		this.items = el('div', {parent: this.node });
 		this.itemViews = {};
 	}
 	addItem() {
@@ -111,7 +111,7 @@ class Todo extends SyncView {
 			key: new Date().toISOString(),
 			text: this.addItemInput.value,
 			isComplete: false
-		}; 
+		};
 		this.data.items.set(item.key, item);
 		this.addItemInput.value = '';
 		this.isEditing = false;
@@ -121,7 +121,7 @@ class Todo extends SyncView {
 			this.data.parent.remove(this.data.key);
 		}
 	}
-	render() { 
+	render() {
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
@@ -144,21 +144,21 @@ class TodoItem extends SyncView {
 			}
 		};
 
-		this.mainView = el('div', { parent: this.node });		
-		this.checkbox = el('input', { parent: this.mainView, type: 'checkbox', 
+		this.mainView = el('div', { parent: this.node });
+		this.checkbox = el('input', { parent: this.mainView, type: 'checkbox',
 			style: { float: 'left', width: '25px', height: '25px', marginRight: '20px' },
 			events: { change: () => { this.toggleIsComplete(); } } });
-		el('button', { parent: this.mainView, innerHTML: 'X', 
+		el('button', { parent: this.mainView, innerHTML: 'X',
 			events: { click: () => { this.remove(); }},
 			style: { float: 'right', fontSize: '1.5em' }});
-		this.moreButton = el('button', { parent: this.mainView, innerHTML: 'i', 
+		this.moreButton = el('button', { parent: this.mainView, innerHTML: 'i',
 			events: { click: () => { this.isEditing = true; this.render(); }},
 			style: { float: 'right', fontSize: '1.5em' }});
-		this.text = el('div', {parent: this.mainView }); 
+		this.text = el('div', {parent: this.mainView });
 		this.template = `<h2>{{text}}</h2>`;
 
 		this.editView = el('div', { parent: this.node });
-		el('button', { parent: this.editView, innerHTML: 'i', 
+		el('button', { parent: this.editView, innerHTML: 'i',
 			events: { click: () => { this.data.set('note', this.noteInput.value);  this.isEditing = false; this.render(); }},
 			style: { float: 'right', fontSize: '1.5em' }});
 		this.noteInput = el('textarea', { parent: this.editView, rows: '5',
@@ -193,7 +193,5 @@ var onloaded = () => {
 	t.newInput.focus();
 }
 var onupdated = () => {
-	t.update(this.db.todos); 
+	t.update(this.db.todos);
 };
-
-

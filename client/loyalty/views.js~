@@ -84,7 +84,7 @@ class LoyaltyMember extends SyncView {
 	constructor() {
 		super();
 		this.node.className = 'group';
-		this.node.style.marginTop = '0.5em';
+		this.node.style.marginTop = '1em';
 
 		this.points = el('span', { 
 			parent: this.node,

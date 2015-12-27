@@ -18,6 +18,7 @@ var SyncNode;
                 //console.log('adding prop: ', propName);
                 var prop = obj[propName];
                 if (typeof prop === 'object') {
+			console.log('prop', prop);
                     var className = prop.constructor.toString().match(/\w+/g)[1];
                     //console.log('ClassName: ' + className, propName);
                     if (className !== 'SyncNode') {

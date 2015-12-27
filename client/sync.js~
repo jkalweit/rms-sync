@@ -122,13 +122,23 @@ class SV {
 		});
 
 		if(sortField) {
-			result.sort(function (a, b) {
-				if (a[sortField].toLowerCase() < b[sortField].toLowerCase())
-					return reverse ? 1 : -1;
-				if (a[sortField].toLowerCase() > b[sortField].toLowerCase())
-					return reverse ? -1 : 1;
-				return 0;
-			});
+			if(reverse) {
+				result.sort(function (a, b) {
+					if (a[sortfield].tolowercase() < b[sortfield].tolowercase())
+						return -1;
+					if (a[sortfield].tolowercase() > b[sortfield].tolowercase())
+						return 1;
+					return 0;
+				});
+			} else {
+				result.sort(function (a, b) {
+					if (a[sortField].toLowerCase() < b[sortField].toLowerCase())
+						return -1;
+					if (a[sortField].toLowerCase() > b[sortField].toLowerCase())
+						return 1;
+					return 0;
+				});
+			}
 		}
 
 		return result;
