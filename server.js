@@ -1,11 +1,20 @@
 var express = require('express');
 var http = require('http');
+var https = require('https');
 var path = require('path');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
 var Sync = require('sync-node');
 var app = express();
+
+var fs = require('fs');
+var options = {
+	key: fs.readFileSync('../key.pem', 'utf8'),
+	cert: fs.readFileSync('../server.crt', 'utf8')
+};
+
 var server = http.createServer(app);
+var sserver = https.createServer(options, app);
 var chokidar = require('chokidar');
 
 app.use(function (req, res, next) {
@@ -63,3 +72,10 @@ server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
   console.log("Server listening at", addr.address + ":" + addr.port);
 });
+
+sserver.listen(443, process.env.IP || "0.0.0.0", function(){
+  var addr = sserver.address();
+  console.log("HTTPS Server listening at", addr.address + ":" + addr.port);
+});
+
+
