@@ -5,8 +5,6 @@
 
 
 
-
-
 class LoyaltyMembers extends SyncView {
 	constructor() {
 		super();
@@ -144,6 +142,8 @@ class LoyaltyPointsView extends SyncView {
 		el('input', { parent: form, value: 'Add', type: 'submit' });
 
 		this.pointsContainer = new ViewsContainer(LoyaltyPoints, 'key', 'reverse');
+		this.pointsContainer.on('viewAdded', (view) => { 
+			view.on('pointsChanged', this.updatePointTotal.bind(this)); });
 	       	this.pointsContainer.node.style.marginTop = '1em';
 		this.node.appendChild(this.pointsContainer.node);
 	}
@@ -157,6 +157,7 @@ class LoyaltyPointsView extends SyncView {
 			};
 			this.data.set(points.key, points);
 			this.updatePointTotal();	
+			this.amountInput.value = '';
 		} else {
 			alert('Invalid amount: ' + this.amountInput.value);
 		}
@@ -174,36 +175,6 @@ class LoyaltyPointsView extends SyncView {
 	}
 }
 
-class ViewsContainer extends SyncView {
-	constructor(ctor, sort, direction) {
-		super();
-		this.views = {};
-		this.ctor = ctor;
-		this.sort = sort;
-		this.direction = direction;
-	}
-	render() {
-		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
-		itemsArr.forEach((item) => {
-			var view  = this.views[item.key];
-			if(!view) {
-				view = new this.ctor();
-				this.views[item.key] = view;
-				this.node.appendChild(view.node);
-				this.emit('addedView', view);
-			}
-			view.update(item);
-		});
-		Object.keys(this.views).forEach((key) => {
-			var view = this.views[key];
-			if(!this.data[view.data.key]) {
-				this.node.removeChild(view.node);
-				delete this.views[view.data.key];
-				this.emit('removedView', view);
-			}
-		});
-	}
-}
 
 class LoyaltyPoints extends SyncView {
 	constructor() {
@@ -216,7 +187,7 @@ class LoyaltyPoints extends SyncView {
 		 	style: { display: 'inline-block', width: '25%', textAlign: 'right' }});
 
 		this.editView = new LoyaltyPointsEdit();
-		this.editView.on('pointsChanged', () => { console.log('changed!'); this.emit('pointsChanged'); });
+		this.editView.on('pointsChanged', () => { this.emit('pointsChanged'); });
 		this.node.appendChild(this.editView.node);		
 
 		document.addEventListener('keypress', e => {
@@ -230,6 +201,7 @@ class LoyaltyPoints extends SyncView {
 		this.dateSpan.innerHTML = moment(this.data.key).format('MM/DD/YYYY hh:mma');
 		this.typeSpan.innerHTML = this.data.type;
 		this.amountSpan.innerHTML = this.data.amount;
+		this.amountSpan.style.color = this.data.type === 'Redeem' ? '#44DD44' : 'initial';
 
 		this.editView.node.style.display = this.adminMode ? 'initial' : 'none';
 		this.editView.update(this.data);
@@ -258,7 +230,13 @@ class LoyaltyPointsEdit extends SyncView {
 
 		el('button', { parent: this.node, innerHTML: 'Delete',
 			style: { marginTop: '.5em' },
-			events: { click: () =>{ if(confirm(`Delete ${this.data.amount}?`)) this.data.parent.remove(this.data.key); }}})
+			events: { click: this.remove.bind(this) }})
+	}
+	remove() {
+		if(confirm(`Delete ${this.data.amount}?`)) {
+			this.data.parent.remove(this.data.key); 
+			this.emit('pointsChanged');
+		}
 	}
 	render() {
 		SyncView.updateViews(this.views, this.data);

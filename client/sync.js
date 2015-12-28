@@ -7,7 +7,6 @@ class SV {
 		this.db = null;
 		var sync = new SyncNodeSocket.SyncNodeSocket('data', {});
 
-		console.log('here2!');
 
 		window.onload = () => {
 
@@ -116,7 +115,7 @@ class SV {
 	static toArray(obj, sortField, reverse) {
 		var result = [];
 		Object.keys(obj).forEach(function(key) {
-			if (key !== 'lastModified') {
+			if (key !== 'lastModified' && key != 'key') {
 				result.push(obj[key]);
 			}
 		});
@@ -206,9 +205,14 @@ class SV {
 
 	static group(arr, prop, groupVals) {
 		var groups = {};
-		groupVals.forEach((groupVal) => {
-			groups[groupVal] = { key: groupVal };
-		});
+
+		if(typeof groupVals === 'array') {
+			groupVals.forEach((groupVal) => {
+				groups[groupVal] = { key: groupVal };
+			});
+		}
+
+
 
 		arr.forEach(function (item) {
 			var val;
@@ -218,8 +222,10 @@ class SV {
 				val = item[prop];
 			}
 
-			if(groups[val]) groups[val][item.key] = item;
+			if(!groups[val]) groups[val] = { key: val };
+			groups[val][item.key] = item;
 		});
+
 		return groups;
 	}
 
@@ -313,10 +319,13 @@ class SyncView {
 		if(!this.eventHandlers[eventName]) this.eventHandlers[eventName] = [];
 		this.eventHandlers[eventName].push(handler);
 	}
-	emit(eventName, data) {
+	emit(eventName) {
 		var handlers = this.eventHandlers[eventName] || [];
-		console.log('handlers', handlers);
-		handlers.forEach(handler => { handler(data); });
+		var args = new Array(arguments.length-1);
+		for(var i = 1; i < arguments.length; ++i) {
+			args[i-1] = arguments[i];
+		}
+		handlers.forEach(handler => { handler.apply(null, args); });
 	}
 	flash() {
 		// to visualize changes for debugging
@@ -326,6 +335,36 @@ class SyncView {
 
 
 
+class ViewsContainer extends SyncView {
+	constructor(ctor, sort, direction) {
+		super();
+		this.views = {};
+		this.ctor = ctor;
+		this.sort = sort;
+		this.sortDirection = direction;
+	}
+	render() {
+		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
+		itemsArr.forEach((item) => {
+			var view  = this.views[item.key];
+			if(!view) {
+				view = new this.ctor();
+				this.views[item.key] = view;
+				this.node.appendChild(view.node);
+				this.emit('viewAdded', view);
+			}
+			view.update(item);
+		});
+		Object.keys(this.views).forEach((key) => {
+			var view = this.views[key];
+			if(!this.data[view.data.key]) {
+				this.node.removeChild(view.node);
+				delete this.views[view.data.key];
+				this.emit('removedView', view);
+			}
+		});
+	}
+}
 
 
 
@@ -353,7 +392,6 @@ class SimpleEditInput extends SyncView {
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
 					this.data.set(this.prop, value);
-					console.log('firing changed', value, oldValue);
 					this.emit('changed', value, oldValue);
 				}
 			}}});
