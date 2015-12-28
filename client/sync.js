@@ -315,6 +315,7 @@ class SyncView {
 	}
 	emit(eventName, data) {
 		var handlers = this.eventHandlers[eventName] || [];
+		console.log('handlers', handlers);
 		handlers.forEach(handler => { handler(data); });
 	}
 	flash() {
@@ -350,13 +351,15 @@ class SimpleEditInput extends SyncView {
 				}				
 				if(formatter) value = formatter(value);
 				if(this.data[this.prop] !== value) {
+					var oldValue = this.data[this.prop];
 					this.data.set(this.prop, value);
+					console.log('firing changed', value, oldValue);
+					this.emit('changed', value, oldValue);
 				}
 			}}});
 	}
 	hasChanged(newData) {
 		// custom hasChanged overrides super class
-		console.log('custom hasChanged', this.data, newData);
 		if(this.data && newData) return this.data[this.prop] !== newData[this.prop];
 		else return this.data !== newData;
 	}

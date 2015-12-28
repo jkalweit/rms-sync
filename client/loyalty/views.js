@@ -91,7 +91,7 @@ class LoyaltyMember extends SyncView {
 		this.memberName = el('span', {
 			parent: this.node,
 			className: 'light',
-		 	events: { click: () => { SV.flash(this.memberName); this.editMode = !this.editMode; this.render(); }}});
+		 	events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
 
 		this.editMode = false;
 		this.editView = this.appendView(new LoyaltyMemberEdit());
@@ -252,7 +252,7 @@ class LoyaltyPointsEdit extends SyncView {
 		var amountInput = this.appendView(new SimpleEditInput('amount', 'Amount', 
 						(val) => { return !isNaN(parseFloat(val)); },
 						(val) => { return parseFloat(val); }));
-		amountInput.on('changed', () => { this.emit('pointsChanged'); });
+		amountInput.on('changed', () => { console.log('changed!'); this.emit('pointsChanged'); });
 		this.views.push(amountInput);
 		this.views.push(this.appendView(new SimpleEditInput('note', 'Note')));
 
