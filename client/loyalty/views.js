@@ -11,6 +11,7 @@ class LoyaltyMembers extends SyncView {
 	constructor() {
 		super();
 
+
 		el('h1', {
 			parent: this.node,
 			innerHTML: 'Loyalty Members',
@@ -59,10 +60,8 @@ class LoyaltyMembers extends SyncView {
 		};
 		this.data.members.set(newMember.key, newMember);
 		this.addMemberInput.value = '';
-	}
-	static normalizePhone(phone) {
-		return phone.replace('-', '').replace('(', '').replace(')', '').replace('.', '').replace(' ', '').toLowerCase();
-	}
+		SV.sendToAdmin('Added Loyalty Member: ' + newMember.name);	
+	}	
 	render() {
 		var filteredMembers;
 		var filterText = this.addMemberInput.value.trim().toLowerCase();
@@ -70,12 +69,12 @@ class LoyaltyMembers extends SyncView {
 			filteredMembers = SV.filterMap(this.data.members,
 				(m) => {
 					return m.name.toLowerCase().indexOf(filterText) !== -1 ||
-								LoyaltyMembers.normalizePhone(m.phone).indexOf(LoyaltyMembers.normalizePhone(filterText)) !== -1; });
+								SV.normalizePhone(m.phone).indexOf(SV.normalizePhone(filterText)) !== -1; });
 		} else {
 			filteredMembers = this.data.members;
 		}
 
-		SV.updateViews(this.membersContainer, this.memberViews, LoyaltyMember, filteredMembers);
+		SV.updateViews(this.membersContainer, this.memberViews, LoyaltyMember, filteredMembers, SV.toArray(filteredMembers, 'name'));
 	}
 }
 
@@ -92,7 +91,7 @@ class LoyaltyMember extends SyncView {
 		this.memberName = el('span', {
 			parent: this.node,
 			className: 'light',
-		 	events: { click: () => { SV.flash(this.memberName); this.editMode = !this.editMode; this.render(); }}});
+		 	events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
 
 		this.editMode = false;
 		this.editView = this.appendView(new LoyaltyMemberEdit());
@@ -140,12 +139,13 @@ class LoyaltyPointsView extends SyncView {
 		 		events: { submit: (e) => { e.preventDefault(); this.addPoints(); }}});
 		this.typeSelect = el('select', { parent: form });
 		el('option', { parent: this.typeSelect, innerHTML: 'Dinner'});
+		el('option', { parent: this.typeSelect, innerHTML: 'Redeem'});
 		this.amountInput = el('input', { parent: form });
 		el('input', { parent: form, value: 'Add', type: 'submit' });
 
-		this.pointsContainer = el('div', { parent: this.node,
-	       		style: { marginTop: '1em' }});
-		this.pointsViews = {};
+		this.pointsContainer = new ViewsContainer(LoyaltyPoints, 'key', 'reverse');
+	       	this.pointsContainer.node.style.marginTop = '1em';
+		this.node.appendChild(this.pointsContainer.node);
 	}
 	addPoints() {
 		var amount = parseFloat(this.amountInput.value);
@@ -156,15 +156,52 @@ class LoyaltyPointsView extends SyncView {
 				amount: amount
 			};
 			this.data.set(points.key, points);
-			var sum = 0;
-			SV.toArray(this.data).forEach((points) => { sum += points.amount; });
-			this.data.parent.set('points', sum);
+			this.updatePointTotal();	
 		} else {
 			alert('Invalid amount: ' + this.amountInput.value);
 		}
 	}
+	updatePointTotal() {
+		var sum = 0;
+		SV.toArray(this.data).forEach((points) => { 
+			sum += (points.amount * (points.type === 'Redeem' ? -1 : 1)); 
+		});
+		this.data.parent.set('points', sum);
+	}
 	render() {
-		SV.updateViews(this.pointsContainer, this.pointsViews, LoyaltyPoints, this.data, SV.toArray(this.data, 'key', true));
+		this.pointsContainer.update(this.data);
+//		SV.updateViews(this.pointsContainer, this.pointsViews, LoyaltyPoints, this.data, SV.toArray(this.data, 'key', true));
+	}
+}
+
+class ViewsContainer extends SyncView {
+	constructor(ctor, sort, direction) {
+		super();
+		this.views = {};
+		this.ctor = ctor;
+		this.sort = sort;
+		this.direction = direction;
+	}
+	render() {
+		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
+		itemsArr.forEach((item) => {
+			var view  = this.views[item.key];
+			if(!view) {
+				view = new this.ctor();
+				this.views[item.key] = view;
+				this.node.appendChild(view.node);
+				this.emit('addedView', view);
+			}
+			view.update(item);
+		});
+		Object.keys(this.views).forEach((key) => {
+			var view = this.views[key];
+			if(!this.data[view.data.key]) {
+				this.node.removeChild(view.node);
+				delete this.views[view.data.key];
+				this.emit('removedView', view);
+			}
+		});
 	}
 }
 
@@ -179,6 +216,7 @@ class LoyaltyPoints extends SyncView {
 		 	style: { display: 'inline-block', width: '25%', textAlign: 'right' }});
 
 		this.editView = new LoyaltyPointsEdit();
+		this.editView.on('pointsChanged', () => { console.log('changed!'); this.emit('pointsChanged'); });
 		this.node.appendChild(this.editView.node);		
 
 		document.addEventListener('keypress', e => {
@@ -207,19 +245,20 @@ class LoyaltyPointsEdit extends SyncView {
 
 		this.views = [];
 
-		this.views.push(this.appendView(new SimpleEditInput('type', 'Type')));
+		var typeInput = this.appendView(new SimpleEditInput('type', 'Type'));
+		typeInput.on('changed', () => { this.emit('pointsChanged'); });
+
+		this.views.push(typeInput);
 		var amountInput = this.appendView(new SimpleEditInput('amount', 'Amount', 
 						(val) => { return !isNaN(parseFloat(val)); },
 						(val) => { return parseFloat(val); }));
-		amountInput.on('changed', this.updatePoints.bind(this));
+		amountInput.on('changed', () => { console.log('changed!'); this.emit('pointsChanged'); });
 		this.views.push(amountInput);
 		this.views.push(this.appendView(new SimpleEditInput('note', 'Note')));
 
 		el('button', { parent: this.node, innerHTML: 'Delete',
 			style: { marginTop: '.5em' },
 			events: { click: () =>{ if(confirm(`Delete ${this.data.amount}?`)) this.data.parent.remove(this.data.key); }}})
-	}
-	updatePoints() {
 	}
 	render() {
 		SyncView.updateViews(this.views, this.data);
