@@ -114,6 +114,7 @@ class SV {
 
 	static toArray(obj, sortField, reverse) {
 		var result = [];
+		if(!obj) return result;
 		Object.keys(obj).forEach(function(key) {
 			if (key !== 'lastModified' && key != 'key') {
 				result.push(obj[key]);
@@ -345,15 +346,18 @@ class ViewsContainer extends SyncView {
 	}
 	render() {
 		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
+		var previous = null;
 		itemsArr.forEach((item) => {
 			var view  = this.views[item.key];
 			if(!view) {
 				view = new this.ctor();
 				this.views[item.key] = view;
-				this.node.appendChild(view.node);
+				// Attempt to preserve order
+				this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
 				this.emit('viewAdded', view);
 			}
 			view.update(item);
+			previous = view;
 		});
 		Object.keys(this.views).forEach((key) => {
 			var view = this.views[key];

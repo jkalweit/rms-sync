@@ -8,8 +8,8 @@ class Timeclock extends SyncView {
 
 		document.body.style.paddingTop = '50px';
 		el('button', { parent: this.node, innerHTML: 'Clock In',
-			style: { position: 'fixed', top: '0px', left: '0px', width: '425px',
-		       		fontSize: '2em' },
+			style: { position: 'fixed', top: '0px', left: '0px', width: '419px',
+		       		fontSize: '3em' },
 			events: { click: this.clockIn.bind(this) } });
 
 
@@ -192,7 +192,7 @@ class Timespan extends SyncView {
 		this.header = el('div', { parent: this.node,
 	       		style: { display: 'inline-block', width: '120px' }});
 		this.clockText = el('div', { parent: this.node,
-	       		style: { display: 'inline-block', width: '185px' }});
+	       		style: { display: 'inline-block', width: '180px' }});
 		this.clockOutButton = el('button', { parent: this.node, innerHTML: 'Clock Out',
 			events: { click: this.clockOut.bind(this) } });
 		this.duration = el('div', { parent: this.node,
@@ -212,7 +212,7 @@ class Timespan extends SyncView {
 		this.editNote = el('input', { parent: this.node,
 			events: { blur: () => {
 				this.data.set('note', this.editNote.value);
-				this.showNote = false;
+				//this.showNote = false;
 				this.render();
 			}}});
 

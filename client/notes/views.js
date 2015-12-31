@@ -6,13 +6,21 @@ class Notes extends SyncView {
 	constructor() {
 		super();
 
+		//this.loginView = new Login();
+		//this.node.appendChild(this.loginView.node);
+		//this.loginView.on('userChanged', (user) => { this.mainView.style.display = user ? 'initial' : 'none';  });
+		//this.loginView.start();
+
+
+		this.mainView = el('div', { parent: this.node});
+
 		el('h1', {
-			parent: this.node,
+			parent: this.mainView,
 			innerHTML: 'Notes',
 			className: 'light' });
 
 		this.addView = el('form', {
-			parent: this.node,
+			parent: this.mainView,
 		        events: {
 				submit: (e) => {
 					this.add();
@@ -41,10 +49,12 @@ class Notes extends SyncView {
 		this.node.appendChild(this.itemsContainer.node);
 	}
 	add() {
+		var body = this.addInput.value.trim();
+		if(!body) return;
 		var created = new Date().toISOString();
 		var newItem = {
 			key: created,
-			body: this.addInput.value
+			body: body
 		};
 		this.data.set(newItem.key, newItem);
 		this.addInput.value = '';
@@ -60,7 +70,7 @@ class Notes extends SyncView {
 			filtered = this.data;
 		}
 
-		var arr = SV.toArray(this.data, 'key', 'reverse');
+		var arr = SV.toArray(filtered, 'key', 'reverse');
 		var groups = SV.group(arr, 
 				(item) => { return moment(item.key).format('ddd MM/DD'); }, 
 				[]);

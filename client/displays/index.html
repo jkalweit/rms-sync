@@ -1,46 +1,91 @@
-<!--
-Copyright (C) 2014 Google Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
 <!DOCTYPE html>
 <html>
 <head>
 <style type="text/css">
 body {
 	overflow:hidden;
-}
-div{
-	height:720PX;
-	width:1280PX;
-	text-align:center;
-	border:0px solid silver;
-	display: table-cell;
-	vertical-align:middle;
-	color:#FFFFFF;
-	background-color:#000000;
+	color:#333;
+	background-color:#FFF;
 	font-weight:bold;
 	font-family:Verdana, Geneva, sans-serif;
 	font-size:40px;
+	text-align: center;
 }
+
+.sign {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	transition: opacity 2s;
+}
+
+.center {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.hide {
+	opacity: 0;
+}
+
 </style>
-<title>Cast Hello Text</title>
+<title>Digital Signage</title>
 </head>
 <body>
-<DIV id="message">Talk to me</DIV>
+<div id="sign1" class="sign">
+	<h1>Happy New Year!</h1>
+	<img src="http://www.thecoalyard.com/logo.png" style="width: 400px"  />
+</div>
+<div id="sign2" class="sign hide">
+	<h1>Chef Meares New Year's Special</h1>
+	<h4>Applewood Smoked Ribs</h4>
+	<h4>Black-eyed Peas</h4>
+	<h4>Collard Greens</h4>
+	<h4>Cornbread</h4>
+</div>
+<div id="sign3" class="sign hide">
+	<h1>Upcoming Events</h1>
+</div>
+<div id="sign4" class="sign hide">
+	<h1>Sign 4</h1>
+</div>
 <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
 <script type="text/javascript">
+
+var signs = ['sign2', 'sign1'];
+
+
+var currentIndex = 0;
+var timer;
+function cycle() {
+	currentIndex = 0;
+	displaySign(signs[currentIndex]);
+	timer = setInterval(function() {
+		currentIndex += 1;
+		if(currentIndex >= signs.length) currentIndex = 0;
+		displaySign(signs[currentIndex]);
+	}, 5000);
+}
+function stopCycle() {
+	clearTimeout(timer);
+}
+
+
+function displaySign(id) {
+	signs.forEach(function(signId) {
+		if(signId !== id) document.getElementById(signId).classList.add('hide');			
+	});
+	//setTimeout(function() {
+		document.getElementById(id).classList.remove('hide');
+	//}, 1000);
+}
+
 window.onload = function() {
+
+	
+
+
 	cast.receiver.logger.setLevelValue(0);
 	window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
 	console.log('Starting Receiver Manager');
@@ -48,7 +93,8 @@ window.onload = function() {
 	// handler for the 'ready' event
 	castReceiverManager.onReady = function(event) {
 		console.log('Received Ready event: ' + JSON.stringify(event.data));
-		window.castReceiverManager.setApplicationState("Application status is ready...");
+		cycle();
+		window.castReceiverManager.setApplicationState("Digital Sign is ready...");
 	};
 
 	// handler for 'senderconnected' event
@@ -60,15 +106,9 @@ window.onload = function() {
 	// handler for 'senderdisconnected' event
 	castReceiverManager.onSenderDisconnected = function(event) {
 		console.log('Received Sender Disconnected event: ' + event.data);
-		if (window.castReceiverManager.getSenders().length == 0) {
-			window.close();
-		}
-	};
-
-	// handler for 'systemvolumechanged' event
-	castReceiverManager.onSystemVolumeChanged = function(event) {
-		console.log('Received System Volume Changed event: ' + event.data['level'] + ' ' +
-				event.data['muted']);
+		//if (window.castReceiverManager.getSenders().length == 0) {
+		//	window.close();
+		//}
 	};
 
 	// create a CastMessageBus to handle messages for a custom namespace
@@ -80,7 +120,20 @@ window.onload = function() {
 	window.messageBus.onMessage = function(event) {
 		console.log('Message [' + event.senderId + ']: ' + event.data);
 		// display the message from the sender
-		displayText(event.data);
+		var command = event.data;
+		console.log(command);
+		switch(command) {
+			case 'cycle':
+				cycle();
+				break;
+			case 'stop cycle':
+				stopCycle();
+				break;
+			default:
+				displaySign(command);
+		}
+		
+		window.castReceiverManager.setApplicationState('Displaying: ' + id);
 		// inform all senders on the CastMessageBus of the incoming message event
 		// sender message listener will be invoked
 		window.messageBus.send(event.senderId, event.data);
@@ -89,13 +142,6 @@ window.onload = function() {
 	// initialize the CastReceiverManager with an application status message
 	window.castReceiverManager.start({statusText: "Application is starting"});
 	console.log('Receiver Manager started');
-};
-
-// utility function to display the text message in the input field
-function displayText(text) {
-	console.log(text);
-	document.getElementById("message").innerHTML=text;
-	window.castReceiverManager.setApplicationState(text);
 };
 </script>
 </body>

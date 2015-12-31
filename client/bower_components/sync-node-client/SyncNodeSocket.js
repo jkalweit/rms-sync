@@ -37,7 +37,7 @@ var SyncNodeSocket;
             this.serverLastModified = null;
             this.syncNode = new Sync.SyncNode({ local: localCached || defaultObject });
             Sync.SyncNode.addNE(this.syncNode, 'onUpdated', this.createOnUpdated(this));
-            host = host || ('http://' + location.host);
+            host = host || ('//' + location.host);
             var socketHost = host + path;
             console.log('Connecting to namespace: "' + socketHost + '"');
             this.server = io(socketHost);

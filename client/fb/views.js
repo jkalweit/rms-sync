@@ -51,20 +51,23 @@ class Login extends SyncView {
 		});
 
 	}
+	setUser(user) {
+		this.user = user;
+		this.emit('userChanged', this.user);
+	}
 	statusChangeCallback(response) {
 		console.log('statusChangeCallback');
 		console.log(response);
 		if (response.status === 'connected') {
-			this.testAPI();
+			this.getUserDetails();
 		} else if (response.status === 'not_authorized') {
 			// The person is logged into Facebook, but not your app.
 			console.log('Please log into this app.');
-			this.user = null;
 		} else {
 			// The person is not logged into Facebook, so we're not sure if
 			// they are logged into this app or not.
 			console.log('Please log into this app.');
-			this.user = null;
+			this.setUser(null);
 		}
 		this.render();
 	}
@@ -87,11 +90,11 @@ class Login extends SyncView {
 			this.statusChangeCallback(response);
 		});
 	}
-	testAPI() {
+	getUserDetails() {
 		console.log('Welcome!  Fetching your information.... ');
 		FB.api('/me?fields=id,name,email,permissions', (response) => {
 			console.log('Successful login for: ', response);
-			this.user = response;
+			this.setUser(response);
 			this.render();
 			//document.getElementById('status').innerHTML =
 			//  'Thanks for logging in, ' + response.name + '!';
@@ -121,16 +124,13 @@ class Login extends SyncView {
 
 
 
+//SV.startReloader();
 
+//var el = SV.el;
 
-
-SV.startReloader();
-
-var el = SV.el;
-
-var view = new Login();
-SV.id('container').appendChild(view.node);
-view.start();
+//var view = new Login();
+//SV.id('container').appendChild(view.node);
+//view.start();
 
 //var sv = new SV();
 //sv.onupdated = () => {

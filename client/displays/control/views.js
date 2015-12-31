@@ -11,6 +11,24 @@ class Sign extends SyncView {
 			className: 'light' });
 		el('button', { parent: this.node, innerHTML: 'Launch', 
 			events: { click: launchApp }});
+		el('button', { parent: this.node, innerHTML: 'Cycle', 
+			events: { click: () => { this.sendMessage('cycle'); } }});
+		el('button', { parent: this.node, innerHTML: 'Stop Cycle', 
+			events: { click: () => { this.sendMessage('stop cycle'); } }});
+		el('button', { parent: this.node, innerHTML: 'Sign 1', 
+			events: { click: () => { this.sendMessage('sign1'); } }});
+		el('button', { parent: this.node, innerHTML: 'Sign 2', 
+			events: { click: () => { this.sendMessage('sign2'); } }});
+		el('button', { parent: this.node, innerHTML: 'Sign 3', 
+			events: { click: () => { this.sendMessage('sign3'); } }});
+		el('button', { parent: this.node, innerHTML: 'Sign 4', 
+			events: { click: () => { this.sendMessage('sign4'); } }});
+	}
+	sendMessage(message) {
+		session.sendMessage('urn:x-cast:com.google.cast.sample.helloworld', message, 
+				() => { console.log('message sent: ' + message); },
+				(err) => { console.log('failed to send message: ' + message); });
+			
 	}
 	render() {
 	}
