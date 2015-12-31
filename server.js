@@ -7,13 +7,6 @@ var socketio = require('socket.io');
 var Sync = require('sync-node');
 var app = express();
 
-var fs = require('fs');
-var options = {
-	key: fs.readFileSync('../key.pem', 'utf8'),
-	cert: fs.readFileSync('../server.crt', 'utf8')
-};
-var sserver = https.createServer(options, app);
-
 
 var server = http.createServer(app);
 var chokidar = require('chokidar');
@@ -119,6 +112,7 @@ server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
 var startHTTPS = false;
 if(startHTTPS) {
 
+	console.log('here');
 	var fs = require('fs');
 	var options = {
 		key: fs.readFileSync('../key.pem', 'utf8'),
