@@ -29,27 +29,39 @@ body {
 	opacity: 0;
 }
 
+h4 {
+	margin: 0.5em;
+}
+
 </style>
 <title>Digital Signage</title>
 </head>
 <body>
 <div id="sign1" class="sign hide">
 	<h1>Happy New Year!</h1>
-	<img src="http://www.thecoalyard.com/logo.png" style="width: 400px"  />
+	<div style="float: left; width: 100%">
+		<img src="http://www.thecoalyard.com/logo.png" style="width: 400px"  />
+	</div>
+	<!-- <div style="float: left; width: 50%">
+		<img style="width: 700px" src="/imgs/game.jpg" />
+	</div>	-->
 </div>
-<div id="sign2" class="sign">
-	<h2>Chef Meares'</h2>
-	<h1>NEW YEAR'S SPECIAL</h1>
-	<div style="width: 50%; float: left;">
+<div id="sign2" class="sign" style="padding-top: 25px">
+	<h2 style="margin: 0.1em">TODAY: Chef Meares'</h2>
+	<h1 style="margin: 0.1em">NEW YEAR'S DAY SPECIAL</h1>
+	<div style="width: 40%; float: left; padding-left: 40px">
+		<br />
 		<h4>Applewood Smoked Ribs</h4>
 		<h4>Black-eyed Peas</h4>
 		<h4>Collard Greens</h4>
 		<h4>Cornbread</h4>
+		<h4>Tea</h4>
+		<h4>$18</h4>
 	</div>
-	<div style="width: 50%; float: left">
-		<img style="float: right; width: 400px" src="/imgs/ribs.jpg" />
-		<img style="float: right; width: 400px" src="/imgs/peas.jpg" />
-		<img style="float: right; width: 400px" src="/imgs/collards.jpg" />
+	<div style="width: 50%; float: left; padding-right: 20px">
+		<img style="float: right; width: 500px" src="/imgs/ribs.jpg" />
+		<img style="float: right; width: 250px" src="/imgs/peas.jpg" />
+		<img style="float: right; width: 250px" src="/imgs/collards.jpg" />
 	</div>
 </div>
 <div id="sign3" class="sign hide">
@@ -61,7 +73,7 @@ body {
 <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
 <script type="text/javascript">
 
-var signs = ['sign2', 'sign1'];
+var signs = ['sign1', 'sign2'];
 
 
 var currentIndex = 0;
@@ -73,7 +85,7 @@ function cycle() {
 		currentIndex += 1;
 		if(currentIndex >= signs.length) currentIndex = 0;
 		displaySign(signs[currentIndex]);
-	}, 5000);
+	}, 7000);
 }
 function stopCycle() {
 	clearTimeout(timer);
