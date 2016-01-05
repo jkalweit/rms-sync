@@ -112,6 +112,23 @@ class Note extends SyncView {
 		this.editView = this.appendView(new NoteEdit());
 	}
 	render() {
+		switch(this.data.status) {
+			case 'Accepted': 
+				this.node.style.color = '#000';
+				this.note.style.textDecoration = 'none';
+				break;
+			case 'Rejected':
+				this.node.style.color = '#D55';
+				this.note.style.textDecoration = 'line-through';
+				break;
+			case 'Completed':
+				this.node.style.color = '#777';
+				this.note.style.textDecoration = 'line-through';
+				break;
+			default:
+				this.node.style.color = '#5D5';
+				this.note.style.textDecoration = 'none';
+		}
 		this.date.innerHTML = moment(this.data.key).format('hh:mma');
 		this.note.innerHTML = this.data.body;
 		this.editView.update(this.data);
@@ -126,8 +143,21 @@ class NoteEdit extends SyncView {
 		this.editBody = new SimpleEditInput('body', 'Note');
 		this.editBody.on('changed', (value, oldValue) => { SV.sendToAdmin('Note changed: ' + value); }); 
 		this.node.appendChild(this.editBody.node);
+		this.statusButton = el('button', { parent: this.node, 
+		       events: { click: this.cycleStatus.bind(this) }});	
 		el('button', { parent: this.node, innerHTML: 'Delete',
 			events: { click: this.remove.bind(this) }});
+	}
+	cycleStatus() {
+		if(!this.data.status || this.data.status === 'New') {
+			this.data.set('status', 'Accepted'); 
+		} else if(this.data.status === 'Accepted') {
+			this.data.set('status', 'Rejected');
+		} else if(this.data.status === 'Rejected') {
+			this.data.set('status', 'Completed');
+		} else if(this.data.status === 'Completed') {
+			this.data.set('status', 'New'); 
+		}
 	}
 	remove() {
 		 if(confirm('Delete this note?')) {
@@ -137,6 +167,7 @@ class NoteEdit extends SyncView {
 	}
 	render() {
 		this.editBody.update(this.data);
+		this.statusButton.innerHTML = this.data.status || 'New';
 	}
 }
 

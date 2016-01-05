@@ -1,11 +1,97 @@
+"use strict"
+
 var express = require('express');
 var http = require('http');
 var https = require('https');
 var path = require('path');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
+var session = require('express-session');
 var Sync = require('sync-node');
+var helmet = require('helmet');
+var passportSocketIo = require('passport.socketio');
+var fs = require('fs');
+var path = require('path');
+const EventEmitter = require('events');
+
 var app = express();
+
+
+
+
+
+
+app.use(helmet());
+var cookieParser = require('cookie-parser')('languorous leviathan');
+app.use(cookieParser);
+
+class MapSessionStore extends session.Store {
+	constructor() {
+		super();
+		this.path = path.join('data', 'sessions.json');
+		try {
+			var data = fs.readFileSync(this.path, 'utf8');
+			this.sessions = JSON.parse(data);
+		} catch(e) {
+			if (e.code !== 'ENOENT') {
+				console.error('Failed to read ' + path + ': ', e);
+			}
+			console.log('Creating empty session store.');
+			this.sessions = {};
+		}
+	} 
+	destroy(sid, callback) {
+		console.log('destroy session', sid);
+		delete this.sessions[sid];
+		callback(null);
+	}
+	get(sid, callback) {
+		//console.log('get session', sid, sessions[sid]);
+		callback(null, this.sessions[sid]);
+	}
+	set(sid, session, callback) {
+		this.sessions[sid] = session;
+		fs.writeFile(this.path, JSON.stringify(this.sessions), function (err) {
+			if (err) {
+				console.error('Failed to write ' + path + ': ' + err);
+			}
+		});
+		callback(null);
+	}
+}
+
+var sessionStore = new MapSessionStore();
+app.use(session({ resave: false, saveUninitialized: false, secret: 'languorous leviathan', store: sessionStore }));
+
+
+
+
+
+var users = {
+	admin: {
+		key: 'admin',
+		name: 'Admin',
+		password: 'super',
+		permissions: {
+			all: true }
+	},
+	jkalweit: {
+		key: 'jkalweit',
+		name: 'Justin',
+		password: 'super',
+		permissions: {
+			all: true
+		}
+	},
+	bar: {
+		key: 'bar',
+		name: 'Bar',
+		password: 'password',
+		permissions: {
+			notes: true
+		}
+	}
+};
 
 
 var server = http.createServer(app);
@@ -23,22 +109,111 @@ app.use(function (req, res, next) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+
+passport.serializeUser(function(user, cb) {
+	cb(null, user.key);
+});
+
+passport.deserializeUser(function(id, cb) {
+	cb(null, users[id]);
+});
+
+
+passport.use(new LocalStrategy(function(username, password, done) {
+	console.log('do login');
+	var user = users[username];	
+	if(user) {
+		if(user.password === password) {
+			console.log('Authenticated: ', user);
+			done(null, user);
+		} else {
+			console.log('Incorrect password: ', user);
+			done('Incorrect password', false);
+		}
+	} else {
+		done('Unknown username', false);
+	}
+}));
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),
+		function(req, res) {
+			res.redirect('/my');
+		});
+
+
+
+
+
+
+
+
 var io = socketio.listen(server);
 
 var defaultData = {
-    todos: {
-        '0': {
-            key: '0', text: 'First group',
-            items: {
-		'0': {
-		    key: '0', text: 'Do the first thing', isComplete: false
-		}
-	    }
-    	}
-    }
 };
 
 var syncServer = new Sync.SyncNodeServer('data', io, defaultData);
+
+function userIsAllowed(user, permission) {
+	console.log('user', user);
+	return user.permissions.all || user.permissions[permission];
+}
+
+app.all('/my', (req, res, next) => {
+	console.log('Do security');
+	if(!req.user) {
+		res.redirect('/login');
+	} else {
+		next();
+	}
+});
+
+app.all('/my/todo', (req, res, next) => {
+	console.log('Do security');
+	if(!req.user) {
+		res.redirect('/login');
+	} else {
+		if(userIsAllowed(req.user, 'todo')) {
+			next();
+		} else {
+			res.end('Unauthorized');
+		}
+	}
+});
+
+app.all('/my/employees', (req, res, next) => {
+	console.log('Do security');
+	if(!req.user) {
+		res.redirect('/login');
+	} else {
+		if(userIsAllowed(req.user, 'employees')) {
+			next();
+		} else {
+			res.end('Unauthorized');
+		}
+	}
+});
+
+
+
+
+
+
+var TriviaServer = require('./trivia-server.js');
+new TriviaServer(app, io, userIsAllowed);
+
+
+
+
+
 app.use('/', express.static(path.join(__dirname, 'client/')));
 
 // using this for debugging...
@@ -57,7 +232,6 @@ app.get('/test', function (req, res) {
 
 
 
-
 // Your accountSid and authToken from twilio.com/user/account
 var accountSid = 'AC600d9e435f0dbbf9df043ba8c860bd6a';
 var authToken = "984c52da67bca40b816b94eb928f70e7";
@@ -65,7 +239,7 @@ var twilio = require('twilio')(accountSid, authToken);
 
 
 io.on('connection', (socket) => {
-	console.log('connection!');
+	console.log('connection!', socket.request.user);
 	socket.on('send text', (msg) => {	
 		twilio.messages.create({
 		    body: msg.body,
@@ -76,13 +250,35 @@ io.on('connection', (socket) => {
 		    	else console.log('Sent text message: ' + JSON.stringify(message));
 		});
 
-
 	});
-
 });
 
 
 
+
+io.use(passportSocketIo.authorize({
+	cookieParser: require('cookie-parser'),       // the same middleware you registrer in express
+	key:          'connect.sid',       // the name of the cookie where express/connect stores its session_id
+	secret:       'languorous leviathan',    // the session_secret to parse the cookie
+	store:        sessionStore,        // we NEED to use a sessionstore. no memorystore please
+	success:      onAuthorizeSuccess,  // *optional* callback on success - read more below
+	fail:         onAuthorizeFail,     // *optional* callback on fail/error - read more below
+}));
+
+
+
+function onAuthorizeSuccess(data, accept){
+  console.log('successful connection to socket.io', data.user);
+  accept();
+}
+
+function onAuthorizeFail(data, message, error, accept){
+  if(error)
+    throw new Error(message);
+  console.log('failed connection to socket.io:', message);
+  if(error)
+    accept(new Error(message));
+}
 
 
 

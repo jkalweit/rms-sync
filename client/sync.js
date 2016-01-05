@@ -2,10 +2,12 @@
 
 
 class SV {
-
+	constructor(namespace) {
+		this.namespace = namespace || 'data';
+	}
 	startSync() {
 		this.db = null;
-		var sync = new SyncNodeSocket.SyncNodeSocket('data', {});
+		var sync = new SyncNodeSocket.SyncNodeSocket(this.namespace, {});
 
 
 		window.onload = () => {
