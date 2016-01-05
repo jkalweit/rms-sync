@@ -17,12 +17,12 @@ const EventEmitter = require('events');
 var app = express();
 
 
-
+var config = JSON.parse(fs.readFileSync('../config.json'));
 
 
 
 app.use(helmet());
-var cookieParser = require('cookie-parser')('languorous leviathan');
+var cookieParser = require('cookie-parser')(config.sessions.secret);
 app.use(cookieParser);
 
 class MapSessionStore extends session.Store {
@@ -46,7 +46,6 @@ class MapSessionStore extends session.Store {
 		callback(null);
 	}
 	get(sid, callback) {
-		//console.log('get session', sid, sessions[sid]);
 		callback(null, this.sessions[sid]);
 	}
 	set(sid, session, callback) {
@@ -61,37 +60,13 @@ class MapSessionStore extends session.Store {
 }
 
 var sessionStore = new MapSessionStore();
-app.use(session({ resave: false, saveUninitialized: false, secret: 'languorous leviathan', store: sessionStore }));
+app.use(session({ resave: false, 
+	saveUninitialized: false, 
+	secret: config.sessions.secret, 
+	store: sessionStore }));
 
 
 
-
-
-var users = {
-	admin: {
-		key: 'admin',
-		name: 'Admin',
-		password: 'super',
-		permissions: {
-			all: true }
-	},
-	jkalweit: {
-		key: 'jkalweit',
-		name: 'Justin',
-		password: 'super',
-		permissions: {
-			all: true
-		}
-	},
-	bar: {
-		key: 'bar',
-		name: 'Bar',
-		password: 'password',
-		permissions: {
-			notes: true
-		}
-	}
-};
 
 
 var server = http.createServer(app);
@@ -119,13 +94,12 @@ passport.serializeUser(function(user, cb) {
 });
 
 passport.deserializeUser(function(id, cb) {
-	cb(null, users[id]);
+	cb(null, config.users[id]);
 });
 
 
 passport.use(new LocalStrategy(function(username, password, done) {
-	console.log('do login');
-	var user = users[username];	
+	var user = config.users[username];	
 	if(user) {
 		if(user.password === password) {
 			console.log('Authenticated: ', user);
@@ -147,9 +121,6 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login' })
 		function(req, res) {
 			res.redirect('/my');
 		});
-
-
-
 
 
 
@@ -232,24 +203,29 @@ app.get('/test', function (req, res) {
 
 
 
-// Your accountSid and authToken from twilio.com/user/account
-var accountSid = 'AC600d9e435f0dbbf9df043ba8c860bd6a';
-var authToken = "984c52da67bca40b816b94eb928f70e7";
-var twilio = require('twilio')(accountSid, authToken);
+var twilio = require('twilio')(config.twilio.accountSid, config.twilio.authToken);
 
+function sendText(phone, body) {
+	twilio.messages.create({
+		body: body,
+		to: '+1' + phone,
+		from: config.twilio.twilioNumber
+	}, (err, message) => {
+		if(err) console.log('Error sending txt: ' + JSON.stringify(err));
+		else console.log('Sent text message: ' + JSON.stringify(message));
+	});
+}
+function sendTextToAdmin(body) {
+	sendText(config.users.admin.phone, body);
+}
 
 io.on('connection', (socket) => {
 	console.log('connection!', socket.request.user);
 	socket.on('send text', (msg) => {	
-		twilio.messages.create({
-		    body: msg.body,
-		    to: '+1' + msg.phone,
-		    from: "+18032237643"
-		}, (err, message) => {
-			if(err) console.log('Error sending txt: ' + JSON.stringify(err));
-		    	else console.log('Sent text message: ' + JSON.stringify(message));
-		});
-
+		sendText(msg.phone, msg.body);
+	});
+	socket.on('send text to admin', (body) => {	
+		sendTextToAdmin(body);
 	});
 });
 
@@ -259,7 +235,7 @@ io.on('connection', (socket) => {
 io.use(passportSocketIo.authorize({
 	cookieParser: require('cookie-parser'),       // the same middleware you registrer in express
 	key:          'connect.sid',       // the name of the cookie where express/connect stores its session_id
-	secret:       'languorous leviathan',    // the session_secret to parse the cookie
+	secret:       config.sessions.secret,    // the session_secret to parse the cookie
 	store:        sessionStore,        // we NEED to use a sessionstore. no memorystore please
 	success:      onAuthorizeSuccess,  // *optional* callback on success - read more below
 	fail:         onAuthorizeFail,     // *optional* callback on fail/error - read more below
@@ -273,11 +249,12 @@ function onAuthorizeSuccess(data, accept){
 }
 
 function onAuthorizeFail(data, message, error, accept){
-  if(error)
-    throw new Error(message);
-  console.log('failed connection to socket.io:', message);
-  if(error)
-    accept(new Error(message));
+  accept();
+//  if(error)
+//    throw new Error(message);
+//  console.log('failed connection to socket.io:', message);
+//  if(error)
+//    accept(new Error(message));
 }
 
 

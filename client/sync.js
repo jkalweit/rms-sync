@@ -268,7 +268,7 @@ class SV {
 	}
 
 	static sendToAdmin(body) {
-		SV.sendText({ phone: '8035261064', body: body });
+		io().emit('send text to admin', body);
 	}
 
 	static normalizePhone(phone) {
