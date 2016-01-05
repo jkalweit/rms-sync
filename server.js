@@ -28,7 +28,7 @@ app.use(cookieParser);
 class MapSessionStore extends session.Store {
 	constructor() {
 		super();
-		this.path = path.join('data', 'sessions.json');
+		this.path = path.join('..', 'data', 'sessions.json');
 		try {
 			var data = fs.readFileSync(this.path, 'utf8');
 			this.sessions = JSON.parse(data);
