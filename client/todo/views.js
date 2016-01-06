@@ -25,7 +25,8 @@ class TodoList extends SyncView {
 		this.data.set(todo.key, todo);
 	}
 	render() {
-		updateViews(this.todos, this.todoViews, Todo, this.data);
+		updateViews(this.todos, this.todoViews, Todo, 
+				this.data, toArray(this.data, 'text'));
 	}
 }
 
@@ -125,7 +126,8 @@ class Todo extends SyncView {
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
-		updateViews(this.items, this.itemViews, TodoItem, this.data.items);
+		updateViews(this.items, this.itemViews, TodoItem, 
+				this.data.items, toArray(this.data.items, 'text'));
 	}
 }
 

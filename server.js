@@ -21,7 +21,14 @@ var app = express();
 var config = JSON.parse(fs.readFileSync('../config.json'));
 
 
-app.use(express_enforces_ssl());
+
+var forceDomain = require('forcedomain');
+app.use(forceDomain({
+	hostname: 'www.thecoalyard.com',
+	protocol: 'https'
+}));
+
+//app.use(express_enforces_ssl());
 app.use(helmet());
 app.use(helmet.noCache());
 app.use(helmet.hsts({
@@ -74,7 +81,6 @@ app.use(session({ resave: false,
 	saveUninitialized: false, 
 	secret: config.sessions.secret, 
 	store: sessionStore }));
-
 
 
 
