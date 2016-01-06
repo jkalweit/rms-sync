@@ -15,18 +15,25 @@ var fs = require('fs');
 var path = require('path');
 const EventEmitter = require('events');
 
+
+
+var startHTTPS = process.env.NODE_ENV !== 'debug';
+if(!startHTTPS) console.log('Running in debug mode, no HTTPS', process.env.NODE_ENV);
+
 var app = express();
 
 
 var config = JSON.parse(fs.readFileSync('../config.json'));
 
 
+if(startHTTPS) {
+	var forceDomain = require('forcedomain');
+	app.use(forceDomain({
+		hostname: 'www.thecoalyard.com',
+		protocol: 'https'
+	}));
+}
 
-var forceDomain = require('forcedomain');
-app.use(forceDomain({
-	hostname: 'www.thecoalyard.com',
-	protocol: 'https'
-}));
 
 //app.use(express_enforces_ssl());
 app.use(helmet());
@@ -90,7 +97,6 @@ var sserver;
 
 var io;
 
-var startHTTPS = true;
 if(startHTTPS) {
 
 	var path = '/etc/letsencrypt/live/thecoalyard.com/';
@@ -150,7 +156,7 @@ passport.use(new LocalStrategy(function(username, password, done) {
 app.use(passport.initialize());
 app.use(passport.session({
 	name: 'rmsSession',
-	secure: true
+	secure: startHTTPS 
 }));
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),
@@ -163,10 +169,7 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login' })
 
 
 
-var defaultData = {
-};
-
-var syncServer = new Sync.SyncNodeServer('data', io, defaultData);
+var syncServer = new Sync.SyncNodeServer('data', io, {});
 
 function userIsAllowed(user, permission) {
 	console.log('user', user);
@@ -241,6 +244,8 @@ app.get('/test', function (req, res) {
 var twilio = require('twilio')(config.twilio.accountSid, config.twilio.authToken);
 
 function sendText(phone, body) {
+	if(!startHTTPS) return;
+
 	twilio.messages.create({
 		body: body,
 		to: '+1' + phone,
@@ -255,7 +260,6 @@ function sendTextToAdmin(body) {
 }
 
 io.on('connection', (socket) => {
-	console.log('connection!', socket.request.user);
 	socket.on('send text', (msg) => {	
 		sendText(msg.phone, msg.body);
 	});
