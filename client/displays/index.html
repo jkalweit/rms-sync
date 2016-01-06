@@ -37,16 +37,16 @@ h4 {
 <title>Digital Signage</title>
 </head>
 <body>
-<div id="sign1" class="sign hide">
+<div id="sign1" class="sign">
 	<h1>Happy New Year!</h1>
 	<div style="float: left; width: 100%">
-		<img src="http://www.thecoalyard.com/logo.png" style="width: 400px"  />
+		<img src="http://www.thecoalyard.com/imgs/logo.png" style="width: 400px"  />
 	</div>
 	<!-- <div style="float: left; width: 50%">
 		<img style="width: 700px" src="/imgs/game.jpg" />
 	</div>	-->
 </div>
-<div id="sign2" class="sign" style="padding-top: 25px">
+<div id="sign2" class="sign hide" style="padding-top: 25px">
 	<h2 style="margin: 0.1em">TODAY: Chef Meares'</h2>
 	<h1 style="margin: 0.1em">NEW YEAR'S SPECIAL</h1>
 	<div style="width: 40%; float: left; padding-left: 40px">
@@ -73,7 +73,7 @@ h4 {
 <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
 <script type="text/javascript">
 
-var signs = ['sign1', 'sign2'];
+var signs = ['sign1'];
 
 
 var currentIndex = 0;
@@ -113,7 +113,7 @@ window.onload = function() {
 	// handler for the 'ready' event
 	castReceiverManager.onReady = function(event) {
 		console.log('Received Ready event: ' + JSON.stringify(event.data));
-		cycle();
+		//cycle();
 		window.castReceiverManager.setApplicationState("Digital Sign is ready...");
 	};
 

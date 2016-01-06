@@ -9,6 +9,7 @@ var socketio = require('socket.io');
 var session = require('express-session');
 var Sync = require('sync-node');
 var helmet = require('helmet');
+var express_enforces_ssl = require('express-enforces-ssl');
 var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
@@ -20,8 +21,17 @@ var app = express();
 var config = JSON.parse(fs.readFileSync('../config.json'));
 
 
-
+app.use(express_enforces_ssl());
 app.use(helmet());
+app.use(helmet.noCache());
+app.use(helmet.hsts({
+	  maxAge: 10886400000,     // Must be at least 18 weeks to be approved by Google 
+	  includeSubdomains: true, // Must be enabled to be approved by Google 
+	  preload: true
+}))
+
+
+var fs = require('fs');
 var cookieParser = require('cookie-parser')(config.sessions.secret);
 app.use(cookieParser);
 
@@ -70,8 +80,25 @@ app.use(session({ resave: false,
 
 
 var server = http.createServer(app);
-var chokidar = require('chokidar');
+var sserver;
 
+var io;
+
+var startHTTPS = true;
+if(startHTTPS) {
+
+	var path = '/etc/letsencrypt/live/thecoalyard.com/';
+	var options = {
+		key: fs.readFileSync(path + 'privkey.pem', 'utf8'),
+		cert: fs.readFileSync(path + 'cert.pem', 'utf8')
+	};
+	sserver = https.createServer(options, app);
+	io = socketio.listen(sserver);
+} else {
+	io = socketio.listen(server);
+}
+
+var chokidar = require('chokidar');
 
 
 
@@ -115,7 +142,10 @@ passport.use(new LocalStrategy(function(username, password, done) {
 
 
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.session({
+	name: 'rmsSession',
+	secure: true
+}));
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),
 		function(req, res) {
@@ -126,7 +156,6 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login' })
 
 
 
-var io = socketio.listen(server);
 
 var defaultData = {
 };
@@ -185,7 +214,7 @@ new TriviaServer(app, io, userIsAllowed);
 
 
 
-app.use('/', express.static(path.join(__dirname, 'client/')));
+app.use('/', express.static('client/'));
 
 // using this for debugging...
 app.get('/data/reset', function (req, res) {
@@ -234,7 +263,7 @@ io.on('connection', (socket) => {
 
 io.use(passportSocketIo.authorize({
 	cookieParser: require('cookie-parser'),       // the same middleware you registrer in express
-	key:          'connect.sid',       // the name of the cookie where express/connect stores its session_id
+	key:          'rmsSession',       // the name of the cookie where express/connect stores its session_id
 	secret:       config.sessions.secret,    // the session_secret to parse the cookie
 	store:        sessionStore,        // we NEED to use a sessionstore. no memorystore please
 	success:      onAuthorizeSuccess,  // *optional* callback on success - read more below
@@ -281,21 +310,9 @@ server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
   console.log("Server listening at", addr.address + ":" + addr.port);
 });
 
-
-var startHTTPS = false;
 if(startHTTPS) {
-
-	console.log('here');
-	var fs = require('fs');
-	var options = {
-		key: fs.readFileSync('../key.pem', 'utf8'),
-		cert: fs.readFileSync('../server.crt', 'utf8')
-	};
-
-	var sserver = https.createServer(options, app);
 	sserver.listen(443, process.env.IP || "0.0.0.0", function(){
 		var addr = sserver.address();
 		console.log("HTTPS Server listening at", addr.address + ":" + addr.port);
 	});
-
 }
