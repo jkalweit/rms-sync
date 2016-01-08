@@ -3,17 +3,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-
-<title>Login</title>
-<link rel="stylesheet" href="/app.css">
+    <title>RMS - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/app.css">
 </head>
 
 <body>
 <h1 class="light">Login</h1>
-<form action="/login" method="post">
+<form action="" method="post">
 	<div>
 		<label>Username:</label>
-		<input type="text" name="username"/><br/>
+		<input id="username" type="text" name="username"/><br/>
 	</div>
 	<div>
 		<label>Password:</label>
@@ -23,6 +23,12 @@
 		<input type="submit" value="Submit"/>
 	</div>
 </form>
+<script>
+//document.onLoaded = function() {
+//	console.log('here');
+//	document.getElementById('username').focus();
+//};
+</script>
 </body>
 </html>
 

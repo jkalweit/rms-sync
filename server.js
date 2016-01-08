@@ -84,7 +84,9 @@ class MapSessionStore extends session.Store {
 }
 
 var sessionStore = new MapSessionStore();
-app.use(session({ resave: false, 
+app.use(session({ 
+	name: 'rmsSession',
+	resave: false, 
 	saveUninitialized: false, 
 	secret: config.sessions.secret, 
 	store: sessionStore }));
@@ -156,12 +158,22 @@ passport.use(new LocalStrategy(function(username, password, done) {
 app.use(passport.initialize());
 app.use(passport.session({
 	name: 'rmsSession',
+	secret: config.sessions.secret,
 	secure: startHTTPS 
 }));
 
 app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),
 		function(req, res) {
-			res.redirect('/my');
+			var redirect = '/my/';
+			var split = req.url.split('?');
+			if(split.length > 1) {
+				var params = split[1].split('=');
+				if(params.length > 1 && params[0].toLowerCase() === 'url') {
+					redirect = params[1];
+				}
+			}
+			console.log('authenticated as', req.user, req.url);
+			res.redirect(redirect);
 		});
 
 
@@ -176,50 +188,22 @@ function userIsAllowed(user, permission) {
 	return user.permissions.all || user.permissions[permission];
 }
 
-app.all('/my', (req, res, next) => {
-	console.log('Do security');
+app.all('/my/*', (req, res, next) => {
 	if(!req.user) {
-		res.redirect('/login');
+		res.redirect('/login?url=' + req.url);
 	} else {
 		next();
 	}
 });
 
-app.all('/my/todo', (req, res, next) => {
-	console.log('Do security');
-	if(!req.user) {
-		res.redirect('/login');
-	} else {
-		if(userIsAllowed(req.user, 'todo')) {
-			next();
-		} else {
-			res.end('Unauthorized');
-		}
-	}
-});
-
-app.all('/my/employees', (req, res, next) => {
-	console.log('Do security');
-	if(!req.user) {
-		res.redirect('/login');
-	} else {
-		if(userIsAllowed(req.user, 'employees')) {
-			next();
-		} else {
-			res.end('Unauthorized');
-		}
-	}
-});
 
 
 
-
-
-
-var TriviaServer = require('./trivia-server.js');
+var TriviaServer = require('./server/trivia-server.js');
 new TriviaServer(app, io, userIsAllowed);
 
-
+var CalendarServer = require('./server/calendar-server.js');
+new CalendarServer(app, io, userIsAllowed);
 
 
 
@@ -244,6 +228,7 @@ app.get('/test', function (req, res) {
 var twilio = require('twilio')(config.twilio.accountSid, config.twilio.authToken);
 
 function sendText(phone, body) {
+	console.log(`Send Text: ${phone} ${body}`);
 	if(!startHTTPS) return;
 
 	twilio.messages.create({

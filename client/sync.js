@@ -381,6 +381,8 @@ class SimpleEditInput extends SyncView {
 		
 		this.prop = prop;
 
+		var el = SV.el;
+
 		this.editView = el('div', { parent: this.node });
 		if(label) {
 			el('span', { parent: this.editView, innerHTML: label,
@@ -406,6 +408,9 @@ class SimpleEditInput extends SyncView {
 		// custom hasChanged overrides super class
 		if(this.data && newData) return this.data[this.prop] !== newData[this.prop];
 		else return this.data !== newData;
+	}
+	focus() {
+		this.input.focus();
 	}
 	render() {
 		this.input.value = this.data[this.prop] || '';
