@@ -9,18 +9,14 @@ class SV {
 		this.db = null;
 		var sync = new SyncNodeSocket.SyncNodeSocket(this.namespace, {});
 
-
 		window.onload = () => {
-
 			if(this.onloaded) {
 				this.onloaded();
 			}
-
 			sync.onUpdated((updated) => {
 				this.db = updated;
 				if (this.onupdated) this.onupdated();
 			});
-
 		}
 	}
 
