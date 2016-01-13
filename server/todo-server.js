@@ -1,5 +1,8 @@
 "use strict"
 
+
+var SecureSyncNodeServer = require('./SecureSyncNodeServer.js').SecureSyncNodeServer;
+
 class TodoServer {
 	constructor(app, io, security) {		
 		console.log('starting todo server');
@@ -18,12 +21,8 @@ class TodoServer {
 			}
 		});
 
-
-		this.io = io.of('/my/todo');
-
-		this.io.on('connection', (socket) => {
-			console.log('connected to todo server for ' + socket.request.user.key);
-		});
+		var server = new SecureSyncNodeServer('/my/todo', io, { todos: {} });
+		server.start();
 	}
 }
 
