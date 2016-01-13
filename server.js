@@ -205,6 +205,9 @@ new TriviaServer(app, io, userIsAllowed);
 var CalendarServer = require('./server/calendar-server.js');
 new CalendarServer(app, io, userIsAllowed);
 
+var TodoServer = require('./server/todo-server.js');
+new TodoServer(app, io, userIsAllowed);
+
 
 
 app.use('/', express.static('client/'));

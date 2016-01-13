@@ -201,6 +201,12 @@ class SV {
 		if(opts.parent) opts.parent.appendChild(elem);
 		return elem;
 	}
+	
+	static onLoad(callback) {
+		window.addEventListener('load', (e) => {
+			callback(e);
+		});
+	}
 
 	static group(arr, prop, groupVals) {
 		var groups = {};

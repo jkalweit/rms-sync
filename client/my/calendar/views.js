@@ -238,19 +238,9 @@ class CalendarItem extends SyncView {
 
 
 
-SV.startReloader()
+SV.startReloader();
 
-//var sv = new SV('/trivia')
 
-var view = new Calendar()
-SV.id('container').appendChild(view.node)
+var view = new Calendar();
+SV.id('container').appendChild(view.node);
 
-//sv.onupdated = () => {
-	//if(!sv.db.notes){
-	//	sv.db.set('notes', { members: {} });
-	//} else {
-	//	view.update(sv.db.notes);
-	//}
-//};
-
-//sv.startSync();
