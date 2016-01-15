@@ -27,21 +27,21 @@ class SV {
 		return context.getElementById(id);
 	}
 	static getProperty(obj, path) {
-		return getPropertyHelper(obj, path.split('.'));
+		return SV.getPropertyHelper(obj, path.split('.'));
 	}
 
 	static getPropertyHelper(obj, split) {
 		if(split.length === 1) return obj[split[0]];
-		return getPropertyHelper(obj[split[0]], split.slice(1, split.length));
+		return SV.getPropertyHelper(obj[split[0]], split.slice(1, split.length));
 	}
 
 	static inject(template, data) {
 		template = template.replace(/checked="{{([\w\.]*)}}"/g, function(m, key) {
-			return getProperty(data, key) ? 'checked' : '';
+			return SV.getProperty(data, key) ? 'checked' : '';
 		});
 
 		return template.replace(/{{([\w\.]*)}}/g, function(m, key) {
-			return getProperty(data, key);
+			return SV.getProperty(data, key);
 		});
 	}
 	static mergeMap(source, destination) {
@@ -85,8 +85,8 @@ class SV {
 				arr.forEach((item) => {
 					var loopClone = document.importNode(loopElem, true);
 					//var looped = inject(forloops[i].innerHtml, item);
-					console.log('loopClone', inject(loopClone.innerHTML, item));
-					df.innerHTML += inject(loopClone.innerHTML, item);
+					console.log('loopClone', SV.inject(loopClone.innerHTML, item));
+					df.innerHTML += SV.inject(loopClone.innerHTML, item);
 				});
 				console.log('df', df.innerHTML);
 				//clone.replaceChild(clone, df);
@@ -95,7 +95,7 @@ class SV {
 			this.innerHTML = '';
 			this.appendChild(clone);
 			var html = this.innerHTML;
-			html = inject(html, this.data);
+			html = SV.inject(html, this.data);
 			this.innerHTML = html;
 		}
 
@@ -420,6 +420,38 @@ class SimpleEditInput extends SyncView {
 }
 
 
+class EditInput extends SyncView {
+	constructor(display, prop, inputStyle) {
+		super();
+		this.prop = prop;
+
+		this.mainView = SV.el('div', { parent: this.node,
+			events: { click: () => {
+				this.isEditing = true;
+				this.render();
+				this.input.focus();
+			} } });
+		this.display = display;
+		this.mainView.appendChild(this.display);
+
+		this.editView = SV.el('div', { parent: this.node });
+		this.input = SV.el('input', { parent: this.editView,
+			events: { blur: () => {
+				this.data.set(this.prop, this.input.value);
+				this.isEditing = false;
+				this.render();
+			} } });
+		SV.mergeMap(inputStyle || {}, this.input.style);
+		this.input.style.width = 'calc(100% - 50px)';
+		this.isEditing = false;
+	}
+	render() {
+		this.display.innerHTML = this.data[this.prop];
+		this.input.value = this.data[this.prop];
+		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
+		this.editView.style.display = this.isEditing ? 'block' : 'none';
+	}
+}
 
 //    Utils.group = group;
 //    function formatCurrency(value, precision) {

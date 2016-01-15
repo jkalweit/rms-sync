@@ -1,5 +1,29 @@
 "use strict"
 
+class Modal extends SyncView {
+	constructor() {
+		super();
+
+		SV.mergeMap({
+			zIndex: 1,
+			position: 'fixed',
+			left: 0,
+			top: 0,
+			right: 0,
+			bottom: 0,
+			backgroundColor: '#DDD'
+		}, this.node.style);
+		this.hide();
+	}
+	show() {
+		this.node.style.display = 'initial';
+	}
+	hide() {
+		this.node.style.display = 'none';
+	}
+	render() {
+	}
+}
 
 
 class Timeclock extends SyncView {
@@ -188,6 +212,10 @@ class TimespanGroup extends SyncView {
 class Timespan extends SyncView {
 	constructor() {
 		super();
+
+		this.clockoutModal = new Modal();
+		this.node.appendChild(this.clockoutModal.node);
+
 	        this.node.style.marginTop = '5px';
 		this.header = el('div', { parent: this.node,
 	       		style: { display: 'inline-block', width: '120px' }});
@@ -252,6 +280,7 @@ class Timespan extends SyncView {
 		this.editFormat = 'MM/DD/YYYY hh:mma';
 	}
 	clockOut() {
+		//this.clockoutModal.show();
 		this.data.set('clockOut', new Date().toISOString());
 	}
 	static duration(timespan) {

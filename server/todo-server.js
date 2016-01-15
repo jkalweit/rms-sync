@@ -1,7 +1,6 @@
 "use strict"
 
 
-var SecureSyncNodeServer = require('./SecureSyncNodeServer.js').SecureSyncNodeServer;
 
 class TodoServer {
 	constructor(app, io, security) {		
@@ -21,8 +20,6 @@ class TodoServer {
 			}
 		});
 
-		var server = new SecureSyncNodeServer('/my/todo', io, { todos: {} });
-		server.start();
 	}
 }
 

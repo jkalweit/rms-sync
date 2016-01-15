@@ -4,11 +4,11 @@ class TodoList extends SyncView {
 	constructor() {
 		super();
 
-		this.sync = new SyncNodeSocket.SyncNodeSocket('/my/todo', {});
+		this.sync = new SyncNodeSocket.SyncNodeSocket('/users', {});
 		this.sync.onUpdated((data) => {
-			console.log('updated', data);
-			if(!data.weeks) data.set('weeks', {});
-			else this.update(data);
+			console.log('updated', data.todos);
+			if(!data.todos) data.set('todos', {});
+			else this.update(data.todos);
 		});
 		
 
@@ -22,7 +22,7 @@ class TodoList extends SyncView {
 			style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
 		this.newButton = SV.el('input', { parent: this.newForm, type: 'submit', value: 'Add',
 			style: { width: '80px', fontSize: '2em' } });
-		this.groupViews = new ViewsContainer(TodoGroup); 
+		this.groupViews = new ViewsContainer(TodoGroup, 'text'); 
 		this.node.appendChild(this.groupViews.node);
 	}
 	addTodo() {
@@ -35,7 +35,7 @@ class TodoList extends SyncView {
 		this.newInput.value = '';
 	}
 	render() {
-		this.groupViews.update(this.todos);
+		this.groupViews.update(this.data);
 	}
 }
 
@@ -142,7 +142,7 @@ class TodoItem extends SyncView {
 		this.data.set('isComplete', this.checkbox.checked);
 	}
 	render() {
-		this.text.innerHTML = inject(this.template, this.data);
+		this.text.innerHTML = SV.inject(this.template, this.data);
 		this.checkbox.checked = this.data.isComplete;
 		this.text.style.textDecoration = this.data.isComplete? 'line-through' : 'none';
 		this.noteInput.value = this.data.note || '';

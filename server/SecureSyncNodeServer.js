@@ -14,25 +14,17 @@ class Response {
 class SecureSyncNodeServer {
 
 	constructor(namespace, io, defaultData) {
-		if (defaultData === void 0) { defaultData = {}; }
+		this.defaultData = defaultData || {};
 		this.namespace = namespace;
-		this.directory = '../data/users';
-		this.userDataMap = {};
+		this.directory = '../data';
 		this.io = io;
 		this.get((data) => {
 			this.data = data;
 			if (!this.data) {
-				this.data = JSON.parse(JSON.stringify(defaultData)); // Use a copy for immutability
+				this.data = {};
 			}
 			this.start();
 		});
-	}
-
-
-	resetData(newData) {
-		this.data = JSON.parse(JSON.stringify(newData)); // Use a copy for immutability
-		this.persist();
-		this.ioNamespace.emit('latest', this.data);
 	}
 
 	start() {
@@ -40,10 +32,14 @@ class SecureSyncNodeServer {
 		this.ioNamespace.on('connection', (socket) => {
 			var user = socket.request.user;
 			console.log(user.name + ' connected to ' + this.namespace);
+			if(!this.data[user.key]) {
+				this.data[user.key] = JSON.parse(JSON.stringify(this.defaultData)); // copy to new obj
+			}
+			var userData = this.data[user.key];
 			socket.on('getlatest', (clientLastModified) => {
-				console.log(user.key, 'getlatest', this.data.lastModified, clientLastModified);
-				if (!clientLastModified || clientLastModified < this.data.lastModified) {
-					socket.emit('latest', this.data);
+				console.log(user.key, 'getlatest', userData.lastModified, clientLastModified);
+				if (!clientLastModified || clientLastModified < userData.lastModified) {
+					socket.emit('latest', userData);
 				}
 				else {
 					console.log('already has latest.');
@@ -52,12 +48,10 @@ class SecureSyncNodeServer {
 			});
 			socket.on('update', (request) => {
 				var merge = request.data;
-				this.doMerge(this.data, merge);
+				this.doMerge(userData, merge);
 				this.persist();
 				socket.emit('updateResponse', new Response(request.requestGuid, null));
-				socket.broadcast.emit('update', merge);
-				if (this.onMerge)
-				this.onMerge(merge);
+				//socket.broadcast.emit('update', merge);
 			});
 		});
 	}

@@ -13,6 +13,8 @@ var express_enforces_ssl = require('express-enforces-ssl');
 var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
+var SecureSyncNodeServer = require('./server/SecureSyncNodeServer.js').SecureSyncNodeServer;
+
 const EventEmitter = require('events');
 
 
@@ -209,6 +211,8 @@ var TodoServer = require('./server/todo-server.js');
 new TodoServer(app, io, userIsAllowed);
 
 
+var usersServer = new SecureSyncNodeServer('/users', io, { todos: {} });
+usersServer.start();
 
 app.use('/', express.static('client/'));
 
