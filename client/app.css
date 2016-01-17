@@ -1,5 +1,7 @@
 body { 
 	font-family: sans-serif; 
+	margin: 0;
+	padding: 0;
 }
 
 .group:after {
@@ -14,9 +16,8 @@ a {
 }
 
 #container {
-	max-width: 400px;
+	max-width: 600px;
 	border-right: 1px solid #CCCCCC;
-	padding: 5px;
 }
 
 .light { 
@@ -30,4 +31,13 @@ a {
 	0% { opacity: 1; } 
 	50% { opacity: .1; } 
 	100% { opacity: 1; }
+}
+
+.btn-big {
+	font-size: 1.5em;
+	margin: .25em .25em .25em 0;
+}
+
+.hide {
+	display: none;
 }
