@@ -51,6 +51,14 @@ class SecureSyncNodeServer {
 				this.doMerge(userData, merge);
 				this.persist();
 				socket.emit('updateResponse', new Response(request.requestGuid, null));
+				for(var id in this.ioNamespace.connected) {
+					var sock = this.ioNamespace.connected[id];
+					if(sock.request.user && 
+					   sock.request.user.key === socket.request.user.key) {
+						console.log('match!');
+						sock.emit('update', merge);
+					} else console.log('no match', sock.request.user);
+				};
 				//socket.broadcast.emit('update', merge);
 			});
 		});
