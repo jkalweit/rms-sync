@@ -1,92 +1,5 @@
 "use strict"
 
-class Modal extends SyncView {
-	constructor() {
-		super();
-
-		SV.mergeMap({
-			zIndex: 1,
-			position: 'fixed',
-			left: 0,
-			top: 0,
-			width: '100vw',
-			height: '100vh',
-			backgroundColor: '#DDD',
-			padding: '1em',
-			overflowY: 'scroll'
-		}, this.node.style);
-
-		this.mainView = SV.el('div', { parent: this.node });
-
-		this.hide();
-	}
-	show() {
-		this.node.style.display = 'initial';
-		document.body.style.overflowY = 'hidden';
-	}
-	hide() {
-		this.node.style.display = 'none';
-		document.body.style.overflowY = 'initial';	
-	}
-	render() {
-	}
-}
-
-class Tab extends SyncView {
-	constructor() {
-		super();
-	}
-}
-
-class TabView extends SyncView {
-	constructor() {
-		super();
-
-		this.header = SV.el('div', { parent: this.node, 
-			style: { 
-				minHeight: '1em'
-			}
-		});
-
-
-		this.tabs = [];
-		this.tabsContainer = SV.el('div', { parent: this.node, 
-			style: { 
-				position: 'relative',
-				top: '-1px',
-				zIndex: '-1',
-				minHeight: '1em',
-				border: '1px solid #CCC'
-			}
-		});
-	}
-	addTab(tab) {
-		var headerButton = SV.el('div', { parent: this.header, innerHTML: tab.title,
-			events: { click: () => { this.showTab(tab); }},
-	      		style: { 
-				border: '1px solid #CCC',
-		    		display: 'inline-block',
-		    		padding: '.25em'
-		    	}
-		});
-		tab.node.classList.add('hide');
-		this.tabsContainer.appendChild(tab.node);
-		this.tabs.push({ header: headerButton, tab: tab });
-	}
-	showTab(tab) {
-		this.tabs.forEach((tabObj) => {
-			if(tabObj.tab === tab) {
-				tabObj.tab.node.classList.remove('hide');
-				tabObj.header.style.borderBottom = '1px solid #FFF';
-			} else {
-				tabObj.tab.node.classList.add('hide');
-				tabObj.header.style.borderBottom = 'initial';
-			}
-		});
-	}
-}
-
-
 class TimeclockByDay extends Tab {
 	constructor() {
 		super();
@@ -120,16 +33,15 @@ class TimeclockSummary extends Tab {
 		super();
 
 		this.title = 'Summary';
-
 	}
 	render() {
 		this.node.innerHTML = '';
 		Object.keys(this.data).forEach(key => {
-				var totalHours = 0;
-				var totalTips = 0;
+				var totalHours = 0.0;
+				var totalTips = 0.0;
 				SV.toArray(this.data[key]).forEach(timespan => {
 					totalHours += Timespan.duration(timespan);
-					totalTips += timespan.tips | 0;
+					if( timespan.tips) totalTips += +timespan.tips;
 				});
 				var div = el('div', { parent: this.node });
 				el('span', { parent: div,
@@ -153,8 +65,7 @@ class Timeclock extends SyncView {
 
 		document.body.style.paddingTop = '50px';
 		el('button', { parent: this.node, innerHTML: 'Clock In',
-			style: { position: 'fixed', top: '0px', left: '0px', width: '419px',
-		       		fontSize: '3em' },
+			style: { fontSize: '3em', display: 'block', margin: 'auto' },
 			events: { click: this.clockIn.bind(this) } });
 
 
@@ -322,8 +233,9 @@ class Timespan extends SyncView {
 		SV.el('button', { parent: modalView, innerHTML: 'Clock Out',
 			className: 'btn-big',
 			events: { click: () => {				
-				this.clockOut();
-				this.clockoutModal.hide();
+				if(this.clockOut()) {
+					this.clockoutModal.hide();
+				}
 			}}});
 		SV.el('button', { parent: modalView, innerHTML: 'Cancel',
 			className: 'btn-big',
@@ -353,13 +265,12 @@ class Timespan extends SyncView {
 			       this.editNote.focus();
 			} }});
 
-		this.editTips = new SimpleEditInput('tips', 'Tips');
-		this.node.appendChild(this.editTips.node);
 		this.editNote = new SimpleEditInput('note', 'Note');
 		this.node.appendChild(this.editNote.node);
 		
 
 		this.editView = el('div', { parent: this.node,
+			className: 'group',
 	       		style: { marginTop: '1em' }});
 		el('button', { parent: this.editView, innerHTML: 'X',
 			style: { float: 'right' },
@@ -381,6 +292,8 @@ class Timespan extends SyncView {
 		this.editName = el('input', { parent: this.editView,
 			events: { blur: () => {
 				this.data.set('name', this.editName.value); }}});
+		this.editTips = new SimpleEditInput('tips', 'Tips');
+		this.editView.appendChild(this.editTips.node);
 
 
 
@@ -394,8 +307,16 @@ class Timespan extends SyncView {
 		this.editFormat = 'MM/DD/YYYY hh:mma';
 	}
 	clockOut() {
-		this.data.set('tips', this.tipsInputModal.value);
+		var tips = this.tipsInputModal.value.trim().replace('$', '');
+		if(tips === '') tips = '0';
+		var tipsParsed = parseFloat(tips);
+		if(isNaN(tipsParsed)) {
+			alert('Invalid tip amount, please enter a number');
+			return false;
+		}
+		this.data.set('tips', tipsParsed);		
 		this.data.set('clockOut', new Date().toISOString());
+		return true;
 	}
 	static duration(timespan) {
 		if(!timespan.clockOut) return 0;
@@ -403,10 +324,8 @@ class Timespan extends SyncView {
 		return Math.round(dur.asHours() * 100) / 100;
 	}
 	render() {
-		this.tipsInputModal.value = this.data.tips || '';
+		this.tipsInputModal.value = this.data.tips || 0;
 		this.editButton.style.display = this.adminMode ? 'initial' : 'none';
-		this.editTips.update(this.data);
-		this.editTips.node.style.display = this.showNote ? 'initial' : 'none';
 		this.editNote.update(this.data);
 		this.editNote.node.style.display = this.showNote ? 'initial' : 'none';
 		this.noteButton.style.backgroundColor = this.data.note ? '#AAFFAA' : 'initial';
@@ -415,6 +334,7 @@ class Timespan extends SyncView {
 		this.editClockIn.value = moment(this.data.clockIn).format(this.editFormat);
 		this.editClockOut.value = this.data.clockOut ? moment(this.data.clockOut).format(this.editFormat) : '';
 		this.editName.value = this.data.name;
+		this.editTips.update(this.data);
 
 		var clockIn = moment(this.data.clockIn);
 		var text = clockIn.format('ddd hh:mma') + ' - ';
