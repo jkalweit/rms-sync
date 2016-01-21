@@ -25,7 +25,7 @@ if(!startHTTPS) console.log('Running in debug mode, no HTTPS', process.env.NODE_
 var app = express();
 
 
-var config = JSON.parse(fs.readFileSync('../config.json'));
+var config = JSON.parse(fs.readFileSync('../data/config.json'));
 
 
 if(startHTTPS) {

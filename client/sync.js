@@ -58,46 +58,46 @@ class SV {
 		var proto = Object.create(HTMLElement.prototype);
 		proto.template = id(name);
 
-		proto.attachedCallback = function() {
-			this.refreshUI();
-		};
+		// proto.attachedCallback = function() {
+		// 	this.refreshUI();
+		// };
 
-		proto.update = function(data) {
-			// Check immutable data for equality
-			if (this.data.lastModified !== data.lastModified) {
-				console.log('          Data is different!', data);
-				this.data = data;
-				this.refreshUI();
-			}
-		}
+		// proto.update = function(data) {
+		// 	// Check immutable data for equality
+		// 	if (this.data.lastModified !== data.lastModified) {
+		// 		console.log('          Data is different!', data);
+		// 		this.data = data;
+		// 		this.refreshUI();
+		// 	}
+		// }
 
-		proto.refreshUI = function() {
-			var clone = document.importNode(this.template.content, true);
-			var forloops = clone.querySelectorAll('for');
-			for(var i = 0; i < forloops.length; i++) {
-				var df = document.createDocumentFragment();
-				var loopElem = forloops[i];
-				var loopAttrib = loopElem.getAttribute('loop');
-				var matches = /([\w]*),\s([\w]*)\sin\s([\w\.]*)/.exec(loopAttrib);
-				var items = getProperty(this.data, matches[3]);
-				var arr = toArray(items);
-				console.log('items', arr);
-				arr.forEach((item) => {
-					var loopClone = document.importNode(loopElem, true);
-					//var looped = inject(forloops[i].innerHtml, item);
-					console.log('loopClone', SV.inject(loopClone.innerHTML, item));
-					df.innerHTML += SV.inject(loopClone.innerHTML, item);
-				});
-				console.log('df', df.innerHTML);
-				//clone.replaceChild(clone, df);
-			}
-			console.log('forloops', forloops);
-			this.innerHTML = '';
-			this.appendChild(clone);
-			var html = this.innerHTML;
-			html = SV.inject(html, this.data);
-			this.innerHTML = html;
-		}
+		// proto.refreshUI = function() {
+		// 	var clone = document.importNode(this.template.content, true);
+		// 	var forloops = clone.querySelectorAll('for');
+		// 	for(var i = 0; i < forloops.length; i++) {
+		// 		var df = document.createDocumentFragment();
+		// 		var loopElem = forloops[i];
+		// 		var loopAttrib = loopElem.getAttribute('loop');
+		// 		var matches = /([\w]*),\s([\w]*)\sin\s([\w\.]*)/.exec(loopAttrib);
+		// 		var items = getProperty(this.data, matches[3]);
+		// 		var arr = toArray(items);
+		// 		console.log('items', arr);
+		// 		arr.forEach((item) => {
+		// 			var loopClone = document.importNode(loopElem, true);
+		// 			//var looped = inject(forloops[i].innerHtml, item);
+		// 			console.log('loopClone', SV.inject(loopClone.innerHTML, item));
+		// 			df.innerHTML += SV.inject(loopClone.innerHTML, item);
+		// 		});
+		// 		console.log('df', df.innerHTML);
+		// 		//clone.replaceChild(clone, df);
+		// 	}
+		// 	console.log('forloops', forloops);
+		// 	this.innerHTML = '';
+		// 	this.appendChild(clone);
+		// 	var html = this.innerHTML;
+		// 	html = SV.inject(html, this.data);
+		// 	this.innerHTML = html;
+		// }
 
 		var ctor = document.registerElement(name, {
 			prototype: proto
@@ -111,13 +111,18 @@ class SV {
 	}
 
 	static toArray(obj, sortField, reverse) {
-		var result = [];
-		if(!obj) return result;
-		Object.keys(obj).forEach(function(key) {
-			if (key !== 'lastModified' && key != 'key') {
-				result.push(obj[key]);
-			}
-		});
+		var result;
+		if(Array.isArray(obj)) {
+			result = obj.slice();
+		} else {
+			result = [];
+			if(!obj) return result;
+			Object.keys(obj).forEach(function(key) {
+				if (key !== 'lastModified' && key != 'key') {
+					result.push(obj[key]);
+				}
+			});
+		}
 
 		if(sortField) {
 			result.sort(function (a, b) {
@@ -128,8 +133,17 @@ class SV {
 				return 0;
 			});
 		}
-
 		return result;
+	}
+
+	static getByKey(obj, key) {
+		if(Array.isArray(obj)) {
+			for(var i = 0; i < obj.length; i++) {
+				if(obj[i].key === key) return obj[i];
+			}
+		} else {
+			return obj[key]; 
+		}
 	}
 
 
@@ -365,7 +379,7 @@ class ViewsContainer extends SyncView {
 		});
 		Object.keys(this.views).forEach((key) => {
 			var view = this.views[key];
-			if(!this.data[view.data.key]) {
+			if(!SV.getByKey(this.data, view.data.key)) {
 				this.node.removeChild(view.node);
 				delete this.views[view.data.key];
 				this.emit('removedView', view);
