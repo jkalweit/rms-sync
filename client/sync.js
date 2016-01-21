@@ -305,19 +305,33 @@ class SyncView {
 	}
 	update(data) {
 		if(this.hasChanged(data)) {
+//			if(this.name) console.log(this.name + ' data changed');
 			this.data = data;
 			if(this.render) this.render();
 			if(this.doFlash) this.flash(); 
 		}
+		else {
+//			if(this.name) console.log(this.name + ' DATA NO CHANGED', this.data, data);
+		}
 	}
 	hasChanged(newData) {
-		if(!this.data && !newData) return false;
-		if((this.data && !newData) || (!this.data && newData)) return true;
+		if(!this.data && !newData) {
+//			if(this.name) console.log(this.name + 'here1');
+			return false;
+		}
+		if((this.data && !newData) || (!this.data && newData)) { 
+//			if(this.name) console.log(this.name + 'here2');
+			return true;
+		}
 		if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
-			console.log('direct comparison', this.data, newData);
+//			console.log('direct comparison', this.data, newData);
 			return this.data === newData;
 		}
-		if(!this.data.lastModified || !newData.lastModified) return true;
+		if(!this.data.lastModified || !newData.lastModified) {
+//			if(this.name) console.log(this.name + 'here3');
+			return true;
+		}	
+//		if(this.name) console.log(this.name + 'here4', this.data.lastModified, newData.lastModified);
 		return this.data.lastModified !== newData.lastModified;
 	}
 	on(eventName, handler) {
@@ -379,6 +393,7 @@ class ViewsContainer extends SyncView {
 class SimpleEditInput extends SyncView {
 	constructor(prop, label, validator, formatter) {
 		super();
+		this.name = 'SimpleEditInput ' + prop;
 		this.doFlash = true;
 		
 		this.prop = prop;
@@ -401,21 +416,18 @@ class SimpleEditInput extends SyncView {
 				if(formatter) value = formatter(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
+					console.log('	update');
 					this.data.set(this.prop, value);
 					this.emit('changed', value, oldValue);
 				}
 			}}});
 	}
-	hasChanged(newData) {
-		// custom hasChanged overrides super class
-		if(this.data && newData) return this.data[this.prop] !== newData[this.prop];
-		else return this.data !== newData;
-	}
 	focus() {
 		this.input.focus();
 	}
 	render() {
-		this.input.value = this.data[this.prop] || '';
+		if(this.input.value !== this.data[this.prop])
+			this.input.value = this.data[this.prop] || '';
 	}
 }
 
@@ -452,6 +464,99 @@ class EditInput extends SyncView {
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 	}
 }
+
+
+class Modal extends SyncView {
+	constructor() {
+		super();
+
+		SV.mergeMap({
+			zIndex: 2,
+			position: 'fixed',
+			left: 0,
+			top: 0,
+			width: '100vw',
+			height: '100vh',
+			backgroundColor: '#DDD',
+			padding: '1em',
+			overflowY: 'scroll'
+		}, this.node.style);
+
+		this.mainView = SV.el('div', { parent: this.node });
+
+		this.hide();
+	}
+	show() {
+		this.node.style.display = 'initial';
+		document.body.style.overflowY = 'hidden';
+	}
+	hide() {
+		this.node.style.display = 'none';
+		document.body.style.overflowY = 'initial';	
+	}
+	render() {
+	}
+}
+
+class Tab extends SyncView {
+	constructor() {
+		super();
+	}
+}
+
+class TabView extends SyncView {
+	constructor() {
+		super();
+
+		this.header = SV.el('div', { parent: this.node, 
+			style: { 
+				minHeight: '1em',
+				position: 'relative',
+				top: '1px',
+			}
+		});
+
+
+		this.tabs = [];
+		this.tabsContainer = SV.el('div', { parent: this.node, 
+			style: { 
+				minHeight: '1em',
+				border: '1px solid #CCC'
+			}
+		});
+	}
+	addTab(tab) {
+		var headerButton = SV.el('div', { parent: this.header, innerHTML: tab.title,
+			events: { click: () => { this.showTab(tab); }},
+	      		style: { 
+				border: '1px solid #CCC',
+		    		display: 'inline-block',
+		    		padding: '.25em'
+		    	}
+		});
+		tab.node.classList.add('hide');
+		this.tabsContainer.appendChild(tab.node);
+		this.tabs.push({ header: headerButton, tab: tab });
+	}
+	showTab(tab) {
+		this.tabs.forEach((tabObj) => {
+			if(tabObj.tab === tab) {
+				tabObj.tab.node.classList.remove('hide');
+				tabObj.header.style.border = '3px solid #CCC';
+				tabObj.header.style.borderBottom = '1px solid #FFF';
+			} else {
+				tabObj.tab.node.classList.add('hide');
+				tabObj.header.style.border = '1px solid #CCC';
+				tabObj.header.style.borderBottom = 'initial';
+			}
+		});
+	}
+}
+
+
+
+
+
 
 //    Utils.group = group;
 //    function formatCurrency(value, precision) {
