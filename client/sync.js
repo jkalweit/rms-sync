@@ -126,9 +126,13 @@ class SV {
 
 		if(sortField) {
 			result.sort(function (a, b) {
-				if (a[sortField].toLowerCase() < b[sortField].toLowerCase())
+				var a1 = a[sortField];
+				var b1 = b[sortField];
+				if(typeof a1 === 'string') a1 = a1.toLowerCase();
+				if(typeof b1 === 'string') b1 = b1.toLowerCase();
+				if (a1 < b1)
 					return reverse ? 1 : -1;
-				if (a[sortField].toLowerCase() > b[sortField].toLowerCase())
+				if (a1 > b1)
 					return reverse ? -1 : 1;
 				return 0;
 			});
@@ -192,7 +196,6 @@ class SV {
 			}
 		});
 	}
-
 
 	static el(name, opts) {
 		opts = opts || {};
@@ -317,11 +320,13 @@ class SyncView {
 	static updateViews(views, data) {
 		views.forEach(view => { view.update(data); });
 	}
-	update(data) {
-		if(this.hasChanged(data)) {
+	update(data, force) {
+		if(force || this.hasChanged(data)) {
 //			if(this.name) console.log(this.name + ' data changed');
+			var oldData = this.data;
 			this.data = data;
-			if(this.render) this.render();
+			this.emit('updating', data, oldData);
+			if(this.render) this.render(force);
 			if(this.doFlash) this.flash(); 
 		}
 		else {
@@ -330,7 +335,6 @@ class SyncView {
 	}
 	hasChanged(newData) {
 		if(!this.data && !newData) {
-//			if(this.name) console.log(this.name + 'here1');
 			return false;
 		}
 		if((this.data && !newData) || (!this.data && newData)) { 
@@ -369,14 +373,14 @@ class SyncView {
 
 
 class ViewsContainer extends SyncView {
-	constructor(ctor, sort, direction) {
-		super();
+	constructor(ctor, sort, direction, element) {
+		super(element);
 		this.views = {};
 		this.ctor = ctor;
 		this.sort = sort;
 		this.sortDirection = direction;
 	}
-	render() {
+	render(force) {
 		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
 		var previous = null;
 		itemsArr.forEach((item) => {
@@ -388,7 +392,7 @@ class ViewsContainer extends SyncView {
 				this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
 				this.emit('viewAdded', view);
 			}
-			view.update(item);
+			view.update(item, force);
 			previous = view;
 		});
 		Object.keys(this.views).forEach((key) => {

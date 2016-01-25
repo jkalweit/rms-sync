@@ -111,7 +111,9 @@ var SyncNode;
                 if (target[propName] !== value) {
                     //console.log('Setting propName: ', propName);
                     var replaceWithMe = new SyncNode(target, new Date().toISOString(), propName);
-                    if (typeof value === 'object') {
+                    if(value instanceof Date) {
+		    	// do not store Dates as SyncNodes	
+		    } else if (typeof value === 'object') {
                         var className = value.constructor.toString().match(/\w+/g)[1];
                         if (className !== 'SyncNode') {
                             value = new SyncNode(value, value.lastModified || new Date().toISOString());

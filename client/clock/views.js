@@ -43,45 +43,124 @@ class TimeclockSummary extends Tab {
 					totalHours += Timespan.duration(timespan);
 					if( timespan.tips) totalTips += +timespan.tips;
 				});
-				var div = el('div', { parent: this.node });
-				el('span', { parent: div,
+				var div = SV.el('div', { parent: this.node });
+				SV.el('span', { parent: div,
 					innerHTML: key,
 			       		style: { display: 'inline-block', width: '150px' }});
-				el('span', { parent: div,
+				SV.el('span', { parent: div,
 					innerHTML: totalHours.toFixed(2),
 			       		style: { display: 'inline-block', width: '75px' }});
-				el('span', { parent: div,
+				SV.el('span', { parent: div,
 					innerHTML: 'Tips:',
 			       		style: { display: 'inline-block', width: '50px' }});
-				el('span', { parent: div,
+				SV.el('span', { parent: div,
 					innerHTML: totalTips.toFixed(2),
 			       		style: { display: 'inline-block', width: '50px' }});
 		});}
+}
+
+class TimeclockNotificationsModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h2', { parent: this.mainView, innerHTML: 'Notifications' });
+		var table = SV.el('table', { parent: this.mainView });
+		this.notificationsContainer = new ViewsContainer(UserNotification, 'key', 'reverse', table);
+		this.notificationsContainer.on('viewAdded', (view) => {
+			view.on('updating', () => { view.employee = this.employee; });
+			view.on('acknowledge', () => {
+				var ack = {
+					key: this.employee.name,
+					timestamp: new Date().toISOString()
+				};
+				view.data.acknowledgements.set(ack.key, ack);
+				SV.sendToAdmin(this.employee.name + ' acknowledged: ' + view.data.text);
+			});
+		});
+		this.mainView.appendChild(this.notificationsContainer.node);
+		SV.el('button', { parent: this.mainView, innerHTML: 'Ok',
+			style: { marginTop: '1em' },
+			events: { click: () => { this.hide(); }}});
+	}
+	render() {
+		this.notificationsContainer.update(this.data.notifications, true);
+	}
+}
+
+class UserNotification extends SyncView {
+	constructor() {
+		super(SV.el('tr'));
+
+		var cell = SV.el('td', { parent: this.node,
+			style: { width: '175px' }});
+		this.timestamp = SV.el('span', { parent: cell });
+		cell = SV.el('td', { parent: this.node,
+			style: { width: '120px' }});
+		this.status = SV.el('span', { parent: cell });
+		this.acceptButton = SV.el('button', { parent: cell, innerHTML: 'Acknowledge',
+			events: { click: () => { 
+				this.emit('acknowledge');
+			}}});
+		cell = SV.el('td', { parent: this.node });
+		this.text = SV.el('span', { parent: cell });
+	}
+	render() {
+		this.timestamp.innerHTML = moment(this.data.key).format('dddd M/D/YYYY')
+		if(this.employee) {
+			var ack = this.data.acknowledgements[this.employee.name];
+			if(!ack) {
+				this.status.style.display = 'none';
+				this.acceptButton.style.display = 'initial';
+			} else {
+				this.status.style.display = 'initial';
+				this.status.innerHTML = moment(ack.timestamp).format('M/D/YYYY');
+				this.acceptButton.style.display = 'none';
+			}
+		}
+		this.text.innerHTML = this.data.text;
+	}
 }
 
 class Timeclock extends SyncView {
 	constructor() {
 		super();
 
+		this.sync = new SyncNodeSocket.SyncNodeSocket('/data', {});
+		this.sync.onUpdated((data) => {
+			if(!data.shifts) { 
+				data.set('shifts', {});
+			}
+			else if(!data.shifts.timespans) { 
+				data.shifts.set('timespans', {});
+			}
+			else { 
+				this.update(data);
+			}
+		});
+
+
+		this.notificationsModal = new TimeclockNotificationsModal();
+		this.node.appendChild(this.notificationsModal.node);
+
 		document.body.style.paddingTop = '50px';
-		el('button', { parent: this.node, innerHTML: 'Clock In',
+		SV.el('button', { parent: this.node, innerHTML: 'Clock In',
 			style: { fontSize: '3em', display: 'block', margin: 'auto' },
 			events: { click: this.clockIn.bind(this) } });
 
 
-		el('h1', { parent: this.node, innerHTML: 'Timeclock', className: 'light',
+		SV.el('h1', { parent: this.node, innerHTML: 'Timeclock', className: 'light',
 	       		style: { marginBottom: '0.2em', textAlign: 'center' }});
-		this.mainView = el('div', { parent: this.node });
-		this.dateRange = el('h4', { parent: this.mainView, className: 'light',
+		this.mainView = SV.el('div', { parent: this.node });
+		this.dateRange = SV.el('h4', { parent: this.mainView, className: 'light',
 	       		style: { marginTop: '0.5em', marginBottom: '0.4em', textAlign: 'center'  }});
 
-		var controls = el('div', { parent: this.mainView, style: { textAlign: 'center' } });
-		this.backAWeek = el('a', { parent: controls, innerHTML: '<--',
+		var controls = SV.el('div', { parent: this.mainView, style: { textAlign: 'center' } });
+		this.backAWeek = SV.el('a', { parent: controls, innerHTML: '<--',
 	       		style: { width: '4em', display: 'inline-block' } });
-		this.thisWeek = el('a', { parent: controls, href: '/clock',
+		this.thisWeek = SV.el('a', { parent: controls, href: '/clock',
 			innerHTML: '[This Week]',
 	       		style: { width: '9em', display: 'inline-block' } });
-		this.forwardAWeek = el('a', { parent: controls,
+		this.forwardAWeek = SV.el('a', { parent: controls,
 			innerHTML: '-->',
 	       		style: { width: '4em', display: 'inline-block' } });
 
@@ -106,13 +185,13 @@ class Timeclock extends SyncView {
 
 
 
-		this.clockinView = el('div', { parent: this.node,
+		this.clockinView = SV.el('div', { parent: this.node,
 	       		style: { display: 'none'  } });
-		el('h1', { parent: this.clockinView, innerHTML: 'Clock In' });
-		this.nameSelect = el('div', { parent: this.clockinView });
+		SV.el('h1', { parent: this.clockinView, innerHTML: 'Clock In' });
+		this.nameSelect = SV.el('div', { parent: this.clockinView });
 
 
-		el('button', { parent: this.clockinView, innerHTML: 'Cancel',
+		SV.el('button', { parent: this.clockinView, innerHTML: 'Cancel',
 				style: { marginTop: '2em' },
 				events: { click: () => {
 					this.mainView.style.display = 'block';
@@ -124,6 +203,10 @@ class Timeclock extends SyncView {
 		this.clockinView.style.display = 'block';
 	}
 	doClockIn(employee) {
+		this.notificationsModal.employee = employee;
+		this.notificationsModal.update(this.data, true);
+		this.notificationsModal.show();
+		
 		this.mainView.style.display = 'block';
 		this.clockinView.style.display = 'none';
 		var timespan = {
@@ -132,7 +215,7 @@ class Timeclock extends SyncView {
 			clockIn: new Date().toISOString(),
 			note: ''
 		};
-		this.data.timespans.set(timespan.key, timespan);
+		this.data.shifts.timespans.set(timespan.key, timespan);
 	}
 	doManualClockIn() {
 		var name = this.nameInput.value.trim();
@@ -146,12 +229,11 @@ class Timeclock extends SyncView {
 			clockIn: new Date().toISOString(),
 			note: ''
 		};
-		this.data.timespans.set(timespan.key, timespan);
+		this.data.shifts.timespans.set(timespan.key, timespan);
 		this.mainView.style.display = 'block';
 		this.clockinView.style.display = 'none';
 	}
 	render() {
-		if(!this.data.timespans) { this.data.set('timespans', {}); return; };
 
 		var date = SV.param('date');
 	       	var mdate = date ? SV.getDayOfWeek(0, moment(date)) : SV.getDayOfWeek(0);
@@ -160,17 +242,17 @@ class Timeclock extends SyncView {
 		this.dateRange.innerHTML = mdate.format('MM/DD/YYYY') + ' - '
 			+ moment(endDate).subtract(1, 'days').format('MM/DD/YYYY');
 
-		var filteredTimespans = SV.filterMap(this.data.timespans, (timespan) => {
+		var filteredTimespans = SV.filterMap(this.data.shifts.timespans, (timespan) => {
 			return moment(timespan.clockIn).isBetween(mdate, endDate);
 		});
 
 
 		var existingVal = this.nameSelect.value;
 		this.nameSelect.innerHTML = '';
-		var employeesArr = SV.toArray(this.data.employees, 'name');
+		var employeesArr = SV.toArray(this.data.shifts.employees, 'name');
 		employeesArr.forEach((employee) => {
 			if(employee.name === '[open]') return;
-			el('button', { parent: this.nameSelect, innerHTML: employee.name,
+			SV.el('button', { parent: this.nameSelect, innerHTML: employee.name,
 				style: { fontSize: '1.5em', margin: '5px' },
 				events: { click: () => { this.doClockIn(employee);  } } });
 		});
@@ -201,6 +283,7 @@ class Timeclock extends SyncView {
 		this.backAWeek.href = '/clock?date=' + moment(sunday).subtract(1, 'week').format('YYYY-MM-DD');
 		this.forwardAWeek.href = '/clock?date=' + moment(sunday).add(1, 'week').format('YYYY-MM-DD');
 
+		this.notificationsModal.update(this.data);
 	}
 }
 
@@ -208,9 +291,9 @@ class Timeclock extends SyncView {
 class TimespanGroup extends SyncView {
 	constructor() {
 		super();
-		this.header = el('h3', { parent: this.node, className: 'light',
+		this.header = SV.el('h3', { parent: this.node, className: 'light',
 			style: { textAlign: 'center' }});
-		this.timespans = el('div', { parent: this.node });
+		this.timespans = SV.el('div', { parent: this.node });
 		this.timespanViews = {};
 	}
 	render() {
@@ -245,20 +328,20 @@ class Timespan extends SyncView {
 	        this.node.style.marginTop = '5px';
 	
 		var mainView = SV.el('div', { parent: this.node, className: 'group' });
-		this.header = el('div', { parent: mainView,
+		this.header = SV.el('div', { parent: mainView,
 	       		style: { display: 'inline-block', width: '120px' }});
-		this.clockText = el('div', { parent: mainView,
+		this.clockText = SV.el('div', { parent: mainView,
 	       		style: { display: 'inline-block', width: '180px' }});
-		this.clockOutButton = el('button', { parent: mainView, innerHTML: 'Clock Out',
+		this.clockOutButton = SV.el('button', { parent: mainView, innerHTML: 'Clock Out',
 			events: { click: () => { this.clockoutModal.show(); }}});
-		this.duration = el('div', { parent: mainView,
+		this.duration = SV.el('div', { parent: mainView,
 	       		style: { display: 'inline-block' }});
-		this.editButton = el('button', { parent: mainView, innerHTML: 'i',
+		this.editButton = SV.el('button', { parent: mainView, innerHTML: 'i',
 			style: { float: 'right' },
 			events: { click: () => {
 				this.isEditing = !this.isEditing; this.render();
 			} }});
-		this.noteButton = el('button', { parent: mainView, innerHTML: 'n',
+		this.noteButton = SV.el('button', { parent: mainView, innerHTML: 'n',
 			style: { float: 'right' },
 			events: { click: () => {
 				this.showNote = !this.showNote; this.render();
@@ -269,19 +352,19 @@ class Timespan extends SyncView {
 		this.node.appendChild(this.editNote.node);
 		
 
-		this.editView = el('div', { parent: this.node,
+		this.editView = SV.el('div', { parent: this.node,
 			className: 'group',
 	       		style: { marginTop: '1em' }});
-		el('button', { parent: this.editView, innerHTML: 'X',
+		SV.el('button', { parent: this.editView, innerHTML: 'X',
 			style: { float: 'right' },
 			events: { click: () => {
 				if(confirm('Delete?')) this.data.parent.remove(this.data.key);
 			} }});
-		this.editClockIn = el('input', { parent: this.editView,
+		this.editClockIn = SV.el('input', { parent: this.editView,
 			events: { blur: () => {
 				var clockIn = moment(this.editClockIn.value, this.editFormat);
 				this.data.set('clockIn', clockIn.toJSON()); }}});
-		this.editClockOut = el('input', { parent: this.editView,
+		this.editClockOut = SV.el('input', { parent: this.editView,
 			events: { blur: () => {
 				if(this.editClockOut.value.trim() === '') this.data.remove('clockOut');
 				else {
@@ -289,7 +372,7 @@ class Timespan extends SyncView {
 					this.data.set('clockOut', clockOut.toJSON());
 				}
 			}}});
-		this.editName = el('input', { parent: this.editView,
+		this.editName = SV.el('input', { parent: this.editView,
 			events: { blur: () => {
 				this.data.set('name', this.editName.value); }}});
 		this.editTips = new SimpleEditInput('tips', 'Tips');
@@ -353,18 +436,7 @@ class Timespan extends SyncView {
 }
 
 
-
 SV.startReloader();
 
-var el = SV.el;
-
 var t = new Timeclock();
-SV.id('container').appendChild(t.node);
-
-var sv = new SV();
-sv.onupdated = () => {
-	console.log('update!');
-	t.update(sv.db.shifts);
-};
-
-sv.startSync();
+SV.onLoad(() => { SV.id('container').appendChild(t.node); });
