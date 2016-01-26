@@ -13,6 +13,7 @@ var express_enforces_ssl = require('express-enforces-ssl');
 var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
+var multer = require('multer');
 var SecureSyncNodeServer = require('./server/SecureSyncNodeServer.js').SecureSyncNodeServer;
 
 const EventEmitter = require('events');
@@ -119,14 +120,24 @@ var chokidar = require('chokidar');
 
 
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
+	if(startHTTPS) {
+		res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
+	} else {		
+		res.header("Access-Control-Allow-Origin", "*");
+	}
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	next();
 });
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+var upload = multer({ dest: 'uploads/' });
+app.post('/upload', upload.single('image'), function (req, res, next) {
+	// req.file is the `avatar` file
+	// req.body will hold the text fields, if there were any
+	console.log('req.file', req.file);
+});
 
 
 var passport = require('passport');
