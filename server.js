@@ -131,21 +131,23 @@ app.use(function (req, res, next) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+var imagesPath = path.join('..', 'uploads', 'imgs');
 var multerStorage = multer.diskStorage({
-	destination: (req, file, cb) => {
-		cb(null, 'uploads');
-	},
+	destination: imagesPath,
 	filename: (req, file, cb) => {
-		cb(null, path.join('img-' + Date.now() + '.jpg'));
+		var destination = req.body.destination || 'img-' + Date.now();
+		cb(null, path.join(destination + '.jpg'));
 	}
 });
 
 var upload = multer({ storage: multerStorage });
 app.post('/upload', upload.single('image'), function (req, res, next) {
-	// req.file is the `avatar` file
-	// req.body will hold the text fields, if there were any
 	console.log('req.file', req.file);
+	res.end(req.file.filename);
 });
+
+app.use('/images', express.static(imagesPath));
+
 
 
 var passport = require('passport');
@@ -164,7 +166,7 @@ passport.use(new LocalStrategy(function(username, password, done) {
 	var user = config.users[username];	
 	if(user) {
 		if(user.password === password) {
-			console.log('Authenticated: ', user);
+			console.log('Authenticated: ', user.name);
 			done(null, user);
 		} else {
 			console.log('Incorrect password: ', user);
@@ -294,7 +296,7 @@ io.use(passportSocketIo.authorize({
 
 
 function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io', data.user);
+  console.log('successful connection to socket.io', data.user.name);
   accept();
 }
 
