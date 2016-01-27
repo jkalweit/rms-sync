@@ -3,7 +3,6 @@
 var express = require('express');
 var http = require('http');
 var https = require('https');
-var path = require('path');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
 var session = require('express-session');
@@ -132,7 +131,16 @@ app.use(function (req, res, next) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-var upload = multer({ dest: 'uploads/' });
+var multerStorage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, 'uploads');
+	},
+	filename: (req, file, cb) => {
+		cb(null, path.join('img-' + Date.now() + '.jpg'));
+	}
+});
+
+var upload = multer({ storage: multerStorage });
 app.post('/upload', upload.single('image'), function (req, res, next) {
 	// req.file is the `avatar` file
 	// req.body will hold the text fields, if there were any
