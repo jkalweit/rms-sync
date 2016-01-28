@@ -145,6 +145,13 @@ app.post('/upload', upload.single('image'), function (req, res, next) {
 	console.log('req.file', req.file);
 	res.end(req.file.filename);
 });
+app.post('/deleteupload', function (req, res, next) {
+	console.log('delete', req.body);
+	res.end();
+	if(req.body.image) {
+		fs.unlink(path.join(imagesPath, req.body.image));
+	}
+});
 
 app.use('/images', express.static(imagesPath));
 

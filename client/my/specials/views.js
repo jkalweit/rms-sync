@@ -5,7 +5,11 @@ class Specials extends SyncView {
 	constructor() {
 		super();
 	
-		
+		this.sync = new SyncNodeSocket.SyncNodeSocket('/data', {});
+		this.sync.onUpdated((data) => {
+			if(!data.specials) data.set('specials', {});
+			else this.update(data.specials);
+		});
 
 		this.mainView = SV.el('div', { parent: this.node});
 
@@ -14,27 +18,76 @@ class Specials extends SyncView {
 			innerHTML: 'Specials',
 			className: 'light' });
 
-		this.imageUploader = new ImageUploader('specials1');
-		this.imageUploader.on('uploaded', (id) => {
-			console.log('uploaded:', id);
-		});
-		this.imageUploader.node.style.width = '150px';
-		this.imageUploader.node.style.height = '150px';
-		this.mainView.appendChild(this.imageUploader.node);
+		SV.el('button', {
+			parent: this.mainView,
+			innerHTML: 'Add',
+			className: 'btn-big',
+	       		events: { click: () => { this.add(); }}});
+
+		this.itemsContainer = new ViewsContainer(Special);
+		this.node.appendChild(this.itemsContainer.node);
 	}
 	add() {
-		this.uploadPhotos(this.addInput.files[0], this.preview);
-	}	
+		var special = {
+			key: new Date().toISOString(),
+			title: 'New Special',
+			description: 'description of special'
+		};
+		this.data.set(special.key, special);
+	}
 	render() {
+		this.itemsContainer.update(this.data);
 	}
 }
 
 
-class ImageUploader extends SyncView {
-	constructor(destination, maxSize) {
+class Special extends SyncView {
+	constructor() {
 		super();
 	
-		this.destination = destination;
+		this.mainView = SV.el('div', { parent: this.node});
+
+		this.title = SV.el('h1', {
+			parent: this.mainView,
+			className: 'light' });
+		this.description = SV.el('span', {
+			parent: this.mainView });
+
+		this.imageUploader = new ImageUploader();
+		this.imageUploader.node.style.width = '450px';
+		this.imageUploader.on('uploaded', (path) => {
+			console.log('path', path, this.data);
+			this.data.set('image', path);
+			this.imageUploader.reloadPreview();
+			console.log('after', this.data);
+		});
+		this.mainView.appendChild(this.imageUploader.node);
+		
+		SV.el('button', {
+			parent: this.mainView,
+			innerHTML: 'Delete',
+			className: 'btn-big',
+			events: { click: () => { this.remove(); }}});
+	}
+	remove() {
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', '/deleteupload');
+		xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		xhr.send(JSON.stringify({ image: this.data.image }));
+		this.data.parent.remove(this.data.key);
+	}
+	render() {
+		console.log('render special');
+		this.title.innerHTML = this.data.title;
+		this.description.innerHTML = this.data.description;
+		this.imageUploader.update(this.data);
+	}
+}
+
+class ImageUploader extends SyncView {
+	constructor(maxSize) {
+		super();
+	
 		this.maxSize = maxSize | 640;
 
 		this.addInput = SV.el('input', {
@@ -51,21 +104,27 @@ class ImageUploader extends SyncView {
 
 		this.preview = SV.el('img', { 
 			parent: this.node,
-			src: this.src(),
-		       style: { width: '100%' }, 
-		       events: { click: () => { this.addInput.click(); },
+			style: { width: '100%' }, 
+		        events: { click: () => { this.addInput.click(); },
 		       		error: (e) => { e.target.src = '/imgs/no_image.png'; }
-		       }});
+		        }});
 	}
-	src() {
-		return '/images/' + this.destination + '.jpg';
+	static src(key) {
+		var k = key.replace(/:/g, '_');
+		k = k.replace(/\./g, '_');
+		k = k.replace(/-/g, '_');
+		return k;
 	}
 	add() {
-		this.uploadPhotos(this.addInput.files[0], this.preview);
+		this.uploadPhotos(this.addInput.files[0]);
 	}	
-	render() {
+	reloadPreview() {
+		this.preview.src = this.data.image ? '/images/' + this.data.image + '?' + Date.now() : '/imgs/no_image.png';
 	}
-	uploadPhotos(file, container){
+	render() {
+		this.reloadPreview();
+	}
+	uploadPhotos(file){
 
 		// Ensure it's an image
 		if(file.type.match(/image.*/)) {
@@ -96,28 +155,19 @@ class ImageUploader extends SyncView {
 					canvas.height = height;
 					canvas.getContext('2d').drawImage(image, 0, 0, width, height);
 					var dataUrl = canvas.toDataURL('image/jpeg');
-					console.log('done!', dataUrl);					
-					container.src = dataUrl;
 					var resizedImage = this.dataURLToBlob(dataUrl);
-					console.log('blob', resizedImage);
 
 					var form = new FormData();
-					form.append('destination', this.destination);
+					form.append('destination', ImageUploader.src(this.data.key));
 					form.append('image', resizedImage);					
 					var xhr = new XMLHttpRequest();
 					xhr.open('POST', '/upload', true);
 					xhr.responseType = 'text';
-					console.log('sending request');
 					xhr.onload = () => {
-						console.log('onload');
 						if(xhr.readyState === xhr.DONE) {
-							console.log('done');
 							if(xhr.status === 200) {
-								console.log('200');
-								console.log('xhr.response', xhr.response);
 								console.log('xhr.responseText', xhr.responseText);
-								this.preview.src = this.src() + '?' + Date.now();
-								this.emit('uploaded', this.destination, this.src());
+								this.emit('uploaded', xhr.responseText);
 							}
 						}
 					};
