@@ -6,14 +6,14 @@ var https = require('https');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
 var session = require('express-session');
-var Sync = require('sync-node');
+var Sync = require('./server/SyncNodeServer.js');
 var helmet = require('helmet');
 var express_enforces_ssl = require('express-enforces-ssl');
 var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
-var SecureSyncNodeServer = require('./server/SecureSyncNodeServer.js').SecureSyncNodeServer;
+var MemberServer = require('./server/MemberServer.js').MemberServer;
 
 const EventEmitter = require('events');
 
@@ -91,6 +91,7 @@ app.use(session({
 	resave: false, 
 	saveUninitialized: false, 
 	secret: config.sessions.secret, 
+	maxAge: 360000000,
 	store: sessionStore }));
 
 
@@ -113,9 +114,6 @@ if(startHTTPS) {
 } else {
 	io = socketio.listen(server);
 }
-
-var chokidar = require('chokidar');
-
 
 
 app.use(function (req, res, next) {
@@ -153,8 +151,10 @@ app.post('/deleteupload', function (req, res, next) {
 	}
 });
 
+
 app.use('/images', express.static(imagesPath));
 
+var membersServer = new MemberServer(io);
 
 
 var passport = require('passport');
@@ -165,12 +165,11 @@ passport.serializeUser(function(user, cb) {
 });
 
 passport.deserializeUser(function(id, cb) {
-	cb(null, config.users[id]);
+	cb(null, membersServer.data[id]);
 });
 
-
 passport.use(new LocalStrategy(function(username, password, done) {
-	var user = config.users[username];	
+	var user = membersServer.data[username];	
 	if(user) {
 		if(user.password === password) {
 			console.log('Authenticated: ', user.name);
@@ -206,19 +205,49 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login' })
 			res.redirect(redirect);
 		});
 
+app.get('/logout', function(req, res){
+	req.logout();
+	res.redirect('/');
+});
 
 
 
 
-
-var syncServer = new Sync.SyncNodeServer('data', io, {});
 
 function userIsAllowed(user, permission) {
 	console.log('user', user);
 	return user.permissions.all || user.permissions[permission];
 }
 
-app.all('/my/*', (req, res, next) => {
+
+
+var enforcePermission = (path, permission) => {
+	app.all(path, (req, res, next) => {
+		console.log('enforcePermission', path, permission, req.user);
+		if(!req.user) {
+			res.redirect('/login?url=' + req.url);
+		} else if(userIsAllowed(req.user, permission)) {
+			next();
+		} else {
+			res.statusCode = 403;
+			res.end('Unauthorized.');
+		}
+	});
+};
+
+enforcePermission('/member/todo/*', 'todo');
+enforcePermission('/manage/members/*', 'members');
+
+
+app.all('/manage/*', (req, res, next) => {
+	if(!req.user) {
+		res.redirect('/login?url=' + req.url);
+	} else {
+		next();
+	}
+});
+
+app.all('/member/*', (req, res, next) => {
 	if(!req.user) {
 		res.redirect('/login?url=' + req.url);
 	} else {
@@ -229,18 +258,10 @@ app.all('/my/*', (req, res, next) => {
 
 
 
-var TriviaServer = require('./server/trivia-server.js');
-new TriviaServer(app, io, userIsAllowed);
-
-var CalendarServer = require('./server/calendar-server.js');
-new CalendarServer(app, io, userIsAllowed);
-
-var TodoServer = require('./server/todo-server.js');
-new TodoServer(app, io, userIsAllowed);
+//var CalendarServer = require('./server/calendar-server.js');
+//new CalendarServer(app, io, userIsAllowed);
 
 
-var usersServer = new SecureSyncNodeServer('/users', io, { todos: {} });
-usersServer.start();
 
 app.use('/', express.static('client/'));
 
@@ -276,7 +297,7 @@ function sendText(phone, body) {
 	});
 }
 function sendTextToAdmin(body) {
-	sendText(config.users.admin.phone, body);
+	sendText(membersServer.data.admin.phone, body);
 }
 
 io.on('connection', (socket) => {
@@ -287,6 +308,36 @@ io.on('connection', (socket) => {
 		sendTextToAdmin(body);
 	});
 });
+
+
+var nodemailer = require('nodemailer');
+var smtpTransport = require('nodemailer-smtp-transport');
+var transporter = nodemailer.createTransport(smtpTransport({
+    service: 'gmail',
+    auth: {
+        user: config.email.user,
+        pass: config.email.password
+    }
+}));
+
+// setup e-mail data with unicode symbols
+var mailOptions = {
+    from: 'The Coal Yard <management@thecoalyard.com>',
+    to: 'kalweit@alumni.duke.edu',
+    subject: 'Testing nodemailer setup',
+    html: '<b>Hello from Nodemailer!</b>'
+};
+
+// send mail with defined transport object
+transporter.sendMail(mailOptions, function(error, info){
+    if(error){
+        return console.log(error);
+    }
+    console.log('Message sent: ' + info.response);
+});
+
+
+
 
 
 
@@ -303,7 +354,7 @@ io.use(passportSocketIo.authorize({
 
 
 function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io', data.user.name);
+  console.log('successful connection to socket.io', data.user.data.info.name);
   accept();
 }
 
@@ -324,6 +375,7 @@ function onAuthorizeFail(data, message, error, accept){
 
 
 
+var chokidar = require('chokidar');
 
 /* For Debugging, send signal when file changes */
 chokidar.watch('./client', { depth: 99 }).on('change', (path) => {
