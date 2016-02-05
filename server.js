@@ -172,7 +172,6 @@ passport.use(new LocalStrategy(function(username, password, done) {
 	var user = membersServer.data[username];	
 	if(user) {
 		if(user.password === password) {
-			console.log('Authenticated: ', user.name);
 			done(null, user);
 		} else {
 			console.log('Incorrect password: ', user);
@@ -201,7 +200,7 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/login' })
 					redirect = params[1];
 				}
 			}
-			console.log('authenticated as', req.user, req.url);
+			console.log('authenticated as', req.user.data.info.name, req.url);
 			res.redirect(redirect);
 		});
 
@@ -215,7 +214,6 @@ app.get('/logout', function(req, res){
 
 
 function userIsAllowed(user, permission) {
-	console.log('user', user);
 	return user.permissions.all || user.permissions[permission];
 }
 
@@ -223,7 +221,7 @@ function userIsAllowed(user, permission) {
 
 var enforcePermission = (path, permission) => {
 	app.all(path, (req, res, next) => {
-		console.log('enforcePermission', path, permission, req.user);
+		console.log('enforcePermission', path, permission, req.user.data.info.name);
 		if(!req.user) {
 			res.redirect('/login?url=' + req.url);
 		} else if(userIsAllowed(req.user, permission)) {
@@ -309,14 +307,24 @@ io.on('connection', (socket) => {
 	});
 });
 
+var xoauth2 = require('xoauth2');
+var generator = xoauth2.createXOAuth2Generator({
+	user: config.gmail.user,
+	clientId: config.gmail.client_id,
+	clientSecret: config.gmail.client_secret,
+	refreshToken: config.gmail.refresh_token
+});
+generator.on('token', function(token){
+  console.info('new token', token.accessToken);
+  // maybe you want to store this token
+});
 
 var nodemailer = require('nodemailer');
 var smtpTransport = require('nodemailer-smtp-transport');
 var transporter = nodemailer.createTransport(smtpTransport({
     service: 'gmail',
     auth: {
-        user: config.email.user,
-        pass: config.email.password
+	    xoauth2: generator
     }
 }));
 
@@ -324,8 +332,8 @@ var transporter = nodemailer.createTransport(smtpTransport({
 var mailOptions = {
     from: 'The Coal Yard <management@thecoalyard.com>',
     to: 'kalweit@alumni.duke.edu',
-    subject: 'Testing nodemailer setup',
-    html: '<b>Hello from Nodemailer!</b>'
+    subject: 'Testing nodemailer setup' + new Date().toISOString(),
+    html: '<b>Hello from Nodemailer!</b> <a href="https://www.thecoalyard.com">The Coal Yard</a>'
 };
 
 // send mail with defined transport object

@@ -133,7 +133,8 @@ class MemberEdit extends SyncView {
 
 		SV.el('button', { parent: this.node, innerHTML: 'Delete',
 			style: { marginTop: '.5em' },
-			events: { click: () =>{ if(confirm(`Delete ${this.data.name}?`)) this.data.parent.remove(this.data.key); }}})
+			events: { click: () =>{ 
+				if(confirm(`Delete ${this.data.info.name}?`)) this.data.parent.parent.remove(this.data.parent.key); }}})
 
 			this.pointsView = this.appendView(new PointsView());
 	}

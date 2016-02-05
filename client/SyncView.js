@@ -573,7 +573,6 @@ class TabView extends SyncView {
 
 
 
-<<<<<<< HEAD:client/SyncView.js
 class UserInfo extends SyncView {
 	constructor() {
 		super();
@@ -600,7 +599,6 @@ class UserInfo extends SyncView {
 	}
 }
 
-=======
 class ImageUploader extends SyncView {
 	constructor(maxSize) {
 		super();
@@ -724,7 +722,6 @@ class ImageUploader extends SyncView {
 }
 
 
->>>>>>> 0a4af7484be7d37111b3acc26e060f8ca8e5f3ea:client/sync.js
 
 
 

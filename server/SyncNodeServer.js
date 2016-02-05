@@ -26,7 +26,6 @@ class SyncNodeServer {
         });
     }
     start() {
-	console.log('starting', this.data, this.namespace);
         this.ioNamespace = this.io.of(this.namespace);
         this.ioNamespace.on('connection', (socket) => {
             console.log('someone connected to ' + this.namespace);
