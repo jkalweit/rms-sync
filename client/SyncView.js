@@ -290,9 +290,30 @@ class SV {
 		io().emit('send text to admin', body);
 	}
 
+	static sendEmailFromAdmin(msg) {
+		io().emit('send email from admin', msg);
+	}
+
 	static normalizePhone(phone) {
 		return phone.replace('-', '').replace('(', '').replace(')', '').replace('.', '').replace(' ', '').toLowerCase();
 	}
+
+
+
+	static s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+
+	static guidShort() {
+		return SV.s4() + SV.s4();
+	}
+        static guid() {
+                       return SV.s4() + SV.s4() + '-' + SV.s4() + '-' + SV.s4() + '-' +
+                SV.s4() + '-' + SV.s4() + SV.s4() + SV.s4();
+        }
+
 }
 
 

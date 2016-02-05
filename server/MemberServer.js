@@ -41,15 +41,47 @@ class MemberServer extends SyncNodeServer {
 				this.doMerge(userData, merge);
 				this.persist();
 				socket.emit('updateResponse', new Response(request.requestGuid, null));
-				for(var id in this.memberIoNamespace.connected) {
-					var sock = this.memberIoNamespace.connected[id];
-					if(sock.request.user && 
-					   sock.request.user.key === socket.request.user.key) {
-						sock.emit('update', merge);
-					}
-				};
+				this.emitMemberUpdate(merge, socket.request.user.key);
 			});
 		});
+	}
+
+	emitUpdate(merge) {
+		this.ioNamespace.emit('update', merge);
+	}
+	emitMemberUpdate(merge, user) {
+		for(var id in this.memberIoNamespace.connected) {
+			var sock = this.memberIoNamespace.connected[id];
+			if(sock.request.user && 
+					sock.request.user.key === user.key) {
+						sock.emit('update', merge);
+					}
+		};
+	}
+
+	verifyEmailAddress(verificationId, res) {
+		console.log('verifying', verificationId);
+		var keys = Object.keys(this.data);
+		for(var i = 0; i < keys.length; i++) {
+			var member = this.data[keys[i]];			
+			console.log('member', member); 
+			if(member.data.info.emailVerificationId === verificationId) {
+				console.log('verified!', member);
+				var merge = {};
+				merge[member.key] =  {
+					'data': {
+						'info': {
+							isEmailVerified: true
+						}
+					}
+				};
+				this.doMerge(this.data, merge);				
+				res.end('Verified ' + verificationId);
+				return;
+			}
+		}
+
+		res.end('Not Verified: ' + verificationId);
 	}
 }
 

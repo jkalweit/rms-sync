@@ -155,6 +155,18 @@ app.post('/deleteupload', function (req, res, next) {
 app.use('/images', express.static(imagesPath));
 
 var membersServer = new MemberServer(io);
+app.get('/verify', function (req, res) {
+	var id = '';
+	var split = req.url.split('?');	
+	if(split.length > 1) {
+		var params = split[1].split('=');
+		if(params.length > 1 && params[0].toLowerCase() === 'id') {
+			id = params[1];
+		}
+	}
+	membersServer.verifyEmailAddress(id, res);
+});
+
 
 
 var passport = require('passport');
@@ -328,20 +340,28 @@ var transporter = nodemailer.createTransport(smtpTransport({
     }
 }));
 
-// setup e-mail data with unicode symbols
-var mailOptions = {
-    from: 'The Coal Yard <management@thecoalyard.com>',
-    to: 'kalweit@alumni.duke.edu',
-    subject: 'Testing nodemailer setup' + new Date().toISOString(),
-    html: '<b>Hello from Nodemailer!</b> <a href="https://www.thecoalyard.com">The Coal Yard</a>'
-};
 
-// send mail with defined transport object
-transporter.sendMail(mailOptions, function(error, info){
-    if(error){
-        return console.log(error);
-    }
-    console.log('Message sent: ' + info.response);
+function sendEmailFromAdmin(address, subject, htmlBody) {
+	var mailOptions = {
+		from: 'The Coal Yard <management@thecoalyard.com>',
+		to: address,
+		subject: subject, 
+		html: htmlBody 
+	};
+
+	transporter.sendMail(mailOptions, function(error, info){
+		if(error){
+			return console.log(error);
+		}
+		console.log('Message sent: ' + info.response);
+	});
+}
+
+io.on('connection', (socket) => {
+	socket.on('send email from admin', (msg) => {	
+		console.log('sending email: ', msg);
+		//sendEmailFromAdmin(msg.address, msg.subject, msg.htmlBody);
+	});
 });
 
 

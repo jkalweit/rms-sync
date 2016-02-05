@@ -8,7 +8,6 @@ class Members extends SyncView {
 
 		this.sync = new SyncNodeSocket('/members', {});
 		this.sync.onUpdated((data) => {
-			console.log('updated', data);
 			this.update(data);
 		});
 
@@ -77,14 +76,12 @@ class Members extends SyncView {
 		if(filterText) {
 			filteredMembers = SV.filterMap(this.data,
 					(m) => {
-						console.log('m', m);
 						return m.data.info.name.toLowerCase().indexOf(filterText) !== -1 ||
 				SV.normalizePhone(m.data.info.phone).indexOf(SV.normalizePhone(filterText)) !== -1; });
 		} else {
 			filteredMembers = this.data;
 		}
 
-		console.log('render', this.data, filteredMembers);
 		this.membersContainer.update(filteredMembers);
 	}
 }
@@ -95,6 +92,7 @@ class Member extends SyncView {
 		super();
 		this.node.className = 'group';
 		this.node.style.marginTop = '0.5em';
+		this.node.style.padding = '0.2em 1em';
 
 		this.points = SV.el('span', { 
 			parent: this.node,
@@ -108,9 +106,11 @@ class Member extends SyncView {
 		this.editView = this.appendView(new MemberEdit());
 	}
 	render() {
-		console.log('data', this.data);
+		this.node.style.backgroundColor = this.editMode ? '#EEE' : '#FFF';
+
 		var member = this.data;
 		this.memberName.innerHTML = member.data.info.name;
+		this.memberName.style.color = member.data.info.isStaff ? '#44F' : 'default';
 		this.points.innerHTML = member.data.loyalty ? member.data.loyalty.points | 0 : 0;
 		this.editView.update(member.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
@@ -129,20 +129,47 @@ class MemberEdit extends SyncView {
 		this.views.push(this.appendView(new SimpleEditInput('name', 'Name')));
 		this.views.push(this.appendView(new SimpleEditInput('phone', 'Phone')));
 		this.views.push(this.appendView(new SimpleEditInput('email', 'Email')));
+		this.views.push(this.appendView(new SimpleEditInput('emailVerificationId', 'Email Id')));
 		this.views.push(this.appendView(new SimpleEditInput('note', 'Note')));
+
+		var label = SV.el('label', { parent: this.node, innerHTML: 'Is Staff:', className: 'group' });
+		this.isStaff = SV.el('input', { parent: label, type: 'checkbox',
+	       		events: { click: () => { this.data.info.set('isStaff', !this.data.info.isStaff); }}});
+		
+		label = SV.el('label', { parent: this.node, innerHTML: 'Is Email Verified:', className: 'group' });
+		this.isEmailVerified = SV.el('input', { parent: label, type: 'checkbox',
+	       		events: { click: () => { this.data.info.set('isEmailVerified', !this.data.info.isEmailVerified); }}});
+
+		SV.el('button', { parent: this.node, innerHTML: 'Send Verification Email',
+			style: { marginTop: '.5em' },
+			events: { click: () => { this.sendEmailVerification(); }}}); 
+
 
 		SV.el('button', { parent: this.node, innerHTML: 'Delete',
 			style: { marginTop: '.5em' },
 			events: { click: () =>{ 
-				if(confirm(`Delete ${this.data.info.name}?`)) this.data.parent.parent.remove(this.data.parent.key); }}})
+				if(confirm(`Delete ${this.data.info.name}?`)) this.data.parent.parent.remove(this.data.parent.key); }}});
 
 			this.pointsView = this.appendView(new PointsView());
 	}
+	sendEmailVerification() {
+		var verificationId = SV.guidShort();
+		this.data.info.set('emailVerificationId', verificationId);
+		SV.sendEmailFromAdmin({
+			address: this.data.info.email,
+			subject: 'Welcome to The Coal Yard!',
+			htmlBody: 
+		`Hello ${this.data.info.name}, please verify your email address by clicking this link: <br/><br/>
+		<a href="https://www.thecoalyard.com/verify?id=${verificationId}">Verify Email Address</a>`
+		});
+	}
 	render() {
 		SyncView.updateViews(this.views, this.data.info);
+		this.isStaff.checked = this.data.info.isStaff;
+		this.isEmailVerified.checked = this.data.info.isEmailVerified;
 		if(!this.data.loyalty) this.data.set('loyalty', {});
 		if(!this.data.loyalty.pointsHistory) this.data.loyalty.set('pointsHistory', {});
-		this.pointsView.update(this.data.loyalty.pointsHistory);
+		this.pointsView.update(this.data.loyalty.pointsHistory);	
 	}
 }
 
