@@ -508,8 +508,9 @@ class EditInput extends SyncView {
 class Modal extends SyncView {
 	constructor() {
 		super();
-
+		
 		SV.mergeMap({
+			display: 'none',
 			zIndex: 2,
 			position: 'fixed',
 			left: 0,
@@ -522,8 +523,6 @@ class Modal extends SyncView {
 		}, this.node.style);
 
 		this.mainView = SV.el('div', { parent: this.node });
-
-		this.hide();
 	}
 	show() {
 		this.node.style.display = 'initial';

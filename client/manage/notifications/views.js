@@ -6,7 +6,7 @@ class Notifications extends SyncView {
 	constructor() {
 		super();
 
-		this.sync = new SyncNodeSocket.SyncNodeSocket('/data', {});
+		this.sync = new SyncNodeSocket('/data', {});
 		this.sync.onUpdated((data) => {
 			if(!data.notifications) data.set('notifications', {});
 			else this.update(data.notifications);

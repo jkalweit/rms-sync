@@ -128,8 +128,11 @@ class MemberEdit extends SyncView {
 
 		this.views.push(this.appendView(new SimpleEditInput('name', 'Name')));
 		this.views.push(this.appendView(new SimpleEditInput('phone', 'Phone')));
-		this.views.push(this.appendView(new SimpleEditInput('email', 'Email')));
-		this.views.push(this.appendView(new SimpleEditInput('emailVerificationId', 'Email Id')));
+		this.views.push(this.appendView(new SimpleEditInput('email', 'Email')));		
+		var view = this.appendView(new SimpleEditInput('emailVerificationId', 'Email Id'));
+		view.input.readOnly = true;
+		view.input.style.backgroundColor = '#DDD';
+		this.views.push(view);
 		this.views.push(this.appendView(new SimpleEditInput('note', 'Note')));
 
 		var label = SV.el('label', { parent: this.node, innerHTML: 'Is Staff:', className: 'group' });

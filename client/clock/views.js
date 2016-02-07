@@ -63,6 +63,7 @@ class TimeclockNotificationsModal extends Modal {
 	constructor() {
 		super();
 
+		console.log('here');	
 		SV.el('h2', { parent: this.mainView, innerHTML: 'Notifications' });
 		var table = SV.el('table', { parent: this.mainView });
 		this.notificationsContainer = new ViewsContainer(UserNotification, 'key', 'reverse', table);
@@ -125,7 +126,7 @@ class Timeclock extends SyncView {
 	constructor() {
 		super();
 
-		this.sync = new SyncNodeSocket.SyncNodeSocket('/data', {});
+		this.sync = new SyncNodeSocket('/data', {});
 		this.sync.onUpdated((data) => {
 			if(!data.shifts) { 
 				data.set('shifts', {});
@@ -142,7 +143,6 @@ class Timeclock extends SyncView {
 		this.notificationsModal = new TimeclockNotificationsModal();
 		this.node.appendChild(this.notificationsModal.node);
 
-		document.body.style.paddingTop = '50px';
 		SV.el('button', { parent: this.node, innerHTML: 'Clock In',
 			style: { fontSize: '3em', display: 'block', margin: 'auto' },
 			events: { click: this.clockIn.bind(this) } });
@@ -234,6 +234,7 @@ class Timeclock extends SyncView {
 		this.clockinView.style.display = 'none';
 	}
 	render() {
+		document.body.style.paddingTop = '50px';
 
 		var date = SV.param('date');
 	       	var mdate = date ? SV.getDayOfWeek(0, moment(date)) : SV.getDayOfWeek(0);

@@ -154,18 +154,9 @@ app.post('/deleteupload', function (req, res, next) {
 
 app.use('/images', express.static(imagesPath));
 
+
+var syncServer = new Sync.SyncNodeServer('data', io, {});
 var membersServer = new MemberServer(io);
-app.get('/verify', function (req, res) {
-	var id = '';
-	var split = req.url.split('?');	
-	if(split.length > 1) {
-		var params = split[1].split('=');
-		if(params.length > 1 && params[0].toLowerCase() === 'id') {
-			id = params[1];
-		}
-	}
-	membersServer.verifyEmailAddress(id, res);
-});
 
 
 
@@ -181,7 +172,19 @@ passport.deserializeUser(function(id, cb) {
 });
 
 passport.use(new LocalStrategy(function(username, password, done) {
-	var user = membersServer.data[username];	
+	
+	var user;
+	var keys = Object.keys(membersServer.data);	
+	for(var i = 0; i < keys.length; i++) {
+		var key = keys[i];
+		if(key !== 'lastModified') {
+			var currUser = membersServer.data[key];
+			if(currUser.data.info.email === username) {
+				user = currUser;
+			}
+		}
+	}
+
 	if(user) {
 		if(user.password === password) {
 			done(null, user);
@@ -266,8 +269,6 @@ app.all('/member/*', (req, res, next) => {
 });
 
 
-
-
 //var CalendarServer = require('./server/calendar-server.js');
 //new CalendarServer(app, io, userIsAllowed);
 
@@ -348,7 +349,7 @@ function sendEmailFromAdmin(address, subject, htmlBody) {
 		subject: subject, 
 		html: htmlBody 
 	};
-
+return;
 	transporter.sendMail(mailOptions, function(error, info){
 		if(error){
 			return console.log(error);

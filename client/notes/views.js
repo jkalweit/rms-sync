@@ -10,16 +10,25 @@ class Notes extends SyncView {
 		//this.node.appendChild(this.loginView.node);
 		//this.loginView.on('userChanged', (user) => { this.mainView.style.display = user ? 'initial' : 'none';  });
 		//this.loginView.start();
+		
+		this.sync = new SyncNodeSocket('/data', {});
+		this.sync.onUpdated((data) => {
+			if(!data.notes){
+				data.set('notes', { members: {} });
+			} else {
+				this.update(data.notes);
+			}
+		});
 
 
-		this.mainView = el('div', { parent: this.node});
+		this.mainView = SV.el('div', { parent: this.node});
 
-		el('h1', {
+		SV.el('h1', {
 			parent: this.mainView,
 			innerHTML: 'Notes',
 			className: 'light' });
 
-		this.addView = el('form', {
+		this.addView = SV.el('form', {
 			parent: this.mainView,
 		        events: {
 				submit: (e) => {
@@ -27,7 +36,7 @@ class Notes extends SyncView {
 					e.preventDefault();
 				}
 			}});
-		this.addInput = el('input', {
+		this.addInput = SV.el('input', {
 			parent: this.addView,
 			style: {
 				fontSize: '1em',
@@ -36,7 +45,7 @@ class Notes extends SyncView {
 			events: {
 				keyup: () => { this.render(); }
 			}});
-		el('input', {
+		SV.el('input', {
 			parent: this.addView,
 			value: 'Add',
 			type: 'submit',
@@ -83,7 +92,7 @@ class NoteGroup extends SyncView {
 		super();
 		this.node.className = 'group';
 		this.node.style.marginTop = '0.5em';
-		this.date = el('h4', {
+		this.date = SV.el('h4', {
 			parent: this.node,
 			className: 'light',
 			style: { display: 'inline-block', width: '150px', marginBottom: '0.5em' }});
@@ -101,12 +110,12 @@ class Note extends SyncView {
 		super();
 		this.node.className = 'group';
 		this.node.style.marginTop = '0.5em';
-		this.date = el('span', {
+		this.date = SV.el('span', {
 			parent: this.node,
 			style: { display: 'inline-block', width: '75px' },
 		 	events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
 			
-		this.note = el('span', {
+		this.note = SV.el('span', {
 			parent: this.node,
 			style: { display: 'inline-block', width: 'calc(100% - 75px)' }});
 		this.editView = this.appendView(new NoteEdit());
@@ -147,9 +156,9 @@ class NoteEdit extends SyncView {
 		this.editBody = new SimpleEditInput('body', 'Note');
 		this.editBody.on('changed', (value, oldValue) => { SV.sendToAdmin('Note changed: ' + value); }); 
 		this.node.appendChild(this.editBody.node);
-		this.statusButton = el('button', { parent: this.node, 
+		this.statusButton = SV.el('button', { parent: this.node, 
 		       events: { click: this.cycleStatus.bind(this) }});	
-		el('button', { parent: this.node, innerHTML: 'Delete',
+		SV.el('button', { parent: this.node, innerHTML: 'Delete',
 			events: { click: this.remove.bind(this) }});
 	}
 	cycleStatus() {
@@ -177,22 +186,9 @@ class NoteEdit extends SyncView {
 	}
 }
 
-
-
 SV.startReloader();
 
-var el = SV.el;
+var t = new Notes();
+SV.onLoad(() => { SV.id('container').appendChild(t.node); });
 
-var view = new Notes();
-SV.id('container').appendChild(view.node);
 
-var sv = new SV();
-sv.onupdated = () => {
-	if(!sv.db.notes){
-		sv.db.set('notes', { members: {} });
-	} else {
-		view.update(sv.db.notes);
-	}
-};
-
-sv.startSync();
