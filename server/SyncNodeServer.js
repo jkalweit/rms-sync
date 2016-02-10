@@ -101,6 +101,7 @@ class SyncNodeServer {
 			if (key === 'meta') {
 			}
 			else if (key === '__remove') {
+				console.log('remove!');
 				delete obj[merge[key]];
 			}
 			else {
@@ -113,3 +114,4 @@ class SyncNodeServer {
 }
 
 exports.SyncNodeServer = SyncNodeServer;
+exports.Response = Response;

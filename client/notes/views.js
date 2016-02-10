@@ -1,20 +1,15 @@
 "use strict"
 
 
-
 class Notes extends SyncView {
 	constructor() {
 		super();
 
-		//this.loginView = new Login();
-		//this.node.appendChild(this.loginView.node);
-		//this.loginView.on('userChanged', (user) => { this.mainView.style.display = user ? 'initial' : 'none';  });
-		//this.loginView.start();
-		
 		this.sync = new SyncNodeSocket('/data', {});
 		this.sync.onUpdated((data) => {
+			console.log('updated!', data);
 			if(!data.notes){
-				data.set('notes', { members: {} });
+				data.set({ notes: { members: {}}});
 			} else {
 				this.update(data.notes);
 			}
@@ -163,19 +158,20 @@ class NoteEdit extends SyncView {
 	}
 	cycleStatus() {
 		if(!this.data.status || this.data.status === 'New') {
-			this.data.set('status', 'Accepted'); 
+			this.data.set({ status: 'Accepted' }); 
 		} else if(this.data.status === 'Accepted') {
-			this.data.set('status', 'Ordered');
+			this.data.set({ status: 'Ordered'});
 		} else if(this.data.status === 'Ordered') {
-			this.data.set('status', 'Completed');
+			this.data.set({ status: 'Completed' });
 		} else if(this.data.status === 'Completed') {
-			this.data.set('status', 'Rejected');
+			this.data.set({ status: 'Rejected' });
 		} else if(this.data.status === 'Rejected') {
-			this.data.set('status', 'New'); 
+			this.data.set({ status: 'New' }); 
 		}
 	}
 	remove() {
 		 if(confirm('Delete this note?')) {
+			console.log('%%%%%%%%%%%%%%%%%%this', this.data);
 		 	this.data.parent.remove(this.data.key);
 			SV.sendToAdmin('Deleted note: ' + this.data.body);
 		 }
@@ -189,6 +185,6 @@ class NoteEdit extends SyncView {
 SV.startReloader();
 
 var t = new Notes();
-SV.onLoad(() => { SV.id('container').appendChild(t.node); });
+window.addEventListener('load', () => { SV.id('container').appendChild(t.node); });
 
 

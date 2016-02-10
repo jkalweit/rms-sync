@@ -6,9 +6,8 @@ class TodoList extends SyncView {
 	constructor() {
 		super();
 
-		this.sync = new SyncNodeSocket.SyncNodeSocket('/members', {});
+		this.sync = new SyncNodeSocket('/memberdata', {});
 		this.sync.onUpdated((data) => {
-			console.log('updated', data.info, data.todos);
 			if(!data.todos) data.set('todos', {});
 			else this.update(data);
 		});

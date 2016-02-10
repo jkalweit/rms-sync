@@ -162,6 +162,7 @@ var membersServer = new MemberServer(io);
 
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
 
 passport.serializeUser(function(user, cb) {
 	cb(null, user.key);
@@ -171,19 +172,25 @@ passport.deserializeUser(function(id, cb) {
 	cb(null, membersServer.data[id]);
 });
 
-passport.use(new LocalStrategy(function(username, password, done) {
-	
-	var user;
+
+var findUser = (comparator) => {
 	var keys = Object.keys(membersServer.data);	
 	for(var i = 0; i < keys.length; i++) {
 		var key = keys[i];
 		if(key !== 'lastModified') {
 			var currUser = membersServer.data[key];
-			if(currUser.data.info.email === username) {
-				user = currUser;
+			if(comparator(currUser)) {
+				return currUser;
 			}
 		}
 	}
+};
+
+
+passport.use(new LocalStrategy(function(username, password, done) {
+	var user = findUser((user) => {
+		user.data.info.email === username
+	});
 
 	if(user) {
 		if(user.password === password) {
@@ -197,7 +204,25 @@ passport.use(new LocalStrategy(function(username, password, done) {
 	}
 }));
 
-
+passport.use(new FacebookStrategy({
+		clientID: config.facebook.appId,
+		clientSecret: config.facebook.appSecret,
+		profileFields: ['id', 'emails', 'name']
+	},
+	(accessToken, refreshToken, profile, done) => {
+		console.log('profile', profile);
+		var user = findUser((user) => {
+			var match = false;
+			profile.emails.forEach((email) => {
+				if(email.value.toLowerCase() === (user.data.info.email || '').toLowerCase()) {
+					match = true;
+				}
+			});
+			return match;
+		});
+		done(null, user);
+	}
+));
 app.use(passport.initialize());
 app.use(passport.session({
 	name: 'rmsSession',
@@ -205,19 +230,39 @@ app.use(passport.session({
 	secure: startHTTPS 
 }));
 
-app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),
-		function(req, res) {
-			var redirect = '/my/';
-			var split = req.url.split('?');
-			if(split.length > 1) {
-				var params = split[1].split('=');
-				if(params.length > 1 && params[0].toLowerCase() === 'url') {
-					redirect = params[1];
-				}
-			}
-			console.log('authenticated as', req.user.data.info.name, req.url);
-			res.redirect(redirect);
+var successRedirect = (req, res) => {
+	console.log('###########uri', req.query.url);
+	var redirect = '/member';
+	var split = req.url.split('?');
+	if(split.length > 1) {
+		var params = split[1].split('=');
+		if(params.length > 1 && params[0].toLowerCase() === 'url') {
+			redirect = params[1].split('&')[0];
+			if(redirect[0] !== '/') redirect = '/' + redirect;
+		}
+	}
+	console.log('authenticated as', req.user.data.info.name);
+	console.log('redirect', redirect);
+	res.redirect(redirect);
+};
+
+app.get('/auth/facebook', (req, res, next) => { 
+	var callbackURL = '/auth/facebook/callback';
+		passport.authenticate(
+			'facebook', 
+			{ scope: "public_profile,email",
+		       	  callbackURL: callbackURL })(req, res, next);
 		});
+app.get('/auth/facebook/callback', (req, res, next) => { 
+	var callbackURL = '/auth/facebook/callback';
+		passport.authenticate(
+			'facebook', 
+			{ 
+				failureRedirect: '/login',
+		       	  callbackURL: callbackURL })(req, res, next);
+}, successRedirect);
+
+app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }), successRedirect);
 
 app.get('/logout', function(req, res){
 	req.logout();
@@ -236,7 +281,6 @@ function userIsAllowed(user, permission) {
 
 var enforcePermission = (path, permission) => {
 	app.all(path, (req, res, next) => {
-		console.log('enforcePermission', path, permission, req.user.data.info.name);
 		if(!req.user) {
 			res.redirect('/login?url=' + req.url);
 		} else if(userIsAllowed(req.user, permission)) {

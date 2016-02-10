@@ -2,10 +2,10 @@
 
 var fs = require('fs');
 var path = require('path');
-var SyncNodeServer = require('./SyncNodeServer.js').SyncNodeServer;
+var SyncNodeServer = require('./SyncNodeServer.js');
 
 
-class MemberServer extends SyncNodeServer {
+class MemberServer extends SyncNodeServer.SyncNodeServer {
 
 	constructor(io) {
 		super('/members', io, {});
@@ -18,7 +18,11 @@ class MemberServer extends SyncNodeServer {
 		this.memberIoNamespace = this.io.of('/memberdata');
 		this.memberIoNamespace.on('connection', (socket) => {
 			var user = socket.request.user;
-			console.log(user.data.info.name + ' connected to ' + this.memberIoNamespace);
+			if(user) {
+				console.log(user.data.info.name + ' connected to ' + this.memberIoNamespace);
+			} else {
+				console.log('WARNING: UNKNOWN user connected to ' + this.memberIoNamespace);
+			}
 			if(!this.data[user.key]) {
 				this.data[user.key] = {}
 			}
@@ -37,24 +41,39 @@ class MemberServer extends SyncNodeServer {
 				}
 			});
 			socket.on('update', (request) => {
-				var merge = request.data;
-				this.doMerge(userData, merge);
+				var merge = {};
+			       	merge[user.key] = { data: request.data };
+				this.doMerge(this.data, merge);
 				this.persist();
-				socket.emit('updateResponse', new Response(request.requestGuid, null));
-				this.emitMemberUpdate(merge, socket.request.user.key);
+				socket.emit('updateResponse', new SyncNodeServer.Response(request.requestGuid, null));
+				console.log('emitting member update', socket.request.user.key);
+				this.ioNamespace.emit('update', merge); 
+				this.emitMemberUpdate(merge, socket.request.user.key, socket);
 			});
 		});
 	}
-
+	onMerge(merge, excludeSocket) {
+		var memberKey;
+		Object.keys(merge).forEach((key) => {
+			if(key !== 'lastModified') memberKey = key;	
+		});		
+		if(memberKey) {
+			var userMerge = merge[memberKey];
+			this.emitMemberUpdate(userMerge.data, memberKey);
+		}
+	}
 	emitUpdate(merge) {
 		this.ioNamespace.emit('update', merge);
 	}
-	emitMemberUpdate(merge, memberKey) {
+	emitMemberUpdate(merge, memberKey, excludeSocket) {
 		for(var id in this.memberIoNamespace.connected) {
 			var sock = this.memberIoNamespace.connected[id];
 			if(sock.request.user && 
 					sock.request.user.key === memberKey) {
-						sock.emit('update', merge);
+						if(sock !== excludeSocket) {
+							console.log('*****woohoo!');
+							sock.emit('update', merge);
+						} else console.log('excluding socket');
 					}
 		};
 	}
@@ -80,7 +99,7 @@ class MemberServer extends SyncNodeServer {
 					this.doMerge(this.data, merge);				
 					this.persist();
 					this.emitUpdate(merge);
-					this.emitMemberUpdate(merge, member.key);
+					this.emitMemberUpdate(merge.data, member.key);
 					res.end('Verified ' + verificationId);
 					return;
 				}

@@ -190,8 +190,6 @@ class PointsView extends SyncView {
 		SV.el('input', { parent: form, value: 'Add', type: 'submit' });
 
 		this.pointsContainer = new ViewsContainer(Points, 'key', 'reverse');
-		this.pointsContainer.on('viewAdded', (view) => { 
-			view.on('pointsChanged', this.updatePointTotal.bind(this)); });
 		this.pointsContainer.node.style.marginTop = '1em';
 		this.node.appendChild(this.pointsContainer.node);
 	}
@@ -203,19 +201,21 @@ class PointsView extends SyncView {
 				type: this.typeSelect.value,
 				amount: amount
 			};			
-			this.data.set(points.key, points);
-			this.updatePointTotal();	
+			var newTotal = this.getPointTotal() + points.amount;
+			var merge = { points: newTotal, pointsHistory: {}};
+			merge.pointsHistory[points.key] = points;
+			this.data.parent.merge(merge);
 			this.amountInput.value = '';
 		} else {
 			alert('Invalid amount: ' + this.amountInput.value);
 		}
 	}
-	updatePointTotal() {
+	getPointTotal() {
 		var sum = 0;
 		SV.toArray(this.data).forEach((points) => { 
 			sum += (points.amount * (points.type === 'Redeem' ? -1 : 1)); 
 		});
-		this.data.parent.set('points', sum);
+		return sum;
 	}
 	render() {
 		this.pointsContainer.update(this.data);

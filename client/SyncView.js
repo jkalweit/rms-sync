@@ -2,26 +2,6 @@
 
 
 class SV {
-	constructor(namespace) {
-		this.namespace = namespace || 'data';
-	}
-	startSync() {
-		this.db = null;
-		var sync = new SyncNodeSocket.SyncNodeSocket(this.namespace, {});
-
-		window.onload = () => {
-			if(this.onloaded) {
-				this.onloaded();
-			}
-			sync.onUpdated((updated) => {
-				this.db = updated;
-				if (this.onupdated) this.onupdated();
-			});
-		}
-	}
-
-
-
 	static id(id, context) {
 		context = context || document;
 		return context.getElementById(id);
@@ -57,48 +37,6 @@ class SV {
 
 		var proto = Object.create(HTMLElement.prototype);
 		proto.template = id(name);
-
-		// proto.attachedCallback = function() {
-		// 	this.refreshUI();
-		// };
-
-		// proto.update = function(data) {
-		// 	// Check immutable data for equality
-		// 	if (this.data.lastModified !== data.lastModified) {
-		// 		console.log('          Data is different!', data);
-		// 		this.data = data;
-		// 		this.refreshUI();
-		// 	}
-		// }
-
-		// proto.refreshUI = function() {
-		// 	var clone = document.importNode(this.template.content, true);
-		// 	var forloops = clone.querySelectorAll('for');
-		// 	for(var i = 0; i < forloops.length; i++) {
-		// 		var df = document.createDocumentFragment();
-		// 		var loopElem = forloops[i];
-		// 		var loopAttrib = loopElem.getAttribute('loop');
-		// 		var matches = /([\w]*),\s([\w]*)\sin\s([\w\.]*)/.exec(loopAttrib);
-		// 		var items = getProperty(this.data, matches[3]);
-		// 		var arr = toArray(items);
-		// 		console.log('items', arr);
-		// 		arr.forEach((item) => {
-		// 			var loopClone = document.importNode(loopElem, true);
-		// 			//var looped = inject(forloops[i].innerHtml, item);
-		// 			console.log('loopClone', SV.inject(loopClone.innerHTML, item));
-		// 			df.innerHTML += SV.inject(loopClone.innerHTML, item);
-		// 		});
-		// 		console.log('df', df.innerHTML);
-		// 		//clone.replaceChild(clone, df);
-		// 	}
-		// 	console.log('forloops', forloops);
-		// 	this.innerHTML = '';
-		// 	this.appendChild(clone);
-		// 	var html = this.innerHTML;
-		// 	html = SV.inject(html, this.data);
-		// 	this.innerHTML = html;
-		// }
-
 		var ctor = document.registerElement(name, {
 			prototype: proto
 		});
@@ -343,7 +281,8 @@ class SyncView {
 	}
 	update(data, force) {
 		if(force || this.hasChanged(data)) {
-//			if(this.name) console.log(this.name + ' data changed');
+			this.lastModified = data.lastModified;
+			if(this.name) console.log(this.name + ' data changed', force);
 			var oldData = this.data;
 			this.data = data;
 			this.emit('updating', data, oldData);
@@ -351,27 +290,28 @@ class SyncView {
 			if(this.doFlash) this.flash(); 
 		}
 		else {
-//			if(this.name) console.log(this.name + ' DATA NO CHANGED', this.data, data);
+			if(this.name) console.log(this.name + ' DATA NO CHANGED', this.data, data);
 		}
 	}
 	hasChanged(newData) {
+		//if(this.name) console.log(this.name + ' doing hasChanged #########################');
 		if(!this.data && !newData) {
 			return false;
 		}
 		if((this.data && !newData) || (!this.data && newData)) { 
-//			if(this.name) console.log(this.name + 'here2');
+			//if(this.name) console.log(this.name + 'here2');
 			return true;
 		}
 		if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
-//			console.log('direct comparison', this.data, newData);
+			//console.log('direct comparison', this.data, newData);
 			return this.data === newData;
 		}
 		if(!this.data.lastModified || !newData.lastModified) {
-//			if(this.name) console.log(this.name + 'here3');
+			//if(this.name) console.log(this.name + 'here3');
 			return true;
 		}	
-//		if(this.name) console.log(this.name + 'here4', this.data.lastModified, newData.lastModified);
-		return this.data.lastModified !== newData.lastModified;
+		//if(this.name) console.log(this.name + 'here4', this.lastModified, newData.lastModified);
+		return this.lastModified !== newData.lastModified;
 	}
 	on(eventName, handler) {
 		if(!this.eventHandlers[eventName]) this.eventHandlers[eventName] = [];
@@ -432,7 +372,6 @@ class ViewsContainer extends SyncView {
 class SimpleEditInput extends SyncView {
 	constructor(prop, label, validator, formatter) {
 		super();
-		this.name = 'SimpleEditInput ' + prop;
 		this.doFlash = true;
 		
 		this.prop = prop;
@@ -455,8 +394,9 @@ class SimpleEditInput extends SyncView {
 				if(formatter) value = formatter(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
-					console.log('	update');
-					this.data.set(this.prop, value);
+					var update = {};
+					update[this.prop] = value;
+					this.data.set(update);
 					this.emit('changed', value, oldValue);
 				}
 			}}});
@@ -596,7 +536,6 @@ class TabView extends SyncView {
 class UserInfo extends SyncView {
 	constructor() {
 		super();
-		console.log('style', this.node.style);
 		SV.mergeMap({
 			float: 'right',
 			margin: '3px',
@@ -604,7 +543,6 @@ class UserInfo extends SyncView {
 			border: '1px solid #CCC',
 			borderRadius: '3px'
 		}, this.node.style);
-		console.log('style2', this.node.style);
 		this.username = SV.el('span', {
 			parent: this.node 
 		});
