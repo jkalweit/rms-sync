@@ -4,22 +4,73 @@
 <style type="text/css">
 body {
 	overflow:hidden;
-	color:#333;
-	background-color:#FFF;
 	font-weight:bold;
 	font-family:Verdana, Geneva, sans-serif;
-	font-size:40px;
+	font-size:20px;
 	text-align: center;
+	color: #EEE;
+	background-color:#333;
 }
 
 .sign {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100%;
+	width: 1280px;
+	height: 1024px;
 	transition: opacity 2s;
+	background-color: #333;
+	padding-top: 5em;
 }
 
+.header {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	box-shadow: 0px 10px 5px #000;
+	padding: 0.5em;
+	background-color: #004D40;
+	color: #;
+	font-size: 30px;
+}
+
+.special {
+	float: left;
+	width: 250px;
+	height: 400px;
+	background-color: #555;
+	padding: 0;
+	margin: 0em 0em 1.6em 2.7em;
+	border: 1px solid #000;
+	position: relative;
+	box-shadow: 10px 10px 5px #000;
+}
+
+.title {
+	background-color: #00796B;
+	color: #FFF;
+	padding: 0.5em;
+	display: block;
+	min-height: 2.5em;
+}
+.description {
+	background-color: #555;
+	color: #DDD;
+	padding: 0.5em;
+	padding-top: 1em;
+	display: block;
+}
+.price {
+	background-color: #80CBC4;
+	color: #333;
+	padding: 0.5em;
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
 .center {
 	margin-left: auto;
 	margin-right: auto;
@@ -37,14 +88,48 @@ h4 {
 <title>Digital Signage</title>
 </head>
 <body>
-<div id="sign1" class="sign">
-	<h1>Happy New Year!</h1>
-	<div style="float: left; width: 100%">
-		<img src="http://www.thecoalyard.com/imgs/logo.png" style="width: 400px"  />
+<div id="sign1" class="sign">	
+	<div class="header">SPECIALS</div>
+	<div class="special">
+		<span class="title">Flyin Hawaiian Chicken</span>
+		<span class="description">Two chicken breasts, seasoned and grilled with teriyaki, pineapple, bacon, provolone and cheddar with a side and toast and SALAD BAR</span>
+		<span class="price">$16</span>
 	</div>
-	<!-- <div style="float: left; width: 50%">
-		<img style="width: 700px" src="/imgs/game.jpg" />
-	</div>	-->
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
 </div>
 <div id="sign2" class="sign hide" style="padding-top: 25px">
 	<h2 style="margin: 0.1em">TODAY: Chef Meares'</h2>
