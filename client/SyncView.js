@@ -55,8 +55,8 @@ class SV {
 		} else {
 			result = [];
 			if(!obj) return result;
-			Object.keys(obj).forEach(function(key) {
-				if (key !== 'lastModified' && key != 'key') {
+			Object.keys(obj).forEach((key) => {
+				if (key !== 'lastModified' && key !== 'key') {
 					result.push(obj[key]);
 				}
 			});

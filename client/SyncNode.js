@@ -53,7 +53,7 @@ class SyncNode extends EventEmitter {
 				var newMerge = {};
 				newMerge[propName] = merge;
 				newMerge.lastModified = merge.lastModified;
-				console.log('emitting update', propName);
+				//console.log('emitting update', propName);
 				this.emit('updated', newUpdated, newMerge);
 			} else {
 				//console.log('updatesDisabled', propName);
@@ -78,7 +78,7 @@ class SyncNode extends EventEmitter {
 					val.on('updated', this.createOnUpdated(key));
 				}
 			}
-			console.log('setting', key, val);
+			//console.log('setting', key, val);
 			this[key] = val;			
 		});
 		if(!obj.lastModified) obj.lastModified = new Date().toISOString();
@@ -96,7 +96,7 @@ class SyncNode extends EventEmitter {
 		this.__isUpdatesDisabled = true;
 		lastModified = lastModified || new Date().toISOString();
 		Object.keys(merge).forEach((key) => {
-			console.log('merging', key, merge);
+			// console.log('merging', key, merge);
 			if (key === '__remove') {
 				var propToRemove = merge[key];
 				console.log('deleted', propToRemove, this);
@@ -116,14 +116,13 @@ class SyncNode extends EventEmitter {
 				}
 			}
 		});
-		console.log('right here....');
 		this.lastModified = lastModified;
 		merge.lastModified = lastModified;
 		this.__isUpdatesDisabled = false;
 
 		var newUpdated = this;
-		console.log('merge', merge);
-		console.log('new updated', newUpdated);
+		//console.log('merge', merge);
+		//console.log('new updated', newUpdated);
 		this.emit('updated', newUpdated, merge);
         }
 	remove(key) {

@@ -201,7 +201,7 @@ class PointsView extends SyncView {
 				type: this.typeSelect.value,
 				amount: amount
 			};			
-			var newTotal = this.getPointTotal() + points.amount;
+			var newTotal = this.getPointTotal() + PointsView.getPointAmount(points);
 			var merge = { points: newTotal, pointsHistory: {}};
 			merge.pointsHistory[points.key] = points;
 			this.data.parent.merge(merge);
@@ -210,10 +210,14 @@ class PointsView extends SyncView {
 			alert('Invalid amount: ' + this.amountInput.value);
 		}
 	}
+	static getPointAmount(points) {
+		return points.amount * (points.type === 'Redeem' ? -1 : 1);
+	}
 	getPointTotal() {
 		var sum = 0;
-		SV.toArray(this.data).forEach((points) => { 
-			sum += (points.amount * (points.type === 'Redeem' ? -1 : 1)); 
+		var arr = SV.toArray(this.data);
+		arr.forEach((points) => { 
+			sum += PointsView.getPointAmount(points); 
 		});
 		return sum;
 	}
