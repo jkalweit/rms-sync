@@ -48,7 +48,7 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 				socket.emit('updateResponse', new SyncNodeServer.Response(request.requestGuid, null));
 				console.log('emitting member update', socket.request.user.key);
 				this.ioNamespace.emit('update', merge); 
-				this.emitMemberUpdate(merge, socket.request.user.key, socket);
+				this.emitMemberUpdate(merge[user.key].data, socket.request.user.key, socket);
 			});
 		});
 	}

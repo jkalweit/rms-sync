@@ -54,13 +54,13 @@ app.use(cookieParser);
 class MapSessionStore extends session.Store {
 	constructor() {
 		super();
-		this.path = path.join('..', 'data', 'sessions.json');
+		this.dataPath = path.join('..', 'data', 'sessions.json');
 		try {
-			var data = fs.readFileSync(this.path, 'utf8');
+			var data = fs.readFileSync(this.dataPath, 'utf8');
 			this.sessions = JSON.parse(data);
 		} catch(e) {
 			if (e.code !== 'ENOENT') {
-				console.error('Failed to read ' + path + ': ', e);
+				console.error('Failed to read ' + this.dataPath + ': ', e);
 			}
 			console.log('Creating empty session store.');
 			this.sessions = {};
@@ -76,9 +76,9 @@ class MapSessionStore extends session.Store {
 	}
 	set(sid, session, callback) {
 		this.sessions[sid] = session;
-		fs.writeFile(this.path, JSON.stringify(this.sessions), function (err) {
+		fs.writeFile(this.dataPath, JSON.stringify(this.sessions), function (err) {
 			if (err) {
-				console.error('Failed to write ' + path + ': ' + err);
+				console.error('Failed to write ' + this.dataPath + ': ' + err);
 			}
 		});
 		callback(null);
@@ -104,10 +104,11 @@ var io;
 
 if(startHTTPS) {
 
-	var path = '/etc/letsencrypt/live/thecoalyard.com/';
+	var certPath = '/etc/letsencrypt/live/thecoalyard.com/';
 	var options = {
-		key: fs.readFileSync(path + 'privkey.pem', 'utf8'),
-		cert: fs.readFileSync(path + 'cert.pem', 'utf8')
+		key: fs.readFileSync(certPath + 'privkey.pem', 'utf8'),
+		cert: fs.readFileSync(certPath + 'cert.pem', 'utf8'),
+		ca: fs.readFileSync(certPath + 'chain.pem', 'utf8')
 	};
 	sserver = https.createServer(options, app);
 	io = socketio.listen(sserver);
@@ -279,8 +280,8 @@ function userIsAllowed(user, permission) {
 
 
 
-var enforcePermission = (path, permission) => {
-	app.all(path, (req, res, next) => {
+var enforcePermission = (route, permission) => {
+	app.all(route, (req, res, next) => {
 		if(!req.user) {
 			res.redirect('/login?url=' + req.url);
 		} else if(userIsAllowed(req.user, permission)) {
@@ -317,7 +318,6 @@ app.all('/member/*', (req, res, next) => {
 //new CalendarServer(app, io, userIsAllowed);
 
 
-
 app.use('/', express.static('client/'));
 
 // using this for debugging...
@@ -352,7 +352,7 @@ function sendText(phone, body) {
 	});
 }
 function sendTextToAdmin(body) {
-	sendText(membersServer.data.admin.phone, body);
+	sendText(membersServer.data.admin.data.info.phone, body);
 }
 
 io.on('connection', (socket) => {
@@ -451,9 +451,9 @@ function onAuthorizeFail(data, message, error, accept){
 var chokidar = require('chokidar');
 
 /* For Debugging, send signal when file changes */
-chokidar.watch('./client', { depth: 99 }).on('change', (path) => {
-	if(path.match(/\.js$/i) !== null) {
-		console.log('js file changed', path);
+chokidar.watch('./client', { depth: 99 }).on('change', (filePath) => {
+	if(filePath.match(/\.js$/i) !== null) {
+		console.log('js file changed', filePath);
 		io.emit('reload');
 	};
 });
