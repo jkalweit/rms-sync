@@ -479,12 +479,18 @@ class Modal extends SyncView {
 class Tab extends SyncView {
 	constructor() {
 		super();
+
+		this.node.style.padding = '1em';
+		this.node.style.boxShadow = '3px 3px 3px #555';
+		this.node.style.backgroundColor = '#FFF';
 	}
 }
 
 class TabView extends SyncView {
 	constructor() {
 		super();
+
+		this.node.style.minWidth = '300px';
 
 		this.header = SV.el('div', { parent: this.node, 
 			style: { 
@@ -499,7 +505,7 @@ class TabView extends SyncView {
 		this.tabsContainer = SV.el('div', { parent: this.node, 
 			style: { 
 				minHeight: '1em',
-				border: '1px solid #CCC'
+				border: '1px solid #000'
 			}
 		});
 	}
@@ -507,9 +513,12 @@ class TabView extends SyncView {
 		var headerButton = SV.el('div', { parent: this.header, innerHTML: tab.title,
 			events: { click: () => { this.showTab(tab); }},
 	      		style: { 
-				border: '1px solid #CCC',
+				border: '1px solid #555',
+		    		borderBottom: '1px solid #000',
 		    		display: 'inline-block',
-		    		padding: '.25em'
+		    		padding: '.25em',
+		    		backgroundColor: '#DDD',
+		    		height: '1em'
 		    	}
 		});
 		tab.node.classList.add('hide');
@@ -520,12 +529,14 @@ class TabView extends SyncView {
 		this.tabs.forEach((tabObj) => {
 			if(tabObj.tab === tab) {
 				tabObj.tab.node.classList.remove('hide');
-				tabObj.header.style.border = '3px solid #CCC';
+				tabObj.header.style.border = '1px solid #000';
 				tabObj.header.style.borderBottom = '1px solid #FFF';
+		    		tabObj.header.style.backgroundColor = '#FFF';
 			} else {
 				tabObj.tab.node.classList.add('hide');
-				tabObj.header.style.border = '1px solid #CCC';
+				tabObj.header.style.border = '1px solid #555';
 				tabObj.header.style.borderBottom = 'initial';
+		    		tabObj.header.style.backgroundColor = '#DDD';
 			}
 		});
 	}

@@ -19,7 +19,7 @@ class Member extends SyncView {
 		this.node.appendChild(this.pointsView.node);
 	}
 	render() {
-		this.node.style.backgroundColor = this.editMode ? '#EEE' : '#FFF';
+		this.node.style.backgroundColor = this.editMode ? '#EEE' : 'transparent';
 
 		var member = this.data;
 		this.userinfo.update(member.info);

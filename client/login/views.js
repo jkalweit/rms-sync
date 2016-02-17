@@ -5,6 +5,7 @@ class LoginTab extends Tab {
 		super();
 
 		this.title = 'Login';
+		this.node.style.position = 'relative';
 
 		var form = SV.el('form', { parent: this.node, method: 'post' });
 		SV.el('input', { parent: form, name: 'username' });
@@ -12,7 +13,8 @@ class LoginTab extends Tab {
 		SV.el('input', { parent: form, type: 'submit', value: 'Login' });
 		var fbButton = SV.el('a', { parent: this.node, alt: 'Login with Facebook',
 				href: '/auth/facebook' });
-		SV.el('img', { parent: fbButton, src: '/imgs/facebook_login.png' });
+		SV.el('img', { parent: fbButton, src: '/imgs/facebook_login.png',
+	       			style: { width: '100%', maxWidth: '300px' }});
 
 	}
 	render() {

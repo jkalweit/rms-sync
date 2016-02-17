@@ -32,6 +32,7 @@ html, body {
 
 #column {
 	margin: 0;
+	padding: 0;
 	width: 100%;
 	text-align: center;
 }
@@ -41,51 +42,58 @@ th {
 	color: #555555;
 }
 
-.card {
-	position: relative;
-	border: 1px solid #555555;
-	box-sizing: border-box;
-	padding: 1em;
-	padding-top: 4em;
-	box-shadow: 4px 4px 4px #444;
-	margin-bottom: 2em;
-	background-color: #EDDAC7;
+
+.ribbon-wrapper-green {
+  width: 185px;
+  height: 188px;
+  overflow: hidden;
+  position: absolute;
+  top: -3px;
+  right: -3px;
 }
 
-.card h2 {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	margin: 0;
-	padding: .5em;
-	background-color: #745538; /* richer #673300 */
-	color: #FFF; 
+.ribbon-green {
+  font: bold 15px Sans-Serif;
+  color: #333;
+  text-align: center;
+  text-shadow: rgba(255,255,255,0.5) 0px 1px 0px;
+  -webkit-transform: rotate(45deg);
+  -moz-transform:    rotate(45deg);
+  -ms-transform:     rotate(45deg);
+  -o-transform:      rotate(45deg);
+  position: relative;
+  padding: 7px 0;
+  left: 9px;
+  top: 45px;
+  width: 220px;
+  background-color: #BFDC7A;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#BFDC7A), to(#8EBF45)); 
+  background-image: -webkit-linear-gradient(top, #BFDC7A, #8EBF45); 
+  background-image:    -moz-linear-gradient(top, #BFDC7A, #8EBF45); 
+  background-image:     -ms-linear-gradient(top, #BFDC7A, #8EBF45); 
+  background-image:      -o-linear-gradient(top, #BFDC7A, #8EBF45); 
+  color: #6a6340;
+  -webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.3);
+  -moz-box-shadow:    0px 0px 3px rgba(0,0,0,0.3);
+  box-shadow:         0px 0px 3px rgba(0,0,0,0.3);
+}
 
+.ribbon-green:before, .ribbon-green:after {
+  content: "";
+  border-top:   3px solid #6e8900;   
+  border-left:  3px solid transparent;
+  border-right: 3px solid transparent;
+  position:absolute;
+  bottom: -3px;
 }
-.card .btn {
-	border: 1px solid #999;
-	box-sizing: border-box;
-	padding: 0.5em 1em;
-	display: inline-block;
-	background-color: #CCA177;
-	color: rgba(0,0,0,.87);
+
+.ribbon-green:before {
+  left: 0;
 }
-.card .btn:hover {
-	box-shadow: 3px 3px 3px #777;
-	background-color: #FF800B;
-	position: relative;
-	top: -3px;
-	left: -3px;
-	color: #FFF;
+.ribbon-green:after {
+  right: 0;
 }
-.card .btn:active {
-	box-shadow: none;
-	top: 0;
-	left: 0;
-	background-color: #673300;
-	color: #FFF;
-}
+
 
 </style>
 
@@ -97,7 +105,10 @@ th {
 <div id="container">
 
 	<div id="column">
-		<img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px" />
+
+		<!-- <div class="ribbon-wrapper-green"><div class="ribbon-green"><a href="/member">Member Login</a></div></div> -->
+		
+       <img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px;" />
 		<br/>
 		<br/>
 		<br/>

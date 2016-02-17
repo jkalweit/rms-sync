@@ -17,14 +17,21 @@ a {
 	color: inherit;
 }
 
+input {
+	font-size: 1.5em;
+}
+
 #container {
 	margin: 2em auto;
 	padding: 2em;
+	min-height: 800px;
 	max-width: 600px;
-	border: 1px solid #CCCCCC;
+	border: 1px solid #3E3227;
 	background-color: #FFF;
 	box-shadow: 10px 10px 5px #000;
 	box-sizing: border-box;
+	background: linear-gradient(#FFF, #AA6F39);
+  	position: relative;
 }
 
 .light { 
@@ -72,7 +79,7 @@ a {
 	color: #FFF; 
 
 }
-.card .btn {
+.btn {
 	border: 1px solid #999;
 	box-sizing: border-box;
 	padding: 0.5em 1em;
@@ -80,7 +87,7 @@ a {
 	background-color: #CCA177;
 	color: rgba(0,0,0,.87);
 }
-.card .btn:hover {
+.btn:hover {
 	box-shadow: 3px 3px 3px #777;
 	background-color: #FF800B;
 	position: relative;
@@ -88,7 +95,7 @@ a {
 	left: -3px;
 	color: #FFF;
 }
-.card .btn:active {
+.btn:active {
 	box-shadow: none;
 	top: 0;
 	left: 0;
