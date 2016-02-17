@@ -1,30 +1,31 @@
 "use strict"
 
-class TimeclockByDay extends Tab {
+class LoginTab extends Tab {
 	constructor() {
 		super();
 
-		this.title = 'By Day';
+		this.title = 'Login';
 
-		this.views = new ViewsContainer(TimespanGroup);
-		this.node.appendChild(this.views.node);
+		var form = SV.el('form', { parent: this.node, method: 'post' });
+		SV.el('input', { parent: form, name: 'username' });
+		SV.el('input', { parent: form, name: 'password', type: 'password' });
+		SV.el('input', { parent: form, type: 'submit', value: 'Login' });
+		var fbButton = SV.el('a', { parent: this.node, alt: 'Login with Facebook',
+				href: '/auth/facebook' });
+		SV.el('img', { parent: fbButton, src: '/imgs/facebook_login.png' });
+
 	}
 	render() {
-		this.views.update(this.data);
 	}
 }
 
-class TimeclockByEmployee extends Tab {
+class SignUpTab extends Tab {
 	constructor() {
 		super();
 
-		this.title = 'By Employee';
-
-		this.views = new ViewsContainer(TimespanGroup);
-		this.node.appendChild(this.views.node);
+		this.title = 'Sign Up';
 	}
 	render() {
-		this.views.update(this.data);
 	}
 }
 
@@ -41,12 +42,12 @@ class LoginOrSignup extends SyncView {
 		this.node.appendChild(this.tabs.node);
 
 
-		// this.tabByDay = new TimeclockByDay();
-		// this.tabs.addTab(this.tabByDay);
-		// this.tabs.showTab(this.tabByDay);
-		// 		
-		// this.tabByEmployee = new TimeclockByEmployee();
-		// this.tabs.addTab(this.tabByEmployee);
+		this.loginTab = new LoginTab();
+		this.tabs.addTab(this.loginTab);
+		this.tabs.showTab(this.loginTab);
+				
+		this.signUpTab = new SignUpTab();
+		this.tabs.addTab(this.signUpTab);
 
 	}
 	render() {

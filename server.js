@@ -187,10 +187,24 @@ var findUser = (comparator) => {
 	}
 };
 
+function normalizeEmail(email) {
+	var normalized = email ? email.trim().toLowerCase() : null;
+	return (normalized && normalized !== '') ? normalized : null;
+}
+
+function emailsMatch(email1, email2) {
+	if(email1 && email2) {
+		return normalizeEmail(email1) === normalizeEmail(email2);
+	} else {
+		return false;
+	}
+}
 
 passport.use(new LocalStrategy(function(username, password, done) {
 	var user = findUser((user) => {
-		user.data.info.email === username
+		if(user.data && user.data.info && user.data.info.email && username) {
+			return emailsMatch(user.data.info.email, username);
+		}
 	});
 
 	if(user) {
@@ -215,7 +229,10 @@ passport.use(new FacebookStrategy({
 		var user = findUser((user) => {
 			var match = false;
 			profile.emails.forEach((email) => {
-				if(email.value.toLowerCase() === (user.data.info.email || '').toLowerCase()) {
+				if(user.data &&
+					user.data.info &&
+					user.data.info.email &&
+					emailsMatch(email.value, user.data.info.email)) {
 					match = true;
 				}
 			});
