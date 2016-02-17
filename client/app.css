@@ -2,7 +2,7 @@ body {
 	font-family: sans-serif; 
 	margin: 0;
 	padding: 0;
-	background-color: #888;
+	background-color: #673300;
 	background-image: url("/imgs/leather_bg.jpg");
 }
 
@@ -18,7 +18,7 @@ a {
 }
 
 #container {
-	margin: 10px auto;
+	margin: 2em auto;
 	padding: 2em;
 	max-width: 600px;
 	border: 1px solid #CCCCCC;
@@ -48,3 +48,85 @@ a {
 .hide {
 	display: none;
 }
+
+
+.card {
+	position: relative;
+	border: 1px solid #555555;
+	box-sizing: border-box;
+	padding: 1em;
+	padding-top: 4em;
+	box-shadow: 4px 4px 4px #444;
+	margin-bottom: 2em;
+	background-color: #EDDAC7;
+}
+
+.card h2 {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	margin: 0;
+	padding: .5em;
+	background-color: #745538; /* richer #673300 */
+	color: #FFF; 
+
+}
+.card .btn {
+	border: 1px solid #999;
+	box-sizing: border-box;
+	padding: 0.5em 1em;
+	display: inline-block;
+	background-color: #CCA177;
+	color: rgba(0,0,0,.87);
+}
+.card .btn:hover {
+	box-shadow: 3px 3px 3px #777;
+	background-color: #FF800B;
+	position: relative;
+	top: -3px;
+	left: -3px;
+	color: #FFF;
+}
+.card .btn:active {
+	box-shadow: none;
+	top: 0;
+	left: 0;
+	background-color: #673300;
+	color: #FFF;
+}
+
+
+
+/* http://paletton.com/#uid=20x0u0klllluGDuq0s4gFeBb+7R */
+
+
+/* As hex codes */
+
+.color-primary-0 { color: #AA6F39 }	/* Main Primary color */
+.color-primary-1 { color: #FF800B }
+.color-primary-2 { color: #E0812A }
+.color-primary-3 { color: #745538 }
+.color-primary-4 { color: #3E3227 }
+
+.color-complement-0 { color: #246068 }	/* Main Complement color */
+.color-complement-1 { color: #0BA1B6 }
+.color-complement-2 { color: #1C7C89 }
+.color-complement-3 { color: #234347 }
+.color-complement-4 { color: #182526 }
+
+
+
+/* As RGBa codes */
+
+.rgba-primary-0 { color: rgba(170,111, 57,1) }	/* Main Primary color */
+.rgba-primary-1 { color: rgba(255,128, 11,1) }
+.rgba-primary-2 { color: rgba(224,129, 42,1) }
+.rgba-primary-3 { color: rgba(116, 85, 56,1) }
+.rgba-primary-4 { color: rgba( 62, 50, 39,1) }
+
+.rgba-complement-0 { color: rgba( 36, 96,104,1) }	/* Main Complement color */
+.rgba-complement-1 { color: rgba( 11,161,182,1) }
+.rgba-complement-2 { color: rgba( 28,124,137,1) }
+.rgba-complement-3 { color: rgba( 35, 67, 71,1) }
+.rgba-complement-4 { color: rgba( 24, 37, 38,1) }
