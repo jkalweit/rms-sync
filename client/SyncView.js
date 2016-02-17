@@ -554,6 +554,7 @@ class UserInfo extends SyncView {
 	}
 	render() {
 		this.username.innerHTML = 'Hello ' + this.data.name + ' - ';
+		this.username.style.color = this.data.isStaff ? '#44F' : 'default';
 	}
 }
 

@@ -19,10 +19,12 @@ a {
 
 #container {
 	margin: 10px auto;
-	padding: 1em;
+	padding: 2em;
 	max-width: 600px;
 	border: 1px solid #CCCCCC;
 	background-color: #FFF;
+	box-shadow: 10px 10px 5px #000;
+	box-sizing: border-box;
 }
 
 .light { 
