@@ -17,7 +17,7 @@ class LoginTab extends Tab {
 	       			style: { width: '100%', maxWidth: '300px' }});
 
 	}
-	render() {
+	render() {		
 	}
 }
 
@@ -53,6 +53,10 @@ class LoginOrSignup extends SyncView {
 
 	}
 	render() {
+		var reason = SV.param('reason');
+		if(reason && reason.toLowerCase() === 'fbfailed') {
+			console.log('fb failed!');
+		}
 	}
 }
 
@@ -60,4 +64,7 @@ class LoginOrSignup extends SyncView {
 SV.startReloader();
 
 var t = new LoginOrSignup();
-SV.onLoad(() => { SV.id('container').appendChild(t.node); });
+SV.onLoad(() => { 
+	SV.id('container').appendChild(t.node);
+	t.render(); // call manually, since not using a SocketSyncNode
+});

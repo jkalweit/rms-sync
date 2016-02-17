@@ -17,7 +17,7 @@ a {
 	color: inherit;
 }
 
-input {
+input, select {
 	font-size: 1.5em;
 }
 

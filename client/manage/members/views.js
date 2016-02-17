@@ -99,7 +99,6 @@ class Member extends SyncView {
 			style: { float: 'right' }});
 		this.memberName = SV.el('span', {
 			parent: this.node,
-			className: 'light',
 			events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
 
 		this.editMode = false;
@@ -110,7 +109,7 @@ class Member extends SyncView {
 
 		var member = this.data;
 		this.memberName.innerHTML = member.data.info.name;
-		this.memberName.style.color = member.data.info.isStaff ? '#44F' : 'default';
+		this.memberName.style.color = member.data.info.isStaff ? '#44F' : '#555';
 		this.points.innerHTML = member.data.loyalty ? member.data.loyalty.points | 0 : 0;
 		this.editView.update(member.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
@@ -186,7 +185,7 @@ class PointsView extends SyncView {
 		this.typeSelect = SV.el('select', { parent: form });
 		SV.el('option', { parent: this.typeSelect, innerHTML: 'Dinner'});
 		SV.el('option', { parent: this.typeSelect, innerHTML: 'Redeem'});
-		this.amountInput = SV.el('input', { parent: form });
+		this.amountInput = SV.el('input', { parent: form, style: { width: '5em' }});
 		SV.el('input', { parent: form, value: 'Add', type: 'submit' });
 
 		this.pointsContainer = new ViewsContainer(Points, 'key', 'reverse');

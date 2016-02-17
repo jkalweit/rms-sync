@@ -9,7 +9,6 @@ class Verify extends SyncView {
 		this.sync = new SyncNodeSocket('/members', {});
 		this.sync.onUpdated((data) => {
 			var id = SV.param('id'); 
-			console.log('id', id);
 			var member;
 			SV.toArray(data).forEach((currMember) => {
 				if(currMember.data.info.emailVerificationId === id) {
@@ -68,22 +67,18 @@ class Verify extends SyncView {
 	validatePassword() {
 		var password = this.passwordInput.value;
 		var passwordConfirm = this.passwordConfirmInput.value;
-		console.log('passwords', password.length, password, passwordConfirm);
-		if((password.length >= 6) && (password === passwordConfirm)) {
-			console.log('here1');
+		if((password.length >= 4) && (password === passwordConfirm)) {
 			this.completeButton.disabled = false;
 			return true;
 		} else {
-			console.log('here2');
 			this.completeButton.disabled = true;
 			return false;
 		}
 
 	}
 	verify() {
-		console.log('verify...');
 		if(this.validatePassword) {
-			this.data.set('password', this.passwordInput.value);
+			this.data.merge({ password: this.passwordInput.value, data: { info: { isEmailVerified: true }}});
 			window.location = '/member';
 		}	
 	}	

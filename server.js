@@ -238,7 +238,12 @@ passport.use(new FacebookStrategy({
 			});
 			return match;
 		});
-		done(null, user);
+		if(!user) {
+			console.log('User not found', profile.emails);
+			done(null, null);
+		} else {
+			done(null, user);
+		}
 	}
 ));
 app.use(passport.initialize());
@@ -410,7 +415,7 @@ function sendEmailFromAdmin(address, subject, htmlBody) {
 		subject: subject, 
 		html: htmlBody 
 	};
-return;
+
 	transporter.sendMail(mailOptions, function(error, info){
 		if(error){
 			return console.log(error);
@@ -422,7 +427,7 @@ return;
 io.on('connection', (socket) => {
 	socket.on('send email from admin', (msg) => {	
 		console.log('sending email: ', msg);
-		//sendEmailFromAdmin(msg.address, msg.subject, msg.htmlBody);
+		sendEmailFromAdmin(msg.address, msg.subject, msg.htmlBody);
 	});
 });
 
