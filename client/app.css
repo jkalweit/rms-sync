@@ -27,10 +27,9 @@ input, select {
 	min-height: 800px;
 	max-width: 600px;
 	border: 1px solid #3E3227;
-	background-color: #FFF;
+	background-color: #FFEEB8;
 	box-shadow: 10px 10px 5px #000;
 	box-sizing: border-box;
-	background: linear-gradient(#FFF, #AA6F39);
   	position: relative;
 }
 
