@@ -157,6 +157,7 @@ app.use('/images', express.static(imagesPath));
 
 
 var syncServer = new Sync.SyncNodeServer('data', io, {});
+var progressServer = new Sync.SyncNodeServer('progress', io, {});
 var membersServer = new MemberServer(io);
 
 

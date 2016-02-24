@@ -6,23 +6,28 @@ class Progress extends SyncView {
 		super();
 
 
-		this.sync = new syncnodesocket('/members', {});
-		this.sync.onupdated((data) => {
-			this.update(data);
+		this.sync = new SyncNodeSocket('/progress', {});
+		this.sync.onUpdated((data) => {
+			if(!data.orders) {
+				data.set('orders', {});
+			} else {
+				this.update(data);
+			}
 		});
 
+
+		SV.el('h1', {
+			parent: this.node,
+			innerHTML: 'Progress',
+			className: 'light' });
 
 		this.mainView = SV.el('div', { parent: this.node,
 			style: { width: '200px', float: 'left' }});
 
-		SV.el('h1', {
-			parent: this.mainView,
-			innerHTML: 'Procedures',
-			className: 'light' });
 		
 		SV.el('button', {
 			parent: this.mainView,
-			innerHTML: 'Add',
+			innerHTML: 'Add Order',
 			className: 'btn-big',
 	       		events: { click: () => { this.add(); }}});
 
@@ -49,19 +54,19 @@ class Progress extends SyncView {
 	add() {
 		var item = {
 			key: new Date().toISOString(),
-			title: 'New Procedure',
+			title: 'New Order',
 			steps: {}
 		};
 		this.data.set(item.key, item);
 	}
 	render() {
-		this.itemsContainer.update(this.data);
+		this.mainView.style.display = this.selectedProcedure ? 'none' : 'block';	
+		this.detailsView.style.display = this.selectedProcedure ? 'block' : 'none';
 		if(this.selectedProcedure) {
 			this.selectedProcedure = this.data[this.selectedProcedure.key];
-		}
-		this.selectedProcedureView.node.style.display = this.selectedProcedure ? 'initial' : 'none';
-		if(this.selectedProcedure) {
 			this.selectedProcedureView.update(this.selectedProcedure);
+		} else {
+			this.itemsContainer.update(this.data);
 		}
 	}
 }
@@ -99,13 +104,13 @@ class Procedure extends SyncView {
 
 		SV.el('button', {
 			parent: this.mainView,
-			innerHTML: 'Add Step',
+			innerHTML: 'Add Progress',
 			style: { float: 'right' },
 	       		events: { click: () => { this.add(); }}});
 
 		this.title = new EditInput(SV.el('h3', { className: 'light' }),
-				'title', { fontSize: '1em' });
-		
+				'title', { fontSize: '1em', clear: 'both' });
+
 		this.mainView.appendChild(this.title.node);
 		this.itemsContainer = new ViewsContainer(ProcedureStep);
 		this.node.appendChild(this.itemsContainer.node);
@@ -185,5 +190,5 @@ class ProcedureStep extends SyncView {
 
 SV.startReloader();
 
-var t = new Procedures();
+var t = new Progress();
 SV.onLoad(() => { SV.id('container').appendChild(t.node); });

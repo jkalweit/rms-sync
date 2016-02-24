@@ -3,7 +3,7 @@ body {
 	margin: 0;
 	padding: 0;
 	background-color: #673300;
-	background-image: url("/imgs/leather_bg.jpg");
+	background-image: url("/imgs/wood_bg.jpg");
 }
 
 .group:after {
@@ -24,9 +24,8 @@ input, select {
 #container {
 	margin: 2em auto;
 	padding: 2em;
-	min-height: 800px;
+	min-height: 700px;
 	max-width: 600px;
-	border: 1px solid #3E3227;
 	background-color: #FFEEB8;
 	box-shadow: 10px 10px 5px #000;
 	box-sizing: border-box;
