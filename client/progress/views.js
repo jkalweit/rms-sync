@@ -79,8 +79,9 @@ class Progress extends SyncView {
 		this.selectedProcedure = null;
 		this.selectedProcedureView = new Procedure();
 		this.selectedProcedureView.on('closed', () => {
-			this.selectedProcedure = null;
-			this.render();
+			//this.selectedProcedure = null;
+			//this.render();
+			window.location = '/progress';
 		});
  		this.detailsView.appendChild(this.selectedProcedureView.node);
 	}
@@ -147,20 +148,20 @@ class Procedure extends SyncView {
 		SV.el('button', {
 			parent: this.mainView,
 			className: 'btn',
-			innerHTML: 'Send Email',
-			style: { float: 'right' },
-	       		events: { click: () => { this.sendEmail(); }}});
+			innerHTML: 'Add Progress',
+			style: { float: 'left' },
+	       		events: { click: () => { this.add(); }}});
+
 
 		SV.el('button', {
 			parent: this.mainView,
 			className: 'btn',
-			innerHTML: 'Add Progress',
-			style: { float: 'right' },
-	       		events: { click: () => { this.add(); }}});
-
+			innerHTML: 'Send Email',
+			style: { float: 'left' },
+	       		events: { click: () => { this.sendEmail(); }}});
 
 		var details = SV.el('div', { parent: this.node, 
-			style: { clear: 'both' }});
+			style: { clear: 'both', paddingTop: '2em' }});
 
 		this.title = new EditInput(SV.el('h3', { className: 'light' }),
 				'title', {}, 'Title');
@@ -170,7 +171,7 @@ class Procedure extends SyncView {
 		details.appendChild(this.email.node);
 
 
-		this.itemsContainer = new ViewsContainer(ProcedureStep);
+		this.itemsContainer = new ViewsContainer(ProcedureStep, 'key', 'reverse');
 		this.node.appendChild(this.itemsContainer.node);
 	}
 	remove() {
@@ -197,7 +198,7 @@ class Procedure extends SyncView {
 		SV.sendEmailFromAdmin({
 			address: this.data.email,
 			subject: 'Progress on ' + this.data.title,
-			htmlBody: `View the progress on your order: <a href="https://www.thecoalyard.com/progress?id=${this.data.key}">View Progress</a>`
+			htmlBody: `View the progress of your order: https://www.thecoalyard.com/progress?id=${this.data.key}`
 		});	
 	}
 	render() {
