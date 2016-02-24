@@ -1,6 +1,35 @@
 "use strict"
 
 
+class NewOrderModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h2', { parent: this.mainView, innerHTML: 'New Order' });
+		this.nameInput = SV.el('input', { parent: this.node });
+		this.nameInput.style.display = 'block';
+		this.nameInput.style.marginBottom = '10px';
+		SV.el('button', { parent: this.node, innerHTML: 'Create Order',
+			className: 'btn-big',
+			events: { click: () => {
+					var title = this.nameInput.value.trim();	
+					if(title == '') {
+						alert('Title cannot be blank.');
+						this.nameInput.focus();
+						return;
+					}
+					this.emit('create', title);
+					this.hide();
+			}}});
+		SV.el('button', { parent: this.node, innerHTML: 'Cancel',
+			className: 'btn-big',
+			events: { click: () => { this.hide(); }}});
+	}
+	render() {
+	}
+}
+
+
 class Progress extends SyncView {
 	constructor() {
 		super();
@@ -15,6 +44,10 @@ class Progress extends SyncView {
 			}
 		});
 
+		this.newOrderModal = new NewOrderModal();
+		this.newOrderModal.on('create', this.createOrder.bind(this));
+		this.node.appendChild(this.newOrderModal.node);
+
 
 		SV.el('h1', {
 			parent: this.node,
@@ -27,9 +60,9 @@ class Progress extends SyncView {
 		
 		SV.el('button', {
 			parent: this.mainView,
-			innerHTML: 'Add Order',
+			innerHTML: 'Add New Order',
 			className: 'btn-big',
-	       		events: { click: () => { this.add(); }}});
+	       		events: { click: () => { this.newOrderModal.show(); }}});
 
 		this.itemsContainer = new ViewsContainer(ProcedureListItem);
 		this.itemsContainer.on('viewAdded', (view) => {
@@ -51,10 +84,10 @@ class Progress extends SyncView {
 		});
  		this.detailsView.appendChild(this.selectedProcedureView.node);
 	}
-	add() {
+	createOrder(title) {
 		var item = {
 			key: new Date().toISOString(),
-			title: 'New Order',
+			title: title,
 			steps: {}
 		};
 		this.data.set(item.key, item);
@@ -116,17 +149,17 @@ class Procedure extends SyncView {
 		this.node.appendChild(this.itemsContainer.node);
 	}
 	remove() {
-		if(confirm('Delete this procedure: "' + this.data.title + '"?')) {
+		if(confirm('Delete this order: "' + this.data.title + '"?')) {
 			// first delete all images:
 			SV.toArray(this.itemsContainer.views).forEach((view) => { view.removeImage(); });
-			this.data.parent.remove(this.data.key);
 			this.emit('closed', this.data);
+			this.data.parent.remove(this.data.key);
 		}
 	}
 	add() {
 		var item = {
 			key: new Date().toISOString(),
-			title: 'New Step',
+			title: moment().format('ddd, MMM Do, h:mmA'),
 			description: ''
 		};
 		this.data.steps.set(item.key, item);
@@ -175,8 +208,10 @@ class ProcedureStep extends SyncView {
 		xhr.send(JSON.stringify({ image: this.data.image }));
 	}
 	remove() {
-		this.removeImage();
-		this.data.parent.remove(this.data.key);
+		if(confirm('Delete this step: "' + this.data.title + '"?')) {
+			this.removeImage();
+			this.data.parent.remove(this.data.key);
+		}
 	}
 	render() {
 		this.title.update(this.data);
