@@ -412,7 +412,7 @@ class SimpleEditInput extends SyncView {
 
 
 class EditInput extends SyncView {
-	constructor(display, prop, inputStyle) {
+	constructor(display, prop, inputStyle, emptyText) {
 		super();
 		this.prop = prop;
 
@@ -433,14 +433,15 @@ class EditInput extends SyncView {
 				this.render();
 			} } });
 		SV.mergeMap(inputStyle || {}, this.input.style);
-		this.input.style.width = 'calc(100% - 50px)';
+		//this.input.style.width = 'calc(100% - 50px)';
+		this.emptyText = emptyText;
 		this.isEditing = false;
 	}
 	render() {
-		this.display.innerHTML = this.data[this.prop];
 		this.input.value = this.data[this.prop];
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
+			this.display.innerHTML = this.data[this.prop] || this.emptyText || '';
 	}
 }
 

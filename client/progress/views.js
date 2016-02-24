@@ -55,7 +55,7 @@ class Progress extends SyncView {
 			className: 'light' });
 
 		this.mainView = SV.el('div', { parent: this.node,
-			style: { width: '200px', float: 'left' }});
+			style: { width: '100%' }});
 
 		
 		SV.el('button', {
@@ -74,7 +74,7 @@ class Progress extends SyncView {
 		this.mainView.appendChild(this.itemsContainer.node);
 
 		this.detailsView = SV.el('div', { parent: this.node,
-			style: { width: '400px', float: 'left', backgroundColor: '#EEE' }});
+			style: { width: '100%' }});
 
 		this.selectedProcedure = null;
 		this.selectedProcedureView = new Procedure();
@@ -88,11 +88,16 @@ class Progress extends SyncView {
 		var item = {
 			key: new Date().toISOString(),
 			title: title,
+			email: '',
 			steps: {}
 		};
 		this.data.set(item.key, item);
 	}
 	render() {
+		var id = SV.param('id');
+		if(id && !this.selectedProcedure) {
+			this.selectedProcedure = this.data[id];
+		}
 		this.mainView.style.display = this.selectedProcedure ? 'none' : 'block';	
 		this.detailsView.style.display = this.selectedProcedure ? 'block' : 'none';
 		if(this.selectedProcedure) {
@@ -109,11 +114,13 @@ class ProcedureListItem extends SyncView {
 		super();
 
 		this.node.className = 'group';
-		this.title = SV.el('h5', { parent: this.node,
+		this.title = SV.el('a', { parent: this.node, className: 'btn',
+			style: { fontSize: '1.5em', display: 'block', width: '100%' },
 	       		events: { click: () => { this.emit('selected', this.data); }}});
 	}
 	render() {
 		this.title.innerHTML = this.data.title;
+		this.title.href = '/progress?id=' + this.data.key;
 	}
 }
 
@@ -125,26 +132,44 @@ class Procedure extends SyncView {
 		
 		SV.el('button', {
 			parent: this.mainView,
+			className: 'btn',
 			innerHTML: 'Delete',
 			style: { float: 'right' },
 	       		events: { click: () => { this.remove(); }}});
 		
 		SV.el('button', {
 			parent: this.mainView,
+			className: 'btn',
 			innerHTML: 'Close',
 			style: { float: 'right' },
 	       		events: { click: () => { this.emit('closed', this.data); }}});
 
 		SV.el('button', {
 			parent: this.mainView,
+			className: 'btn',
+			innerHTML: 'Send Email',
+			style: { float: 'right' },
+	       		events: { click: () => { this.sendEmail(); }}});
+
+		SV.el('button', {
+			parent: this.mainView,
+			className: 'btn',
 			innerHTML: 'Add Progress',
 			style: { float: 'right' },
 	       		events: { click: () => { this.add(); }}});
 
-		this.title = new EditInput(SV.el('h3', { className: 'light' }),
-				'title', { fontSize: '1em', clear: 'both' });
 
-		this.mainView.appendChild(this.title.node);
+		var details = SV.el('div', { parent: this.node, 
+			style: { clear: 'both' }});
+
+		this.title = new EditInput(SV.el('h3', { className: 'light' }),
+				'title', {}, 'Title');
+		details.appendChild(this.title.node);
+		this.email = new EditInput(SV.el('h3', { className: 'light' }),
+				'email', {}, 'Enter email address');
+		details.appendChild(this.email.node);
+
+
 		this.itemsContainer = new ViewsContainer(ProcedureStep);
 		this.node.appendChild(this.itemsContainer.node);
 	}
@@ -164,8 +189,20 @@ class Procedure extends SyncView {
 		};
 		this.data.steps.set(item.key, item);
 	}
+	sendEmail() {
+		if(!this.data.email) {
+			alert('Cannot send email: no email address');
+			return;
+		}
+		SV.sendEmailFromAdmin({
+			address: this.data.email,
+			subject: 'Progress on ' + this.data.title,
+			htmlBody: `View the progress on your order: <a href="https://www.thecoalyard.com/progress?id=${this.data.key}">View Progress</a>`
+		});	
+	}
 	render() {
 		this.title.update(this.data);
+		this.email.update(this.data);
 		this.itemsContainer.update(this.data.steps);
 	}
 }
@@ -174,11 +211,14 @@ class Procedure extends SyncView {
 class ProcedureStep extends SyncView {
 	constructor() {
 		super();
-	
+
+		SV.mergeMap({ padding: '2em', marginTop: '1em' }, this.node.style);
+
 		this.mainView = SV.el('div', { parent: this.node});
 
 		SV.el('button', {
 			parent: this.mainView,
+			className: 'btn',
 			innerHTML: 'Delete',
 			style: { float: 'right' },
 			events: { click: () => { this.remove(); }}});
