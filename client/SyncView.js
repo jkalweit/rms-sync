@@ -34,7 +34,6 @@ class SV {
 
 
 	static createElement(name) {
-
 		var proto = Object.create(HTMLElement.prototype);
 		proto.template = id(name);
 		var ctor = document.registerElement(name, {
@@ -205,7 +204,6 @@ class SV {
 		return result;
 	}
 
-
   	static arrayContains(list, value) {
       		for (var i = 0; i < list.length; ++i) {
           		if (list[i] === value)
@@ -234,6 +232,12 @@ class SV {
 
 	static normalizePhone(phone) {
 		return phone.replace('-', '').replace('(', '').replace(')', '').replace('.', '').replace(' ', '').toLowerCase();
+	}
+
+	static formatCurrency(value, precision) {
+		precision = precision || 2;
+		var number = (typeof value === 'string') ? parseInt(value) : value;
+		return number.toFixed(precision);
 	}
 }
 
@@ -433,6 +437,52 @@ class EditInput extends SyncView {
 }
 
 
+class SimpleEditSelect extends SyncView {
+	constructor(prop, label, validator, formatter, options) {
+		super();
+		this.doFlash = true;
+		
+		this.prop = prop;
+
+		var el = SV.el;
+
+		this.editView = el('div', { parent: this.node });
+		if(label) {
+			el('span', { parent: this.editView, innerHTML: label,
+				style: { display: 'inline-block', width: '100px' }});
+		}
+		this.input = el('select', { parent: this.editView,
+			style: { width: 'calc(100% - 110px)' },
+			events: { blur: () => {
+				var value = this.input.value;			
+				if(validator && !validator(value)) {
+					alert('Invalid value: "' + value + '"');
+					return;
+				}				
+				if(formatter) value = formatter(value);
+				if(this.data[this.prop] !== value) {
+					var oldValue = this.data[this.prop];
+					var update = {};
+					update[this.prop] = value;
+					this.data.set(update);
+					this.emit('changed', value, oldValue);
+				}
+			}}});
+		SV.toArray(options).forEach((option) => {
+			SV.el('option', { parent: this.input, innerHTML: option });
+		});
+	}
+	focus() {
+		this.input.focus();
+	}
+	render() {
+		if(this.input.value !== this.data[this.prop])
+			this.input.value = this.data[this.prop] || '';
+	}
+}
+
+
+
 class Modal extends SyncView {
 	constructor() {
 		super();
@@ -476,6 +526,19 @@ class Modal extends SyncView {
 		document.body.appendChild(modal.node);
 		modal.show();
 	}
+
+	static confirm(title, message, callback) {
+		var modal = new Modal();
+		modal.mainView.appendChild(SV.el('h1', { innerHTML: title }));
+		modal.mainView.appendChild(SV.el('p', { innerHTML: message }));
+		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Yes', className: 'btn',
+	       		events: { click: () => { modal.hide(); callback(); }}}));
+		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Cancel', className: 'btn',
+	       		events: { click: () => { modal.hide(); }}}));
+		document.body.appendChild(modal.node);
+		modal.show();
+	}
+
 }
 
 class Tab extends SyncView {

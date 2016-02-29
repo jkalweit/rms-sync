@@ -55,11 +55,6 @@ h1, h2, h3, h4, h5, h6 {
 	100% { opacity: 1; }
 }
 
-.btn-big {
-	font-size: 1.5em;
-	margin: .25em .25em .25em 0;
-}
-
 .hide {
 	display: none;
 }
@@ -111,6 +106,16 @@ h1, h2, h3, h4, h5, h6 {
 	color: #FFF;
 }
 
+.btn-wide {
+	display: block;
+	width: '100%';
+
+}
+
+.btn-big {
+	font-size: 1.5em;
+	margin: .25em .25em .25em 0;
+}
 
 
 /* http://paletton.com/#uid=20x0u0klllluGDuq0s4gFeBb+7R */

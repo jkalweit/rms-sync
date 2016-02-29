@@ -43,6 +43,7 @@ class Members extends SyncView {
 			}});
 
 		this.membersContainer = this.appendView(new ViewsContainer(Member));
+		this.membersContainer.node.style.marginTop = '2em';
 	}
 	addMember() {
 		var created = new Date().toISOString();
@@ -90,9 +91,7 @@ class Members extends SyncView {
 class Member extends SyncView {
 	constructor() {
 		super();
-		this.node.className = 'group';
-		this.node.style.marginTop = '0.5em';
-		this.node.style.padding = '0.2em 1em';
+		this.node.className = 'btn btn-wide';
 
 		this.points = SV.el('span', { 
 			parent: this.node,
@@ -105,8 +104,6 @@ class Member extends SyncView {
 		this.editView = this.appendView(new MemberEdit());
 	}
 	render() {
-		this.node.style.backgroundColor = this.editMode ? '#EEE' : '#FFF';
-
 		var member = this.data;
 		this.memberName.innerHTML = member.data.info.name;
 		this.memberName.style.color = member.data.info.isStaff ? '#44F' : '#555';

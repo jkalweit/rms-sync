@@ -6,31 +6,30 @@ class Menu extends SyncView {
 	constructor() {
 		super();
 	
-		this.mainView = SV.el('div', { parent: this.node});
+		this.sync = new SyncNodeSocket('/data', {});
+		this.sync.on('updated', (data) => {
+			if(!data.menu) {
+				data.set('menu', { items: {} });
+			} else { 
+				this.update(data.menu);
+			}
+		});
+
 
 		SV.el('h1', {
-			parent: this.mainView,
-			innerHTML: 'Menu',
-			className: 'light' });
+			parent: this.node, innerHTML: 'Menu' });
 
 		this.addView = SV.el('form', {
-			parent: this.mainView,
-			action: '/upload',
-			enctype: 'multipart/form-data',
-			method: 'post',
+			parent: this.node,
 		        events: {
 				submit: (e) => {
-					this.add();
+					this.addItem();
 					e.preventDefault();
 				}
 			}});
 		this.addInput = SV.el('input', {
 			parent: this.addView,
-			type: 'file',
-			accept: 'image/*',
-			name: 'image',
 			style: {
-				fontSize: '1em',
 				width: 'calc(100% - 4em)'
 			}});
 		SV.el('input', {
@@ -38,17 +37,44 @@ class Menu extends SyncView {
 			value: 'Add',
 			type: 'submit',
 			style: {
-				fontSize: '1em',
+				fontSize: '1.5em',
 			}});
+		
+		this.itemsContainer = new ViewsContainer(MenuItem);
+		this.itemsContainer.node.style.marginTop = '2em';
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (menuItem) => {
+				this.editMenuItemModal.update(menuItem);
+				this.editMenuItemModal.show();
+			});
+		});
+		this.node.appendChild(this.itemsContainer.node);
 
-		this.preview = SV.el('img', { 
-			parent: this.addView });
+		this.editMenuItemModal = new MenuItemEditModal();
+		this.node.appendChild(this.editMenuItemModal.node);
 	}
-	add() {
-		this.uploadPhotos(this.addInput.files[0], this.preview);
+	addItem() {
+		var menuItem = {
+			key: SyncNode.guidShort(),
+			created: new Date().toISOString(),
+			name: this.addInput.value,
+			description: '',
+			price: 0
+		};
+		this.addInput.value = '';
+		var result = this.data.items.set(menuItem.key, menuItem)[menuItem.key];
+		console.log('result', result);
+		this.editMenuItemModal.update(result);
+		this.editMenuItemModal.show();
+
 	}	
 	render() {
+		this.itemsContainer.update(this.data.items);
 	}
+
+
+
+
 	uploadPhotos(file, container){
 
 		// Ensure it's an image
@@ -124,6 +150,50 @@ class Menu extends SyncView {
 		return new Blob([uInt8Array], {type: contentType});
 	}
 
+}
+
+
+class MenuItem extends SyncView {
+	constructor() {
+		super();
+
+		var btn = SV.el('div', { parent: this.node, className: 'btn btn-wide', 
+	       		events: { click: () => { this.emit('selected', this.data); }}});
+
+
+		this.name = SV.el('span', { parent: btn, 
+			style: { fontWeight: 'default' }});
+		this.price = SV.el('span', { parent: btn, 
+			style: { fontWeight: 'default', float: 'right' }});
+	}
+	render() {
+		this.name.innerHTML = this.data.name;	
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
+	}
+}
+
+class MenuItemEditModal extends Modal {
+	constructor() {
+		super();
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Menu Item' });
+		this.views = [];
+		this.views.push(this.appendView(new SimpleEditInput('name', 'Name'), this.mainView));
+		this.views.push(this.appendView(new SimpleEditInput('description', 'Description'), this.mainView));
+		this.views.push(this.appendView(new SimpleEditInput('price', 'Price'), this.mainView));
+		this.views.push(this.appendView(new SimpleEditSelect('taxType', 'Tax Type', null, null, ['9%', 'Included']), this.mainView));
+		SV.el('button', { parent: this.mainView, innerHTML: 'Ok', className: 'btn',
+			events: { click: () => { this.hide(); }}});
+		SV.el('button', { parent: this.mainView, innerHTML: 'Delete', className: 'btn', 
+			events: { click: () => { 
+					Modal.confirm('Delete Menu Item', 'Delete this item?', () => {
+						this.data.parent.remove(this.data.key); this.hide(); 
+					});
+				}
+			}});
+	}
+	render() {
+		SyncView.updateViews(this.views, this.data);
+	}
 }
 
 

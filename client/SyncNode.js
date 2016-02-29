@@ -79,6 +79,7 @@ class SyncNode extends EventEmitter {
 			var updated = this;
 			this.emit('updated', updated, merge);
 		}
+		return this;
 	}
 	merge(merge) {
 		this.__isUpdatesDisabled = true;
