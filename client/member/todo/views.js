@@ -6,8 +6,11 @@ class TodoList extends SyncView {
 	constructor() {
 		super();
 
+		this.name = 'TodoList';
+
 		this.sync = new SyncNodeSocket('/memberdata', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
+			console.log('updated!');
 			if(!data.todos) data.set('todos', {});
 			else this.update(data);
 		});
@@ -36,7 +39,7 @@ class TodoList extends SyncView {
 			text: this.newInput.value,
 			items: {}
 		};
-		this.data.set(todo.key, todo);
+		this.data.todos.set(todo.key, todo);
 		this.newInput.value = '';
 	}
 	render() {
@@ -49,6 +52,8 @@ class TodoList extends SyncView {
 class TodoGroup extends SyncView {
 	constructor() {
 		super();
+
+		//this.name = 'TodoGroup';
 
 		this.mainView = SV.el('div', { parent: this.node });
 		SV.el('button', { parent: this.mainView, innerHTML: 'X',
@@ -109,6 +114,8 @@ class TodoGroup extends SyncView {
 class TodoItem extends SyncView {
 	constructor() {
 		super();
+
+		//this.name = 'TodoItem';
 
 		var view = {
 			main: {

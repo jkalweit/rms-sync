@@ -235,23 +235,6 @@ class SV {
 	static normalizePhone(phone) {
 		return phone.replace('-', '').replace('(', '').replace(')', '').replace('.', '').replace(' ', '').toLowerCase();
 	}
-
-
-
-	static s4() {
-                return Math.floor((1 + Math.random()) * 0x10000)
-                    .toString(16)
-                    .substring(1);
-            }
-
-	static guidShort() {
-		return SV.s4() + SV.s4();
-	}
-        static guid() {
-                       return SV.s4() + SV.s4() + '-' + SV.s4() + '-' + SV.s4() + '-' +
-                SV.s4() + '-' + SV.s4() + SV.s4() + SV.s4();
-        }
-
 }
 
 
@@ -281,11 +264,11 @@ class SyncView {
 	}
 	update(data, force) {
 		if(force || this.hasChanged(data)) {
-			this.lastModified = data.lastModified;
-			if(this.name) console.log(this.name + ' data changed', force);
-			var oldData = this.data;
+			//this.lastModified = data.lastModified;
+			//this.currentVersion = data.version;
+			//var oldData = this.data;
 			this.data = data;
-			this.emit('updating', data, oldData);
+			this.emit('updating', data); //, oldData);
 			if(this.render) this.render(force);
 			if(this.doFlash) this.flash(); 
 		}
@@ -294,24 +277,28 @@ class SyncView {
 		}
 	}
 	hasChanged(newData) {
-		//if(this.name) console.log(this.name + ' doing hasChanged #########################');
-		if(!this.data && !newData) {
-			return false;
-		}
-		if((this.data && !newData) || (!this.data && newData)) { 
-			//if(this.name) console.log(this.name + 'here2');
-			return true;
-		}
-		if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
-			//console.log('direct comparison', this.data, newData);
-			return this.data === newData;
-		}
-		if(!this.data.lastModified || !newData.lastModified) {
-			//if(this.name) console.log(this.name + 'here3');
-			return true;
-		}	
-		//if(this.name) console.log(this.name + 'here4', this.lastModified, newData.lastModified);
-		return this.lastModified !== newData.lastModified;
+		return true;
+		// if(this.name) console.log(this.name + ' doing hasChanged #########################');
+		// if(!this.data && !newData) {
+		// 	if(this.name) console.log(this.name + 'here1 both are null');
+		// 	return false;
+		// }
+		// if((this.data && !newData) || (!this.data && newData)) { 
+		// 	if(this.name) console.log(this.name + 'here2');
+		// 	return true;
+		// }
+		// if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
+		// 	console.log('direct comparison', this.data, newData);
+		// 	return this.data === newData;
+		// }
+		// if(!this.data.lastModified || !newData.lastModified) {
+		// 	if(this.name) console.log(this.name + 'here3');
+		// 	return true;
+		// }	
+		// if(this.name) console.log(this.name + 'here4', this.lastModified, newData.lastModified);
+		// if(this.name) console.log(this.name + 'here5', this.currentVersion, newData.version);
+		// return (this.data.version !== newData.version) || (this.currentVersion != newData.version);
+		// return this.lastModified !== newData.lastModified;
 	}
 	on(eventName, handler) {
 		if(!this.eventHandlers[eventName]) this.eventHandlers[eventName] = [];
@@ -458,12 +445,16 @@ class Modal extends SyncView {
 			top: 0,
 			width: '100vw',
 			height: '100vh',
-			backgroundColor: '#DDD',
+			backgroundColor: 'rgba(0,0,0,0.7)',
 			padding: '1em',
 			overflowY: 'scroll'
 		}, this.node.style);
 
-		this.mainView = SV.el('div', { parent: this.node });
+		this.mainView = SV.el('div', { parent: this.node,
+	       		style: { width: '100%', maxWidth: '600px', minWidth: '400px',
+				boxShadow: '10px 10px 5px #000',
+				padding: '2em', textAlign: 'center',
+			       	margin: 'auto auto', backgroundColor: '#DDD' }});
 	}
 	show() {
 		this.node.style.display = 'initial';
@@ -474,6 +465,16 @@ class Modal extends SyncView {
 		document.body.style.overflowY = 'initial';	
 	}
 	render() {
+	}
+
+	static showNotification(title, message) {
+		var modal = new Modal();
+		modal.mainView.appendChild(SV.el('h1', { innerHTML: title }));
+		modal.mainView.appendChild(SV.el('p', { innerHTML: message }));
+		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Ok', className: 'btn',
+	       		events: { click: () => { modal.hide(); }}}));
+		document.body.appendChild(modal.node);
+		modal.show();
 	}
 }
 

@@ -7,7 +7,7 @@ class Members extends SyncView {
 		super();
 
 		this.sync = new SyncNodeSocket('/members', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
 			this.update(data);
 		});
 
@@ -155,7 +155,7 @@ class MemberEdit extends SyncView {
 			this.pointsView = this.appendView(new PointsView());
 	}
 	sendEmailVerification() {
-		var verificationId = SV.guidShort();
+		var verificationId = SyncNode.guidShort();
 		this.data.info.set('emailVerificationId', verificationId);
 		SV.sendEmailFromAdmin({
 			address: this.data.info.email,

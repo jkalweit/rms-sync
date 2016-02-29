@@ -5,7 +5,7 @@ class Member extends SyncView {
 		super();
 
 		this.sync = new SyncNodeSocket('/memberdata', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
 			this.update(data);
 		});
 

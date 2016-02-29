@@ -3,7 +3,7 @@
 
 class EventEmitter {
 	constructor() {
-            	SyncNode.addNE(this, '__eventHandlers', {});
+		SyncNode.addNE(this, '__eventHandlers', {});
 	}
 	on(eventName, handler) {
 		if(!this.__eventHandlers[eventName]) this.__eventHandlers[eventName] = [];
@@ -25,9 +25,8 @@ class SyncNode extends EventEmitter {
 		super();
 
 		obj = obj || {};
-            	SyncNode.addNE(this, '__syncNodeId', syncNodeIdCounterForDebugging++);
-            	SyncNode.addNE(this, '__isUpdatesDisabled', false);
-		this.lastModified = obj.lastModified || new Date(0).toISOString();
+		SyncNode.addNE(this, '__syncNodeId', syncNodeIdCounterForDebugging++);
+		SyncNode.addNE(this, '__isUpdatesDisabled', false);
 
 		Object.keys(obj).forEach((propName) => {
 			var propValue = obj[propName];
@@ -47,16 +46,11 @@ class SyncNode extends EventEmitter {
 	}
 	createOnUpdated(propName) {
 		return (updated, merge) => {				
-			this.lastModified = updated.lastModified;
 			if(!this.__isUpdatesDisabled) {
 				var newUpdated = this;
 				var newMerge = {};
 				newMerge[propName] = merge;
-				newMerge.lastModified = merge.lastModified;
-				//console.log('emitting update', propName);
 				this.emit('updated', newUpdated, newMerge);
-			} else {
-				//console.log('updatesDisabled', propName);
 			}
 		}
 	}
@@ -78,62 +72,61 @@ class SyncNode extends EventEmitter {
 					val.on('updated', this.createOnUpdated(key));
 				}
 			}
-			//console.log('setting', key, val);
 			this[key] = val;			
 		});
-		if(!obj.lastModified) obj.lastModified = new Date().toISOString();
-		this.lastModified = obj.lastModified;
 		if(!this.__isUpdatesDisabled) {
 			var merge = obj;
 			var updated = this;
 			this.emit('updated', updated, merge);
 		}
 	}
-	merge(merge, lastModified) {
-		if (merge.lastModified && (this.lastModified > merge.lastModified)) {
-			console.log('****WARNING*****: local version is NEWER than server version.' + this.lastModified + ' ' + merge.lastModified);
-		}
+	merge(merge) {
 		this.__isUpdatesDisabled = true;
-		lastModified = lastModified || new Date().toISOString();
 		Object.keys(merge).forEach((key) => {
-			// console.log('merging', key, merge);
 			if (key === '__remove') {
 				var propToRemove = merge[key];
-				console.log('deleted', propToRemove, this);
 				delete this[propToRemove];
-				console.log('deleted', propToRemove, this);
 			} else {
 				var nextNode = this[key];			
 				if (!nextNode || typeof nextNode !== 'object') {
-					merge.lastModified = lastModified;
 					var val = {};
 					val[key] = merge[key];	
-					val.lastModified = lastModified;
 					this.set(val);
 				}
 				else {
-					nextNode.merge(merge[key], lastModified);				
+					nextNode.merge(merge[key]);				
 				}
 			}
 		});
-		this.lastModified = lastModified;
-		merge.lastModified = lastModified;
 		this.__isUpdatesDisabled = false;
 
 		var newUpdated = this;
-		//console.log('merge', merge);
-		//console.log('new updated', newUpdated);
 		this.emit('updated', newUpdated, merge);
-        }
+	}
 	remove(key) {
-	       if(this.hasOwnProperty(key)) this.merge({ '__remove': key });
+		if(this.hasOwnProperty(key)) this.merge({ '__remove': key });
 	}
 	static addNE(obj, propName, value) {
-            Object.defineProperty(obj, propName, {
-                enumerable: false,
-                configurable: true,
-                writable: true,
-                value: value
-            });
-        };
+		Object.defineProperty(obj, propName, {
+			enumerable: false,
+		configurable: true,
+		writable: true,
+		value: value
+		});
+	};
+
+	static s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+
+	static guidShort() {
+		return SyncNode.s4() + SyncNode.s4();
+	}
+	static guid() {
+		return SyncNode.s4() + SyncNode.s4() + '-' + SyncNode.s4() + '-' + SyncNode.s4() + '-' +
+			SyncNode.s4() + '-' + SyncNode.s4() + SyncNode.s4() + SyncNode.s4();
+	}
+
 }

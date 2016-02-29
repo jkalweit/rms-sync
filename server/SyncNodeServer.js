@@ -11,6 +11,9 @@ class Response {
 	}
 }
 
+// TODO: implement versions on each node to enforce optimistic concurrency.
+//
+//
 class SyncNodeServer {
     constructor(namespace, io, defaultData) {
         if (defaultData === void 0) { defaultData = {}; }
@@ -41,9 +44,15 @@ class SyncNodeServer {
             });
             socket.on('update', (request) => {
                 var merge = request.data;
-                this.doMerge(this.data, merge);
+		if(merge.lastModified && this.data.lastModified > merge.lastModified) {
+			// Probably should stop here and send a concurency error response to client:
+			console.error('WARNING: Server version lastModified GREATER THAN merge lastModified', this.data.lastModified, merge.lastModified);
+		}
+		var newLastModified = new Date().toISOString();
+                this.doMerge(this.data, merge, newLastModified);
                 this.persist();
-                socket.emit('updateResponse', new Response(request.requestGuid, null));
+		// merge is updated with new lastModified, send to client in updateResponse
+                socket.emit('updateResponse', new Response(request.requestGuid, merge));
                 socket.broadcast.emit('update', merge);
                 if (this.onMerge)
                     this.onMerge(merge);
@@ -91,22 +100,19 @@ class SyncNodeServer {
 		return path.join(this.directory, this.namespace + '.json');
 	}
 
-	doMerge(obj, merge) {
-		if (typeof merge !== 'object')
+	doMerge(obj, merge, newLastModified) {
+		if(typeof merge !== 'object') {
+			// end of recursion
 			return merge;
-		Object.keys(merge).forEach((key) => {
-			if (key === 'lastModified' && obj[key] > merge[key]) {
-				console.error('Server version lastModified GREATER THAN merge lastModified', obj[key], merge[key]);
-			}
-			if (key === 'meta') {
-			}
-			else if (key === '__remove') {
-				console.log('remove!');
+		}
+		Object.keys(merge).forEach((key) => {			
+			if (key === '__remove') {
 				delete obj[merge[key]];
 			}
 			else {
 				var nextObj = (obj[key] || {});
 				obj[key] = this.doMerge(nextObj, merge[key]);
+				obj.lastModified = newLastModified;
 			}
 		});
 		return obj;

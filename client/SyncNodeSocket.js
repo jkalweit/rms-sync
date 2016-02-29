@@ -2,23 +2,16 @@
 
 class Request {
 	constructor(data) {
-		this.requestGuid = Request.guid();
+		this.requestGuid = SyncNode.guid();
 		this.stamp = new Date();
 		this.data = data;
 	}
-	static guid() {
-		function s4() {
-			return Math.floor((1 + Math.random()) * 0x10000)
-				.toString(16)
-				.substring(1);
-		}
-		return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-			s4() + '-' + s4() + s4() + s4();
-	}
 }
 
-class SyncNodeSocket {
+class SyncNodeSocket extends EventEmitter {
 	constructor(path, defaultObject, host) {
+		super();
+
 		this.listeners = [];
 		this.updatesDisabled = false; //To prevent loop when setting data received from server
 		this.status = 'Initializing...';
@@ -34,38 +27,31 @@ class SyncNodeSocket {
 		console.log('Connecting to namespace: "' + socketHost + '"');
 		this.server = io(socketHost);
 		this.server.on('connect', () => {
-			//	Log.log(this.path, 'Connected');
 			console.log('*************CONNECTED');
 			this.status = 'Connected';
 			this.updateStatus(this.status);
 			this.getLatest();
 		});
 		this.server.on('disconnect', () => {
-			//	Log.log(this.path, 'Disconnected');
 			console.log('*************DISCONNECTED');
 			this.status = 'Disconnected';
 			this.updateStatus(this.status);
 		});
 		this.server.on('reconnect', (number) => {
-			//	Log.log(this.path, 'Reconnected after tries: ' + number);
 			console.log('*************Reconnected after ' + number + ' tries');
 			this.status = 'Connected';
 			this.updateStatus(this.status);
-			this.getLatest();
 		});
 		this.server.on('reconnect_failed', (number) => {
-			//	Log.error(this.path, 'Reconnection Failed. Number of tries: ' + number);
 			console.log('*************************Reconnection failed.');
 		});
 		this.server.on('update', (merge) => {
-			//	Log.debug(this.path, 'received update: ' + JSON.stringify(merge));
 			console.log('*************handle update: ', merge);
 			this.updatesDisabled = true;
 			this.local.merge(merge);
 			this.updatesDisabled = false;
 		});
 		this.server.on('updateResponse', (response) => {
-			// Log.debug(this.path, 'received response: ' + JSON.stringify(response));
 			//console.log('*************handle response: ', response);
 			this.clearRequest(response.requestGuid);
 		});
@@ -74,16 +60,11 @@ class SyncNodeSocket {
 				console.log('already has latest.');
 			}
 			else {
-				// Log.debug(this.path, 'Received latest: ' + latest.lastModified);
-				this.serverLastModified = latest.lastModified;
 				console.log('handle latest: ', latest);
-				//this.updatesDisabled = true;
 				localStorage.setItem(this.path, JSON.stringify(latest));
 				this.setLocal(new SyncNode(latest));
-				//this.syncNode.set('local', latest);
-				//this.updatesDisabled = false;
 			}
-		this.sendOpenRequests();
+			this.sendOpenRequests();
 		});
 	}
 	setLocal(syncNode) {		
@@ -97,8 +78,6 @@ class SyncNodeSocket {
 	}
 	sendOpenRequests() {
 		var keys = Object.keys(this.openRequests);
-		// Log.debug(this.path, 'Sending open requests: ' + keys.length.toString());
-		//console.log('Sending open requests: ', keys.length);
 		keys.forEach((key) => {
 			this.sendRequest(this.openRequests[key]);
 		});
@@ -107,20 +86,18 @@ class SyncNodeSocket {
 		delete this.openRequests[requestGuid];
 	}
 	getLatest() {
-		console.log('doing get latest...');
-		this.server.emit('getlatest', this.serverLastModified);
+		this.sendOpenRequests();
+		this.server.emit('getlatest', null); //, this.serverLastModified);
 		console.log('sent get latest...');
 	}
 	updateStatus(status) {
 		this.status = status;
-		if (this.onStatusChanged)
-			this.onStatusChanged(this.path, this.status);
+		this.emit('statusChanged', this.path, this.status);
 	}
 	createOnUpdated(node) {
 		return (updated, action, path, merge) => {
 			SyncNode.SyncNode.addNE(updated, 'onUpdated', this.createOnUpdated(this));
 			this.syncNode = updated;
-			//console.log('syncNode updated:', action, path, merge, this.syncNode);
 			localStorage.setItem(this.path, JSON.stringify(this.get()));
 			this.queueUpdate(merge.local);
 			this.notify();
@@ -129,7 +106,6 @@ class SyncNodeSocket {
 	queueUpdate(update) {
 		if (!this.updatesDisabled) {
 			var request = new Request(update);
-			this.openRequests[request.requestGuid] = request;
 			this.sendRequest(request);
 		}
 	}
@@ -139,16 +115,10 @@ class SyncNodeSocket {
 			this.server.emit('update', request);
 		}
 	}
-	onUpdated(callback) {
-		this.listeners.push(callback);
-	}
 	notify() {
-		this.listeners.forEach((callback) => {
-			callback(this.get());
-		});
+		this.emit('updated', this.get());
 	}
 	get() {
 		return this.local;	
-		//return this.syncNode['local'];
 	}
 }
