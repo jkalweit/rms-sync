@@ -47,7 +47,7 @@ class Tickets extends SyncView {
 			events: {
 				keyup: () => { this.render(); }
 			}});
-		SV.el('input', {
+		this.addButton = SV.el('input', {
 			parent: this.addView,
 			value: 'Add',
 			type: 'submit',
@@ -64,9 +64,14 @@ class Tickets extends SyncView {
 			key: SyncNode.guidShort(),
 			created: created,
 			name: this.addInput.value,
+			table: '',
 			orderItems: {}
 		};
-		this.data.set(newItem.key, newItem);
+		newItem = this.data.set(newItem.key, newItem)[newItem.key];
+		var modal = new SelectTableModal();
+		this.node.appendChild(modal.node);
+		modal.update(newItem);
+		modal.show();
 		this.addInput.value = '';
 	}	
 	render() {
@@ -81,10 +86,32 @@ class Tickets extends SyncView {
 			filtered = this.data;
 		}
 
+		this.addButton.disabled = filterText === '';
+
 		this.ticketsContainer.update(filtered);
 	}
 }
 
+class SelectTableModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Table' });
+		this.ticketName = SV.el('h2', { parent: this.mainView });
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', 
+			events: { click: () => { this.hide(); }}});
+
+		var tables = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', 'Bar', 'Deck'];
+		tables.forEach((table) => {
+			SV.el('button', { parent: this.mainView, innerHTML: table,
+				events: { click: () => { this.data.set('table', table); this.hide(); }}});
+		});
+	}
+	render() {
+		console.log('here', this.data);
+		this.ticketName.innerHTML = this.data.name;	
+	}
+}
 
 class TicketListItem extends SyncView {
 	constructor() {
@@ -103,7 +130,7 @@ class TicketListItem extends SyncView {
 	}
 	render() {
 		var ticket = this.data;
-		this.name.innerHTML = ticket.name;
+		this.name.innerHTML = ticket.table + ' ' + ticket.name;
 		this.name.style.color = ticket.isPaid ? '#44F' : '#555';
 		//this.editView.update(member.data);
 		//this.editView.node.style.display = this.editMode ? 'block' : 'none';

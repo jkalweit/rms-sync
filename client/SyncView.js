@@ -509,6 +509,7 @@ class Modal extends SyncView {
 	show() {
 		this.node.style.display = 'initial';
 		document.body.style.overflowY = 'hidden';
+		console.log('did this');
 	}
 	hide() {
 		this.node.style.display = 'none';
