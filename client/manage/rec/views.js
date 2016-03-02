@@ -98,14 +98,16 @@ class SelectTableModal extends Modal {
 
 		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Table' });
 		this.ticketName = SV.el('h2', { parent: this.mainView });
-		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', 
-			events: { click: () => { this.hide(); }}});
 
 		var tables = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', 'Bar', 'Deck'];
 		tables.forEach((table) => {
-			SV.el('button', { parent: this.mainView, innerHTML: table,
+			SV.el('div', { parent: this.mainView, innerHTML: table, className: 'btn btn-wide',
 				events: { click: () => { this.data.set('table', table); this.hide(); }}});
 		});
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', className: 'btn cancel',
+		       style: { marginTop: '1em' },	
+			events: { click: () => { this.hide(); }}});
 	}
 	render() {
 		console.log('here', this.data);
