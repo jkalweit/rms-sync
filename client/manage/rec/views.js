@@ -92,6 +92,16 @@ class Tickets extends SyncView {
 	}
 }
 
+class OptionsMenu extends SyncView {
+	constructor() {
+		super();
+	}
+	render() {
+		var icon = this.data.expanded ? 'more_horiz' : 'more_vert';
+		this.node.innerHTML = `<i class="material-icons">${icon}</i>`
+	}
+}
+
 class SelectTableModal extends Modal {
 	constructor() {
 		super();
@@ -125,6 +135,10 @@ class TicketListItem extends SyncView {
 			style: { padding: '0.5em' },
 			events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
 
+		this.options = new OptionsMenu();
+		SV.mergeMap({ float: 'right' }, this.options.node.style);
+		this.mainView.appendChild(this.options.node);
+
 		this.amount = SV.el('span', { 
 			parent: this.mainView,
 			style: { float: 'right' }});
@@ -140,6 +154,7 @@ class TicketListItem extends SyncView {
 		this.name.style.color = ticket.isPaid ? '#44F' : '#555';
 		this.editView.update(this.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
+		this.options.update({ expanded: this.editMode });
 	}
 }
 

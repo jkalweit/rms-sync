@@ -1,6 +1,22 @@
 "use strict"
 
 
+
+var WebFontConfig = {
+    google: { families: [ 'Roboto::latin' ] }
+  };
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+  })();
+
+
+
+
 class SV {
 	static id(id, context) {
 		context = context || document;
@@ -509,7 +525,6 @@ class Modal extends SyncView {
 	show() {
 		this.node.style.display = 'initial';
 		document.body.style.overflowY = 'hidden';
-		console.log('did this');
 	}
 	hide() {
 		this.node.style.display = 'none';
