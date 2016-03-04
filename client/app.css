@@ -17,7 +17,7 @@ a {
 	color: inherit;
 }
 
-input, select {
+input, select, textarea {
 	font-size: 1.5em;
 }
 
@@ -32,11 +32,6 @@ input, select {
   	position: relative;
 }
 
-@media (max-width: 600px) {
-	#container {
-		margin: 0;
-	}
-}
 
 h1, h2, h3, h4, h5, h6 {
 	color: #777777;
@@ -109,7 +104,6 @@ h1, h2, h3, h4, h5, h6 {
 .btn-wide {
 	display: block;
 	width: '100%';
-
 }
 
 .btn-big {
@@ -117,6 +111,69 @@ h1, h2, h3, h4, h5, h6 {
 	margin: .25em .25em .25em 0;
 }
 
+.ticketListItem {
+	border: 1px solid #999;
+	box-sizing: border-box;
+	padding: 0.5em 1em;
+	display: block;
+	width: '100%';
+	background-color: #CCA177;
+	color: rgba(0,0,0,.87);
+}
+.ticketListItem:hover {
+	box-shadow: 3px 3px 3px #777;
+	background-color: #FF800B;
+	position: relative;
+	//top: -3px;
+	//left: -3px;
+}
+.ticketListItem:active {
+	box-shadow: none;
+	top: 0;
+	left: 0;
+	background-color: #673300;
+}
+
+
+.modal {
+	display: none;
+	z-index: 2;
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(0,0,0,0.7);
+	padding: 1em;
+	overflow-y: scroll;
+
+}
+
+.modal .main-view {
+	width: 100%;
+	max-width: 600px;
+	min-width: 300px;
+	box-shadow: 10px 10px 5px #000;
+	box-sizing: border-box;
+	padding: 2em;
+	margin: auto auto;
+	background-color: #FFF;
+}
+
+.modal .footer {
+	margin-top: 1em;
+	overflow: hidden;
+}
+
+@media (max-width: 600px) {
+	#container {
+		margin: 0;
+	}
+	.modal {
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
 
 /* http://paletton.com/#uid=20x0u0klllluGDuq0s4gFeBb+7R */
 

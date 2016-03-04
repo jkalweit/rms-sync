@@ -56,7 +56,15 @@ class Tickets extends SyncView {
 			}});
 
 		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
+		this.ticketsContainer.on('viewAdded', (view) => {
+			view.on('selectTable', (ticket) => {
+				this.selectTable(ticket);
+			});
+		});
 		this.ticketsContainer.node.style.marginTop = '2em';
+		
+		this.selectTableModal = new SelectTableModal();
+		this.node.appendChild(this.selectTableModal.node);
 	}
 	add() {
 		var created = new Date().toISOString();
@@ -68,12 +76,13 @@ class Tickets extends SyncView {
 			orderItems: {}
 		};
 		newItem = this.data.set(newItem.key, newItem)[newItem.key];
-		var modal = new SelectTableModal();
-		this.node.appendChild(modal.node);
-		modal.update(newItem);
-		modal.show();
+		this.selectTable(newItem);
 		this.addInput.value = '';
 	}	
+	selectTable(ticket) {
+		this.selectTableModal.update(ticket);
+		this.selectTableModal.show();
+	}
 	render() {
 		var filtered;
 		var filterText = this.addInput.value.trim().toLowerCase();
@@ -120,7 +129,6 @@ class SelectTableModal extends Modal {
 			events: { click: () => { this.hide(); }}});
 	}
 	render() {
-		console.log('here', this.data);
 		this.ticketName.innerHTML = this.data.name;	
 	}
 }
@@ -128,8 +136,9 @@ class SelectTableModal extends Modal {
 class TicketListItem extends SyncView {
 	constructor() {
 		super();
-		this.node.className = 'btn btn-wide';
+		this.node.className = 'ticketListItem';
 		this.node.style.padding = '0';
+		this.node.style.color = '#000';
 
 		this.mainView = SV.el('div', { parent: this.node, 
 			style: { padding: '0.5em' },
@@ -147,6 +156,7 @@ class TicketListItem extends SyncView {
 
 		this.editMode = false;
 		this.editView = this.appendView(new TicketEdit());
+		this.editView.on('selectTable', (ticket) => { this.emit('selectTable', ticket); });
 	}
 	render() {
 		var ticket = this.data;
@@ -159,6 +169,43 @@ class TicketListItem extends SyncView {
 }
 
 
+
+class SelectMenuItemModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
+	
+		this.itemsContainer = new ViewsContainer(MenuItem);
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (menuItem) => { this.emit('selected', menuItem); this.hide(); });
+		});
+		this.mainView.appendChild(this.itemsContainer.node);
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', className: 'btn cancel',
+		       style: { marginTop: '1em' },	
+			events: { click: () => { this.hide(); }}});
+	}
+	render() {
+		this.itemsContainer.update(this.data);
+	}
+}
+
+class MenuItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'btn btn-wide', 
+			events: { click: () => { this.emit('selected', this.data); }}}));
+		this.name = SV.el('span', { parent: this.node });
+	}
+	render() {
+		this.name.innerHTML = this.data.name;
+	}
+}
+
+
+
+
+
 class TicketEdit extends SyncView {
 	constructor() {
 		super();
@@ -166,21 +213,134 @@ class TicketEdit extends SyncView {
 		this.node.style.backgroundColor = '#FFF';
 		this.node.style.padding = '1em';
 
-		this.views = [];
+		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
+		this.selectMenuItemModal.on('selected', (menuItem) => {
+			this.addOrderItem(menuItem);
+		});
 
-		this.views.push(this.appendView(new SimpleEditInput('name', 'Name')));
+
+
+		SV.el('button', { parent: this.node, innerHTML: 'Add Order Item', className: 'btn',
+			style: { marginBottom: '.5em' },
+			events: { click: () =>{ 
+				this.selectMenuItemModal.show();
+			}}});
+
+		SV.el('button', { parent: this.node, innerHTML: 'More Options', className: 'btn',
+			style: { marginBottom: '.5em', float: 'right' },
+			events: { click: () =>{ 
+				this.ticketEditDetailsModal.show();
+			}}});
+
+
+
+	
+		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
+		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
+		this.orderItems.on('viewAdded', (view) => {
+			view.on('selected', (orderItem) => {
+				this.orderItemEditModal.update(orderItem);
+				this.orderItemEditModal.show();
+			});
+		});
+
+		this.ticketEditDetailsModal = this.appendView(new TicketEditDetailsModal());
+	}
+	addOrderItem(menuItem) {
+		var orderItem = {
+			key: SyncNode.guidShort(),
+			name: menuItem.name,
+			price: menuItem.price,
+			quantity: 1,
+			note: ''
+		};
+		this.data.orderItems.set(orderItem.key, orderItem);
+	}
+	render() {
+		this.ticketEditDetailsModal.update(this.data);
+		this.orderItems.update(this.data.orderItems);
+		this.selectMenuItemModal.update(this.data.parent.parent.parent.menu.items);
+	}
+}
+
+class TicketEditDetailsModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Ticket Details' });
+
+		this.selectTable = SV.el('button', { parent: this.mainView, innerHTML: 'Table', className: 'btn',
+			events: { click: () => { this.emit('selectTable', this.data); }}});
 		
-		SV.el('button', { parent: this.node, innerHTML: 'Delete',
+		this.nameInput = new SimpleEditInput('name');
+		this.mainView.appendChild(this.nameInput.node);
+		
+
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Delete', className: 'btn',
 			style: { marginTop: '.5em' },
 			events: { click: () =>{ 
 				Modal.confirm('Delete ticket?', `Delete ${this.data.name}?`,
 			       		() => { this.data.parent.remove(this.data.key); });
 			}}});
+		
+		SV.el('button', { parent: this.mainView, innerHTML: 'Ok', className: 'btn',
+			style: { marginTop: '.5em' },
+			events: { click: () => { this.hide(); }}});
+	
+	}
+	render() {
+		this.selectTable.innerHTML = this.data.table;
+		this.nameInput.update(this.data);
+	}
+}
+
+class OrderItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'btn btn-wide', 
+			events: { click: () => { this.emit('selected', this.data); }}}));
+		this.name = SV.el('span', { parent: this.node });
+		this.price = SV.el('span', { parent: this.node,
+	       		style: { float: 'right' }});
+	}
+	render() {
+		this.name.innerHTML = this.data.name;
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
+	}
+}
+
+
+class OrderItemEditModal extends Modal {
+	constructor() {
+		super();
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Order Item' });
+		this.views = [];
+		this.views.push(this.appendView(new SimpleEditInput('name', 'Name'), this.mainView));
+		var note = this.appendView(new SimpleEditInput('note', 'Note', null, null, true), this.mainView);
+		note.input.rows = 10;
+		this.views.push(note);
+		this.views.push(this.appendView(new SimpleEditInput('price', 'Price'), this.mainView));
+		
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+
+		SV.el('button', { parent: footer, innerHTML: 'Ok', className: 'btn btn-big',
+			style: { float: 'right' },
+			events: { click: () => { this.hide(); }}});
+		SV.el('button', { parent: footer, innerHTML: 'Delete', className: 'btn btn-big', 
+			events: { click: () => { 
+					Modal.confirm('Delete Order Item', 'Delete this item?', () => {
+						this.data.parent.remove(this.data.key); this.hide(); 
+					});
+				}
+			}});
 	}
 	render() {
 		SyncView.updateViews(this.views, this.data);
 	}
 }
+
+
+
 
 
 

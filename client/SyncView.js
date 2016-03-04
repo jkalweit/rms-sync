@@ -252,7 +252,7 @@ class SV {
 
 	static formatCurrency(value, precision) {
 		precision = precision || 2;
-		var number = (typeof value === 'string') ? parseInt(value) : value;
+		var number = (typeof value === 'string') ? parseFloat(value) : value;
 		return number.toFixed(precision);
 	}
 }
@@ -377,20 +377,20 @@ class ViewsContainer extends SyncView {
 
 
 class SimpleEditInput extends SyncView {
-	constructor(prop, label, validator, formatter) {
+	constructor(prop, label, validator, formatter, isTextArea) {
 		super();
 		this.doFlash = true;
 		
 		this.prop = prop;
 
-		var el = SV.el;
 
-		this.editView = el('div', { parent: this.node });
+		this.editView = SV.el('div', { parent: this.node });
 		if(label) {
-			el('span', { parent: this.editView, innerHTML: label,
+			SV.el('span', { parent: this.editView, innerHTML: label,
 				style: { display: 'inline-block', width: '100px' }});
 		}
-		this.input = el('input', { parent: this.editView,
+		var elem = isTextArea ? 'textarea' : 'input';
+		this.input = SV.el(elem, { parent: this.editView,
 			style: { width: 'calc(100% - 110px)' },
 			events: { blur: () => {
 				var value = this.input.value;			
@@ -502,25 +502,9 @@ class SimpleEditSelect extends SyncView {
 class Modal extends SyncView {
 	constructor() {
 		super();
-		
-		SV.mergeMap({
-			display: 'none',
-			zIndex: 2,
-			position: 'fixed',
-			left: 0,
-			top: 0,
-			width: '100vw',
-			height: '100vh',
-			backgroundColor: 'rgba(0,0,0,0.7)',
-			padding: '1em',
-			overflowY: 'scroll'
-		}, this.node.style);
+		this.node.className = 'modal';
 
-		this.mainView = SV.el('div', { parent: this.node,
-	       		style: { width: '100%', maxWidth: '600px', minWidth: '400px',
-				boxShadow: '10px 10px 5px #000',
-				padding: '2em', textAlign: 'center',
-			       	margin: 'auto auto', backgroundColor: '#DDD' }});
+		this.mainView = SV.el('div', { parent: this.node, className: 'main-view' });
 	}
 	show() {
 		this.node.style.display = 'initial';
