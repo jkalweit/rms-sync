@@ -9,7 +9,9 @@ class Reconciliation extends SyncView {
 		this.sync = new SyncNodeSocket('/data', {});
 		this.sync.on('updated', (data) => {
 			if(!data.reconciliations) {
-				data.set('reconciliations', { tickets: {} });
+				data.set('reconciliations', { 
+					tickets: {}, 
+					totals: { food: 0, tax: 0, alcohol: 0, total: 0 }});
 			} else {
 				this.update(data);
 			}
@@ -20,9 +22,54 @@ class Reconciliation extends SyncView {
 			parent: this.node,
 			innerHTML: 'Reconciliation' });
 		this.tickets = this.appendView(new Tickets());
+		this.tickets.on('totalsChanged', () => { this.updateTotals(); });
+		
+	
+		var table = SV.el('table', { parent: this.node, 
+	       		style: { float: 'right', marginRight: '9.25em', marginTop: '2em' }});	
+	
+		var row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Food',
+	       		style: { textAlign: 'right' }});
+		this.food = SV.el('td', { parent: row,
+	       		style: { textAlign: 'right', width: '5em' }});
+		
+		row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Tax',
+	       		style: { textAlign: 'right' }});
+		this.tax = SV.el('td', { parent: row,
+	       		style: { textAlign: 'right', width: '5em' }});
+		
+		row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Alcohol',
+	       		style: { textAlign: 'right' }});
+		this.alcohol = SV.el('td', { parent: row,
+	       		style: { textAlign: 'right', width: '5em' }});
+		
+		row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Total',
+	       		style: { textAlign: 'right' }});
+		this.total = SV.el('td', { parent: row,
+	       		style: { textAlign: 'right', width: '5em' }});
+	}
+	updateTotals() {
+		var totals = { food: 0, tax: 0, alcohol: 0, total: 0 };
+		var tickets = SV.toArray(this.data.reconciliations.tickets).forEach((ticket) => {
+			var ticketTotals = TicketEdit.getTotals(ticket);
+			totals.food += ticketTotals.food;
+			totals.tax += ticketTotals.tax;
+			totals.alcohol += ticketTotals.food;
+			totals.total += ticketTotals.total;
+		});
+		this.data.reconciliations.set('totals', totals);
 	}
 	render() {
 		this.tickets.update(this.data.reconciliations.tickets);
+
+		this.food.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.food);
+		this.tax.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.tax);
+		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
+		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
 	}
 }
 
@@ -60,6 +107,9 @@ class Tickets extends SyncView {
 		this.ticketsContainer.on('viewAdded', (view) => {
 			view.on('selectTable', (ticket) => {
 				this.selectTable(ticket);
+			});
+			view.on('totalsChanged', (ticket) => {
+				this.emit('totalsChanged', ticket);
 			});
 		});
 		this.ticketsContainer.node.style.marginTop = '2em';
@@ -156,9 +206,10 @@ class TicketListItem extends SyncView {
 		this.name = SV.el('span', {
 			parent: this.mainView });
 
-		this.editMode = true;
+		this.editMode = false;
 		this.editView = this.appendView(new TicketEdit());
 		this.editView.on('selectTable', (ticket) => { this.emit('selectTable', ticket); });
+		this.editView.on('totalsChanged', (ticket) => { this.emit('totalsChanged', ticket); });
 	}
 	render() {
 		var ticket = this.data;
@@ -231,6 +282,10 @@ class TicketEdit extends SyncView {
 
 	
 		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
+		this.orderItemEditModal.on('totalChanged', (orderItem) => {
+			this.updateTotals();
+			alertify.success('Changed <b>' + orderItem.name + '</b>');
+		});
 		this.orderItemEditModal.on('deleted', (orderItem) => {
 			this.updateTotals();
 			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
@@ -240,9 +295,10 @@ class TicketEdit extends SyncView {
 			view.on('selected', (orderItem) => {
 				this.orderItemEditModal.update(orderItem);
 				this.orderItemEditModal.show();
+				this.orderItemEditModal.note.focus();
 			});
-			view.on('addOne', (orderItem) => {
-				this.addOrderItem(orderItem);
+			view.on('addAgain', (orderItem) => {
+				this.addOrderItem(orderItem, orderItem.quantity);
 			});
 		});
 
@@ -306,7 +362,7 @@ class TicketEdit extends SyncView {
 			this.emit('selectTable', ticket);
 		});
 	}
-	updateTotals() {
+	static getTotals(ticket) {
 		var totals = {
 			food: 0,
 			tax: 0,
@@ -314,7 +370,7 @@ class TicketEdit extends SyncView {
 			total: 0
 		};
 
-		SV.toArray(this.data.orderItems).forEach((item) => {
+		SV.toArray(ticket.orderItems).forEach((item) => {
 			var amount = item.price * item.quantity;
 			if(item.taxType === 'Included') {
 				totals.alcohol += amount;
@@ -326,14 +382,20 @@ class TicketEdit extends SyncView {
 		totals.tax = totals.food * 0.09;
 		totals.total = totals.food + totals.tax + totals.alcohol;
 
-		this.data.set('totals', totals);
+		return totals;
 	}
-	addOrderItem(menuItem) {
+	updateTotals() {
+		var totals = TicketEdit.getTotals(this.data);	
+		this.data.set('totals', totals);
+		this.emit('totalsChanged', this.data);
+	}
+	addOrderItem(menuItem, quantity) {
+		quantity = quantity || 1;
 		var orderItem = {
 			key: SyncNode.guidShort(),
 			name: menuItem.name,
 			price: menuItem.price,
-			quantity: 1,
+			quantity: quantity,
 			taxType: menuItem.taxType,
 			note: ''
 		};
@@ -399,13 +461,18 @@ class OrderItem extends SyncView {
 		SV.el('div', { parent: this.node, innerHTML: `<i class="material-icons">repeat_one</i>`,
 			className: 'btn',
 			style: { float: 'right', height: '100%' },
-			events: { click: () => { this.emit('addOne', this.data); }}});
+			events: { click: () => { this.emit('addAgain', this.data); }}});
 		this.price = SV.el('span', { parent: this.node,
 	       		style: { float: 'right' }});
+
+		this.note = SV.el('span', { parent: this.node,
+			style: { display: 'block', clear: 'both', marginLeft: '5em', fontStyle: 'italic' }});
 	}
 	render() {
 		this.name.innerHTML = this.data.name;
-		this.price.innerHTML = SV.formatCurrency(this.data.price);
+		var price = SV.formatCurrency(this.data.price);
+		this.price.innerHTML = (this.data.quantity != 1 ? this.data.quantity + ' x ' : '') + price;
+		this.note.innerHTML = this.data.note;
 	}
 }
 
@@ -416,10 +483,16 @@ class OrderItemEditModal extends Modal {
 		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Order Item' });
 		this.views = [];
 		this.views.push(this.appendView(new SimpleEditInput('name', 'Name'), this.mainView));
-		var note = this.appendView(new SimpleEditInput('note', 'Note', null, null, true), this.mainView);
-		note.input.rows = 10;
-		this.views.push(note);
-		this.views.push(this.appendView(new SimpleEditInput('price', 'Price'), this.mainView));
+		this.note = this.appendView(new SimpleEditInput('note', 'Note', null, null, true), this.mainView);
+		this.note.input.rows = 10;
+		this.views.push(this.note);
+		this.price = this.appendView(new SimpleEditInput('price', 'Price'), this.mainView);
+		this.price.on('changed', () => { this.emit('totalChanged', this.data); });
+		this.views.push(this.price);
+
+		this.quantity = this.appendView(new SimpleEditInput('quantity', 'Quantity'), this.mainView);
+		this.quantity.on('changed', () => { this.emit('totalChanged', this.data); });
+		this.views.push(this.quantity);
 		
 		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
 
