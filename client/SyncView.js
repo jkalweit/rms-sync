@@ -255,6 +255,14 @@ class SV {
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
 		return number.toFixed(precision);
 	}
+
+	static iconButton(icon, options) {
+		var button = SV.el('div', options);
+		button.classList.add('btn');
+		button.classList.add('btn-big');
+		button.innerHTML = `<i class="material-icons">${icon}</i>` + button.innerHTML;
+		return button;
+	}
 }
 
 
@@ -531,9 +539,10 @@ class Modal extends SyncView {
 		var modal = new Modal();
 		modal.mainView.appendChild(SV.el('h1', { innerHTML: title }));
 		modal.mainView.appendChild(SV.el('p', { innerHTML: message }));
-		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Yes', className: 'btn',
+		modal.mainView.appendChild(SV.iconButton('done', { className: 'btn btn-big',
+			style: { float: 'right' },
 	       		events: { click: () => { modal.hide(); callback(); }}}));
-		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Cancel', className: 'btn',
+		modal.mainView.appendChild(SV.el('div', { innerHTML: 'Cancel', className: 'btn btn-big',
 	       		events: { click: () => { modal.hide(); }}}));
 		document.body.appendChild(modal.node);
 		modal.show();

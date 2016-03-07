@@ -83,14 +83,14 @@ h1, h2, h3, h4, h5, h6 {
 	padding: 0.5em 1em;
 	display: inline-block;
 	background-color: #CCA177;
-	color: rgba(0,0,0,.87);
+	color: rgba(0,0,0,.57);
 }
 .btn:hover {
 	box-shadow: 3px 3px 3px #777;
 	background-color: #FF800B;
 	position: relative;
-	top: -3px;
-	left: -3px;
+/*	top: -3px;
+	left: -3px; */
 	color: #FFF;
 }
 .btn:active {
@@ -103,7 +103,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-wide {
 	display: block;
-	width: '100%';
+	width: 100%;
 }
 
 .btn-big {
@@ -111,29 +111,58 @@ h1, h2, h3, h4, h5, h6 {
 	margin: .25em .25em .25em 0;
 }
 
-.ticketListItem {
+.ticket-list-item {
 	border: 1px solid #999;
 	box-sizing: border-box;
 	padding: 0.5em 1em;
 	display: block;
-	width: '100%';
+	width: 100%;
 	background-color: #CCA177;
 	color: rgba(0,0,0,.87);
 }
-.ticketListItem:hover {
+.ticket-list-item:hover {
 	box-shadow: 3px 3px 3px #777;
 	background-color: #FF800B;
 	position: relative;
 	//top: -3px;
 	//left: -3px;
 }
-.ticketListItem:active {
+.ticket-list-item:active {
 	box-shadow: none;
 	top: 0;
 	left: 0;
 	background-color: #673300;
 }
 
+
+.order-item {
+	box-sizing: border-box;
+	padding: 0;
+	display: block;
+	width: 100%;
+	color: rgba(0,0,0,.87);
+	overflow: hidden;
+}
+.order-item:hover {
+	box-shadow: 3px 3px 3px #777;
+	background-color: #FF800B;
+	position: relative;
+	//top: -3px;
+	//left: -3px;
+}
+.order-item:active {
+	box-shadow: none;
+	top: 0;
+	left: 0;
+	background-color: #673300;
+}
+.order-item span {
+	margin: .8em;
+}
+.order-item .btn {
+	border: none;
+	background-color: transparent;
+}
 
 .modal {
 	display: none;
