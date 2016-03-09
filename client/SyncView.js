@@ -366,9 +366,11 @@ class ViewsContainer extends SyncView {
 				this.views[item.key] = view;
 				// Attempt to preserve order
 				this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
+				view.update(item, force);
 				this.emit('viewAdded', view);
+			} else {
+				view.update(item, force);
 			}
-			view.update(item, force);
 			previous = view;
 		});
 		Object.keys(this.views).forEach((key) => {

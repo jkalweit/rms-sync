@@ -111,6 +111,12 @@ class Tickets extends SyncView {
 			view.on('totalsChanged', (ticket) => {
 				this.emit('totalsChanged', ticket);
 			});
+			if(view.data.key === this.newTicketKey) {
+				// We just added this ticket, so display it in edit mode and store so we can scroll to it:
+				this.newTicketView = view;
+				this.newTicketView.toggleEditMode(); 
+				this.newTicketView.node.scrollIntoView();	
+			}
 		});
 		this.ticketsContainer.node.style.marginTop = '2em';
 		
@@ -127,15 +133,20 @@ class Tickets extends SyncView {
 			orderItems: {},
 			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
 		};
+		this.addInput.value = '';
+		this.render(); // force render after clearing filter (addInput) so we can scollIntoView to this.newTicketView
+
+		this.newTicketKey = newItem.key;
 		newItem = this.data.set(newItem.key, newItem)[newItem.key];
 		this.selectTable(newItem);
-		this.addInput.value = '';
 	}	
 	selectTable(ticket) {
 		this.selectTableModal.update(ticket);
 		this.selectTableModal.show();
 	}
 	render() {
+		this.ticketsContainer.update(this.data);
+		
 		var filtered;
 		var filterText = this.addInput.value.trim().toLowerCase();
 		if(filterText) {
@@ -147,9 +158,13 @@ class Tickets extends SyncView {
 			filtered = this.data;
 		}
 
+		SV.toArray(this.ticketsContainer.views).forEach((view) => {
+			view.node.style.display = filtered[view.data.key] ? 'block' : 'none';
+		});
+
 		this.addButton.disabled = filterText === '';
 
-		this.ticketsContainer.update(filtered);
+
 	}
 }
 
@@ -194,7 +209,7 @@ class TicketListItem extends SyncView {
 
 		this.mainView = SV.el('div', { parent: this.node, 
 			style: { padding: '0.5em' },
-			events: { click: () => { this.editMode = !this.editMode; this.render(); }}});
+			events: { click: () => { this.toggleEditMode(); }}});
 
 		this.options = new OptionsMenu();
 		SV.mergeMap({ float: 'right' }, this.options.node.style);
@@ -210,6 +225,9 @@ class TicketListItem extends SyncView {
 		this.editView = this.appendView(new TicketEdit());
 		this.editView.on('selectTable', (ticket) => { this.emit('selectTable', ticket); });
 		this.editView.on('totalsChanged', (ticket) => { this.emit('totalsChanged', ticket); });
+	}
+	toggleEditMode() {
+		this.editMode = !this.editMode; this.render();
 	}
 	render() {
 		var ticket = this.data;

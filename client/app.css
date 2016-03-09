@@ -30,6 +30,7 @@ input, select, textarea {
 	box-shadow: 10px 10px 5px #000;
 	box-sizing: border-box;
   	position: relative;
+	overflow: hidden;
 }
 
 
@@ -143,6 +144,7 @@ h1, h2, h3, h4, h5, h6 {
 	color: rgba(0,0,0,.87);
 	overflow: hidden;
 }
+/*
 .order-item:hover {
 	box-shadow: 3px 3px 3px #777;
 	background-color: #FF800B;
@@ -156,12 +158,14 @@ h1, h2, h3, h4, h5, h6 {
 	left: 0;
 	background-color: #673300;
 }
+*/
 .order-item span {
 	margin: .8em;
 }
 .order-item .btn {
 	border: none;
 	background-color: transparent;
+	color: #777;
 }
 
 .modal {
