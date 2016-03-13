@@ -4,6 +4,11 @@ body {
 	padding: 0;
 	background-color: #673300;
 	background-image: url("/imgs/wood_bg.jpg");
+	
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
 }
 
 .group:after {
@@ -85,9 +90,14 @@ h1, h2, h3, h4, h5, h6 {
 	display: inline-block;
 	background-color: #CCA177;
 	color: rgba(0,0,0,.57);
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
 }
 .btn:hover {
 	//box-shadow: 3px 3px 3px #777;
+	/* box-shadow: 3px 3px 3px #777; */
 	background-color: #FF800B;
 	position: relative;
 /*	top: -3px;
@@ -121,6 +131,7 @@ h1, h2, h3, h4, h5, h6 {
 	background-color: #CCA177;
 	color: rgba(0,0,0,.87);
 }
+/*
 .ticket-list-item:hover {
 	box-shadow: 3px 3px 3px #777;
 	background-color: #FF800B;
@@ -134,7 +145,7 @@ h1, h2, h3, h4, h5, h6 {
 	left: 0;
 	background-color: #673300;
 }
-
+*/
 
 .order-item {
 	box-sizing: border-box;
