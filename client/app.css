@@ -1,5 +1,5 @@
 body { 
-	font-family: 'Roboto', sans-serif; 
+	font-family: sans-serif; 
 	margin: 0;
 	padding: 0;
 	background-color: #673300;
@@ -67,7 +67,7 @@ h1, h2, h3, h4, h5, h6 {
 	box-sizing: border-box;
 	padding: 1em;
 	padding-top: 4em;
-	box-shadow: 4px 4px 4px #444;
+	//box-shadow: 4px 4px 4px #444;
 	margin-bottom: 2em;
 	background-color: #EDDAC7;
 }
@@ -96,6 +96,7 @@ h1, h2, h3, h4, h5, h6 {
 	user-select: none;
 }
 .btn:hover {
+	//box-shadow: 3px 3px 3px #777;
 	/* box-shadow: 3px 3px 3px #777; */
 	background-color: #FF800B;
 	position: relative;
@@ -104,7 +105,7 @@ h1, h2, h3, h4, h5, h6 {
 	color: #FFF;
 }
 .btn:active {
-	box-shadow: none;
+	//box-shadow: none;
 	top: 0;
 	left: 0;
 	background-color: #673300;
