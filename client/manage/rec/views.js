@@ -21,6 +21,32 @@ class UserListItem extends SyncView {
 	}
 }
 
+
+class ReconciliationModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Reconciliation' });
+
+		
+		this.nameInput = this.appendView(new SimpleEditInput('name', 'Name'), this.mainView);
+		this.beginningDrawer = this.appendView(new SimpleEditInput('beginning', 'Beginning Drawer'), this.mainView);
+		this.endingDrawer = this.appendView(new SimpleEditInput('ending', 'Ending Drawer'), this.mainView);
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+
+
+		SV.iconButton('done', { parent: footer, className: 'btn btn-big',
+			style: { float: 'right' },
+			events: { click: () => { this.hide(); }}});
+	}
+	render() {
+		this.nameInput.update(this.data.drawer);
+	}
+}
+
+
+
 class Reconciliation extends SyncView {
 	constructor() {
 		super();
@@ -90,6 +116,12 @@ class Reconciliation extends SyncView {
 	       		style: { textAlign: 'right' }});
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
+
+		SV.el('div', { parent: this.node, className: 'btn', innerHTML: 'Reconcile',
+			events: { click: () => { this.recModal.show(); }}});
+
+		this.recModal = this.appendView(new ReconciliationModal());
+
 	}
 	updateTotals() {
 		var totals = { food: 0, tax: 0, alcohol: 0, total: 0 };
@@ -111,6 +143,7 @@ class Reconciliation extends SyncView {
 		this.tax.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
+		this.recModal.update(this.data);
 	}
 }
 
