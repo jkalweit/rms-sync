@@ -15,6 +15,9 @@ var path = require('path');
 var multer = require('multer');
 var MemberServer = require('./server/MemberServer.js').MemberServer;
 
+var pdf = require('html-pdf');
+var exec = require('child_process').exec;
+
 const EventEmitter = require('events');
 
 
@@ -463,6 +466,39 @@ function onAuthorizeFail(data, message, error, accept){
 //    accept(new Error(message));
 }
 
+
+
+io.on('connection', (socket) => {
+	socket.on('print', (html) => {	
+		print(html);
+	});
+});
+
+
+
+function print(html) {
+	console.log('print!', html);
+
+	var options = {
+		width: '3in',
+		border: { 
+			right: '6in'
+		}
+	};
+
+	var buffer = pdf.create(html, options).toFile('receipt.pdf', (err, res) => {
+		if(err) {
+			console.log('Error while printing: ', err, res.filename);
+		} else {
+			var cmd = '"C:\\Program Files\\Foxit Software\\Foxit Reader\\FoxitReader.exe" /t "' + res.filename + '" "TSP143LAN"';
+			exec(cmd, (err, stdout, stderr) => {
+				if(err) {					
+					console.log('Error while executing print command: '. err);
+				}
+			});
+		}
+	});
+}
 
 
 

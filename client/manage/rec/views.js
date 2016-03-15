@@ -427,6 +427,10 @@ class TicketEdit extends SyncView {
 			style: { float: 'left', marginTop: '2em' },
 	       		events: { click: () => { this.cyclePaymentStatus(); }}});
 
+		this.printReceiptButton = SV.el('div', { parent: this.node, className: 'btn', innerHTML: 'Print Receipt', 
+			style: { float: 'left', marginTop: '2em' },
+	       		events: { click: () => { this.printReceipt(); }}});
+
 
 		var totals = SV.el('div', { parent: this.node,
 	       		style: { marginTop: '2em', marginRight: '.8em', float: 'right', overflow: 'hidden' }});	
@@ -469,6 +473,31 @@ class TicketEdit extends SyncView {
 		this.ticketEditDetailsModal.on('selectTable', (ticket) => {
 			this.emit('selectTable', ticket);
 		});
+	}
+	printReceipt() {
+		console.log('printing receipt');
+		var html = `<html>
+				<head>
+					<style>
+						html, body {
+							margin: 0;
+							padding: 0;
+							font-family: sans-serif;
+						}
+					</style>
+				</head>
+				<body>
+					Receipt: ${this.data.name}`;
+
+		SV.toArray(this.data.orderItems).forEach((orderItem) => {
+			html += `<div style="clear: both; overflow: hidden">
+					<p style="float: left">${orderItem.name}</p>
+					<p style="float: right">${orderItem.price}</p>
+				</div>`;
+		});
+		html += `</body></html>`;
+
+		io().emit('print', html);
 	}
 	static getTotals(ticket) {
 		var totals = {
