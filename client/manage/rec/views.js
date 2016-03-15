@@ -30,8 +30,11 @@ class ReconciliationModal extends Modal {
 
 		
 		this.nameInput = this.appendView(new SimpleEditInput('name', 'Name'), this.mainView);
-		this.beginningDrawer = this.appendView(new SimpleEditInput('beginning', 'Beginning Drawer'), this.mainView);
-		this.endingDrawer = this.appendView(new SimpleEditInput('ending', 'Ending Drawer'), this.mainView);
+		this.beginningDrawer = this.appendView(new SimpleEditInput('beginning', 'Beginning Drawer', 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter), this.mainView);
+		this.endingDrawer = this.appendView(new SimpleEditInput('ending', 'Ending Drawer', 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter), this.mainView);
+		this.difference = SV.el('div', { parent: this.mainView });
 
 		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
 
@@ -40,8 +43,19 @@ class ReconciliationModal extends Modal {
 			style: { float: 'right' },
 			events: { click: () => { this.hide(); }}});
 	}
+	updateCalculations() {
+		console.log('drawer', this.data.drawer);
+		this.difference.innerHTML = this.data.drawer.ending - this.data.drawer.beginning;
+	}
 	render() {
-		this.nameInput.update(this.data.drawer);
+		if(!this.data.drawer) this.data.set('drawer', {
+			beginning: 0,
+			ending: 0
+		});
+		this.nameInput.update(this.data);
+		this.beginningDrawer.update(this.data.drawer);
+		this.endingDrawer.update(this.data.drawer);
+		this.updateCalculations();
 	}
 }
 

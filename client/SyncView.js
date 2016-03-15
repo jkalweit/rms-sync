@@ -379,7 +379,6 @@ class SimpleEditInput extends SyncView {
 		
 		this.prop = prop;
 
-
 		this.editView = SV.el('div', { parent: this.node });
 		if(label) {
 			SV.el('span', { parent: this.editView, innerHTML: label,
@@ -410,6 +409,13 @@ class SimpleEditInput extends SyncView {
 	render() {
 		if(this.input.value !== this.data[this.prop])
 			this.input.value = this.data[this.prop] || '';
+	}
+
+	static NumberValidator(val) {
+		return !isNaN(parseFloat(val));
+	}
+	static NumberFormatter(val) {
+		return parseFloat(val);
 	}
 }
 
