@@ -378,15 +378,13 @@ class SimpleEditInput extends SyncView {
 		this.doFlash = true;
 		
 		this.prop = prop;
-
-		this.editView = SV.el('div', { parent: this.node });
+		
 		if(label) {
-			SV.el('span', { parent: this.editView, innerHTML: label,
+			SV.el('span', { parent: this.node, innerHTML: label,
 				style: { display: 'inline-block', width: '100px' }});
 		}
 		var elem = isTextArea ? 'textarea' : 'input';
-		this.input = SV.el(elem, { parent: this.editView,
-			style: { width: 'calc(100% - 110px)' },
+		this.input = SV.el(elem, { parent: this.node,
 			events: { blur: () => {
 				var value = this.input.value;			
 				if(validator && !validator(value)) {
@@ -402,6 +400,9 @@ class SimpleEditInput extends SyncView {
 					this.emit('changed', value, oldValue);
 				}
 			}}});
+		if(label) {
+			this.input.style.width = 'calc(100% - 110px)';
+		}
 	}
 	focus() {
 		this.input.focus();
@@ -412,9 +413,11 @@ class SimpleEditInput extends SyncView {
 	}
 
 	static NumberValidator(val) {
+		if(val.trim() == '') return true;
 		return !isNaN(parseFloat(val));
 	}
 	static NumberFormatter(val) {
+		if(val.trim() == '') return 0;
 		return parseFloat(val);
 	}
 }

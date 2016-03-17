@@ -30,11 +30,52 @@ class ReconciliationModal extends Modal {
 
 		
 		this.nameInput = this.appendView(new SimpleEditInput('name', 'Name'), this.mainView);
-		this.beginningDrawer = this.appendView(new SimpleEditInput('beginning', 'Beginning Drawer', 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter), this.mainView);
-		this.endingDrawer = this.appendView(new SimpleEditInput('ending', 'Ending Drawer', 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter), this.mainView);
-		this.difference = SV.el('div', { parent: this.mainView });
+		this.nameInput.node.style.marginBottom = '2em';
+
+		var labelWidth = '10em';
+		var rowStyle = { minHeight: '2em', display: 'flex', alignItems: 'center' };
+		var cellStyle = { display: 'inline-block', fontSize: '1.5em', width: '3em', textAlign: 'right', boxSizing: 'border-box' };
+
+		var row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Beginning Cash', style: { display: 'inline-block', width: labelWidth }});
+		this.beginningDrawer = new SimpleEditInput('beginning', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.beginningDrawer.input.style);
+		row.appendChild(this.beginningDrawer.node);
+		
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Sales', style: { display: 'inline-block', width: labelWidth }});
+		this.sales = SV.el('div', { parent: row, style: cellStyle });
+		
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Ending Cash', style: { display: 'inline-block', width: labelWidth }});
+		this.endingDrawer = new SimpleEditInput('ending', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.endingDrawer.input.style);
+		row.appendChild(this.endingDrawer.node);
+		
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Difference', style: { display: 'inline-block', width: labelWidth }});
+		this.difference = SV.el('div', { parent: row, style: cellStyle});
+
+/*
+		var table = SV.el('table', { parent: this.mainView });
+		var row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Beginning' });
+		var cell = SV.el('td', { parent: row });
+		this.beginningDrawer = new SimpleEditInput('beginning', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		cell.appendChild(this.beginningDrawer.node);
+
+		row = SV.el('tr', { parent: table });
+		SV.el('td', { parent: row, innerHTML: 'Ending' });
+		cell = SV.el('td', { parent: row });
+		this.endingDrawer = new SimpleEditInput('ending', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		cell.appendChild(this.endingDrawer.node);
+*/
+		
 
 		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
 
@@ -44,8 +85,9 @@ class ReconciliationModal extends Modal {
 			events: { click: () => { this.hide(); }}});
 	}
 	updateCalculations() {
-		console.log('drawer', this.data.drawer);
-		this.difference.innerHTML = this.data.drawer.ending - this.data.drawer.beginning;
+		var runningTotal = this.data.drawer.beginning || 0;
+		runningTotal += this.data.totals.total;
+		this.difference.innerHTML = SV.formatCurrency(this.data.drawer.ending - runningTotal);
 	}
 	render() {
 		if(!this.data.drawer) this.data.set('drawer', {
@@ -54,6 +96,7 @@ class ReconciliationModal extends Modal {
 		});
 		this.nameInput.update(this.data);
 		this.beginningDrawer.update(this.data.drawer);
+		this.sales.innerHTML = this.data.totals.total;
 		this.endingDrawer.update(this.data.drawer);
 		this.updateCalculations();
 	}
@@ -100,11 +143,17 @@ class Reconciliation extends SyncView {
 		SV.el('h1', {
 			parent: this.node,
 			innerHTML: 'Reconciliation' });
-		this.tickets = this.appendView(new Tickets());
+
+		this.instructions = SV.el('div', { parent: this.node });
+		SV.el('h1', { parent: this.instructions, innerHTML: 'First select a user.' });
+		this.mainView = SV.el('div', { parent: this.node });
+
+
+		this.tickets = this.appendView(new Tickets(), this.mainView);
 		this.tickets.on('totalsChanged', () => { this.updateTotals(); });
 		
 	
-		var table = SV.el('table', { parent: this.node, 
+		var table = SV.el('table', { parent: this.mainView, 
 	       		style: { float: 'right', marginRight: '9.25em', marginTop: '2em' }});	
 	
 		var row = SV.el('tr', { parent: table });
@@ -131,7 +180,9 @@ class Reconciliation extends SyncView {
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
 
-		SV.el('div', { parent: this.node, className: 'btn', innerHTML: 'Reconcile',
+
+		var controls = SV.el('div', { parent: this.mainView, style: { marginTop: '2em' }});		
+		SV.el('div', { parent: controls, className: 'btn', innerHTML: 'Reconcile',
 			events: { click: () => { this.recModal.show(); }}});
 
 		this.recModal = this.appendView(new ReconciliationModal());
@@ -151,13 +202,17 @@ class Reconciliation extends SyncView {
 	render() {
 		this.usersContainer.update(this.users);
 		this.currentUserSelect.value = window.recSettings.currentUser;
+		this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
+		this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
+
 		this.tickets.update(this.data.reconciliations.tickets);
 
 		this.food.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
-		this.recModal.update(this.data);
+		this.recModal.update(this.data.reconciliations);
+		this.recModal.show();
 	}
 }
 
@@ -191,8 +246,10 @@ class Tickets extends SyncView {
 				width: '80px'
 			}});
 
+		var controls = SV.el('div', { parent: this.node, style: { marginTop: '2em' }});
+
 		this.hidePaid = true;
-		this.hidePaidButton = SV.el('div', { parent: this.node, className: 'btn',
+		this.hidePaidButton = SV.el('div', { parent: controls, className: 'btn',
 			events: { click: () => { this.hidePaid = !this.hidePaid; this.render(); }}});
 
 		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
@@ -240,7 +297,7 @@ class Tickets extends SyncView {
 	render() {
 		this.ticketsContainer.update(this.data);
 		
-		this.hidePaidButton.innerHTML = this.hidePaid ? 'Paid Tickets: Hidden' :  'Paid Tickets: Shown';
+		this.hidePaidButton.innerHTML = 'Paid Tickets: ' + (this.hidePaid ? 'Hidden' :  'Shown');
 
 		var filtered;
 		var filterText = this.addInput.value.trim().toLowerCase();
@@ -352,13 +409,19 @@ class TicketListItem extends SyncView {
 		var ticket = this.data;
 	
 		if(ticket.paymentStatus === 'Unpaid') {
+			this.mainView.style.paddingTop = '1em';
+			this.mainView.style.paddingBottom = '1em';
 			this.node.style.backgroundColor = '#FFF';
+			this.mainView.style.backgroundColor = '#CCA177';
 		} else {			
+			this.mainView.style.paddingTop = '0.5em';
+			this.mainView.style.paddingBottom = '0.5em';
 			this.node.style.backgroundColor = '#BBB';
+			this.mainView.style.backgroundColor = '#BBB';
 		}
 
 		this.name.innerHTML = ticket.table + ' ' + ticket.name;
-		this.name.style.color = ticket.paymentStatus === 'Unpaid' ? '#44F' : '#555';
+		this.name.style.color = ticket.paymentStatus === 'Unpaid' ? '#222' : '#555';
 		this.total.innerHTML = SV.formatCurrency(ticket.totals.total);
 		this.editView.update(this.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
