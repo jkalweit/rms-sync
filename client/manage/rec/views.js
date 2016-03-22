@@ -46,7 +46,35 @@ class ReconciliationModal extends Modal {
 		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
 		SV.el('span', { parent: row, innerHTML: 'Sales', style: { display: 'inline-block', width: labelWidth }});
 		this.sales = SV.el('div', { parent: row, style: cellStyle });
+	
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Credit Cards', style: { display: 'inline-block', width: labelWidth }});
+		this.credit = new SimpleEditInput('credit', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.credit.input.style);
+		row.appendChild(this.credit.node);
 		
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Credit Tips', style: { display: 'inline-block', width: labelWidth }});
+		this.creditTips = new SimpleEditInput('creditTips', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.creditTips.input.style);
+		row.appendChild(this.creditTips.node);
+		
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Gift Cards', style: { display: 'inline-block', width: labelWidth }});
+		this.giftCards = new SimpleEditInput('giftCards', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.giftCards.input.style);
+		row.appendChild(this.giftCards.node);
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Payouts', style: { display: 'inline-block', width: labelWidth }});
+		this.payouts = new SimpleEditInput('payouts', null, 
+					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
+		SV.mergeMap(cellStyle, this.payouts.input.style);
+		row.appendChild(this.payouts.node);
+
 		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
 		SV.el('span', { parent: row, innerHTML: 'Ending Cash', style: { display: 'inline-block', width: labelWidth }});
 		this.endingDrawer = new SimpleEditInput('ending', null, 
@@ -87,16 +115,28 @@ class ReconciliationModal extends Modal {
 	updateCalculations() {
 		var runningTotal = this.data.drawer.beginning || 0;
 		runningTotal += this.data.totals.total;
+		runningTotal -= this.data.drawer.credit;
+		runningTotal -= this.data.drawer.creditTips;
+		runningTotal -= this.data.drawer.giftCards;
+		runningTotal -= this.data.drawer.payouts;
 		this.difference.innerHTML = SV.formatCurrency(this.data.drawer.ending - runningTotal);
 	}
 	render() {
 		if(!this.data.drawer) this.data.set('drawer', {
 			beginning: 0,
-			ending: 0
+			ending: 0,
+			credit: 0,
+			creditTips: 0,
+			giftCards: 0,
+			payouts: 0
 		});
 		this.nameInput.update(this.data);
 		this.beginningDrawer.update(this.data.drawer);
 		this.sales.innerHTML = this.data.totals.total;
+		this.credit.update(this.data.drawer);
+		this.creditTips.update(this.data.drawer);
+		this.giftCards.update(this.data.drawer);
+		this.payouts.update(this.data.drawer);
 		this.endingDrawer.update(this.data.drawer);
 		this.updateCalculations();
 	}
@@ -212,7 +252,7 @@ class Reconciliation extends SyncView {
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
 		this.recModal.update(this.data.reconciliations);
-		//this.recModal.show();
+		this.recModal.show();
 	}
 }
 
