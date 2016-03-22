@@ -22,123 +22,92 @@ class UserListItem extends SyncView {
 }
 
 
-class ReconciliationModal extends Modal {
+class Reconciliations extends SyncView {
 	constructor() {
 		super();
-
-		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Reconciliation' });
-
 		
-		this.nameInput = this.appendView(new SimpleEditInput('name', 'Name'), this.mainView);
-		this.nameInput.node.style.marginBottom = '2em';
-
-		var labelWidth = '10em';
-		var rowStyle = { minHeight: '2em', display: 'flex', alignItems: 'center' };
-		var cellStyle = { display: 'inline-block', fontSize: '1.5em', width: '3em', textAlign: 'right', boxSizing: 'border-box' };
-
-		var row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Beginning Cash', style: { display: 'inline-block', width: labelWidth }});
-		this.beginningDrawer = new SimpleEditInput('beginning', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.beginningDrawer.input.style);
-		row.appendChild(this.beginningDrawer.node);
-		
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Sales', style: { display: 'inline-block', width: labelWidth }});
-		this.sales = SV.el('div', { parent: row, style: cellStyle });
-	
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Credit Cards', style: { display: 'inline-block', width: labelWidth }});
-		this.credit = new SimpleEditInput('credit', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.credit.input.style);
-		row.appendChild(this.credit.node);
-		
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Credit Tips', style: { display: 'inline-block', width: labelWidth }});
-		this.creditTips = new SimpleEditInput('creditTips', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.creditTips.input.style);
-		row.appendChild(this.creditTips.node);
-		
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Gift Cards', style: { display: 'inline-block', width: labelWidth }});
-		this.giftCards = new SimpleEditInput('giftCards', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.giftCards.input.style);
-		row.appendChild(this.giftCards.node);
-
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Payouts', style: { display: 'inline-block', width: labelWidth }});
-		this.payouts = new SimpleEditInput('payouts', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.payouts.input.style);
-		row.appendChild(this.payouts.node);
-
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Ending Cash', style: { display: 'inline-block', width: labelWidth }});
-		this.endingDrawer = new SimpleEditInput('ending', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		SV.mergeMap(cellStyle, this.endingDrawer.input.style);
-		row.appendChild(this.endingDrawer.node);
-		
-
-		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
-		SV.el('span', { parent: row, innerHTML: 'Difference', style: { display: 'inline-block', width: labelWidth }});
-		this.difference = SV.el('div', { parent: row, style: cellStyle});
-
-/*
-		var table = SV.el('table', { parent: this.mainView });
-		var row = SV.el('tr', { parent: table });
-		SV.el('td', { parent: row, innerHTML: 'Beginning' });
-		var cell = SV.el('td', { parent: row });
-		this.beginningDrawer = new SimpleEditInput('beginning', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		cell.appendChild(this.beginningDrawer.node);
-
-		row = SV.el('tr', { parent: table });
-		SV.el('td', { parent: row, innerHTML: 'Ending' });
-		cell = SV.el('td', { parent: row });
-		this.endingDrawer = new SimpleEditInput('ending', null, 
-					SimpleEditInput.NumberValidator, SimpleEditInput.NumberFormatter);
-		cell.appendChild(this.endingDrawer.node);
-*/
-		
-
-		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+		this.sync = new SyncNodeSocket('/data', {});
+		this.sync.on('updated', (data) => {
+			if(!data.reconciliations) {
+				data.set('reconciliations', {});
+			} else {
+				this.update(data);
+			}
+		});
 
 
-		SV.iconButton('done', { parent: footer, className: 'btn btn-big',
-			style: { float: 'right' },
-			events: { click: () => { this.hide(); }}});
+		window.membersSync = new SyncNodeSocket('/members', {});
+
+		window.recSettings = new LocalSyncNode('recSettings');	
+		window.recSettings.on('updated', (data) => {
+			this.render();
+		});
+
+		this.listView = SV.el('div', { parent: this.node });
+		SV.el('h1', { parent: this.listView, innerHTML: 'Select a Reconciliation' });
+		SV.el('button', { parent: this.listView, className: 'btn btn-big', innerHTML: 'Open New Reconciliation',
+			events: { click: () => { this.addRec(); }}});
+
+		this.recsView = new ViewsContainer(ReconciliationListItem);
+		this.recsView.on('viewAdded', (view) => {
+			view.on('selected', (rec) => {	
+				window.recSettings.set('selectedRecKey', rec.key);
+			});
+		});
+		this.listView.appendChild(this.recsView.node);
+
+		this.detailsView = SV.el('div', { parent: this.node });
+			
+		this.recDetails = new Reconciliation();
+		this.recDetails.on('closed', () => { window.recSettings.remove('selectedRecKey'); this.render(); });
+		this.detailsView.appendChild(this.recDetails.node);
 	}
-	updateCalculations() {
-		var runningTotal = this.data.drawer.beginning || 0;
-		runningTotal += this.data.totals.total;
-		runningTotal -= this.data.drawer.credit;
-		runningTotal -= this.data.drawer.creditTips;
-		runningTotal -= this.data.drawer.giftCards;
-		runningTotal -= this.data.drawer.payouts;
-		this.difference.innerHTML = SV.formatCurrency(this.data.drawer.ending - runningTotal);
+	addRec() {
+		var added = new Date().toISOString();
+		var name = moment(added).format('dddd MMM Do YYYY');
+		var newRec = {
+			key: added,
+			added: added,
+			name: name,
+			tickets: {},
+			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
+		};
+		this.data.reconciliations.set(newRec.key, newRec);
 	}
 	render() {
-		if(!this.data.drawer) this.data.set('drawer', {
-			beginning: 0,
-			ending: 0,
-			credit: 0,
-			creditTips: 0,
-			giftCards: 0,
-			payouts: 0
-		});
-		this.nameInput.update(this.data);
-		this.beginningDrawer.update(this.data.drawer);
-		this.sales.innerHTML = this.data.totals.total;
-		this.credit.update(this.data.drawer);
-		this.creditTips.update(this.data.drawer);
-		this.giftCards.update(this.data.drawer);
-		this.payouts.update(this.data.drawer);
-		this.endingDrawer.update(this.data.drawer);
-		this.updateCalculations();
+		var isDetailsView = window.recSettings.selectedRecKey;
+		this.listView.style.display = !isDetailsView ? 'block' : 'none';
+		this.detailsView.style.display = isDetailsView ? 'block' : 'none';
+		
+		if(isDetailsView) {
+			var rec = this.data.reconciliations[window.recSettings.selectedRecKey];
+			if(!rec) {
+				window.recSettings.remove('selectedRecKey');
+				this.render();
+			} else {
+				this.recDetails.update(rec);
+			}
+		} else {
+			this.recsView.update(this.data.reconciliations);
+		}
+	}
+}
+
+class ReconciliationListItem extends SyncView {
+	constructor() {
+		super();
+		
+		this.node.className = 'group btn btn-wide';
+		this.name = SV.el('div', { parent: this.node,
+			style: { float: 'left' }});
+		this.total = SV.el('div', { parent: this.node, 
+			style: { float: 'right' }});
+
+		this.node.addEventListener('click', () => { this.emit('selected', this.data); });
+	}
+	render() {
+		this.name.innerHTML = this.data.name;
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 	}
 }
 
@@ -148,28 +117,7 @@ class Reconciliation extends SyncView {
 	constructor() {
 		super();
 
-		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.on('updated', (data) => {
-			if(!data.reconciliations) {
-				data.set('reconciliations', { 
-					tickets: {}, 
-					totals: { food: 0, tax: 0, alcohol: 0, total: 0 }});
-			} else {
-				this.update(data);
-			}
-		});
-
-
-		window.membersSync = new SyncNodeSocket('/members', {});
-		window.membersSync.on('updated', (data) => {
-			this.users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			// this.users['default'] = { key: 'default', data: { info: { name: '' }}};
-			this.render();
-		});
-
-
-		window.recSettings = new LocalSyncNode('recSettings');	
-
+		
 		this.currentUserSelect = SV.el('select', { parent: this.node, 
 			value: window.recSettings.currentUser,
 			style: { float: 'right' }});
@@ -180,10 +128,13 @@ class Reconciliation extends SyncView {
 			this.render();
 		});
 
-		SV.el('h1', {
-			parent: this.node,
-			innerHTML: 'Reconciliation' });
+		window.membersSync.on('updated', (data) => {
+			this.users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			this.render();
+		});
 
+		SV.el('h1', { parent: this.node, innerHTML: 'Reconciliation' });
+		
 		this.instructions = SV.el('div', { parent: this.node });
 		SV.el('h1', { parent: this.instructions, innerHTML: 'First select a user.' });
 		this.mainView = SV.el('div', { parent: this.node });
@@ -224,20 +175,22 @@ class Reconciliation extends SyncView {
 		var controls = SV.el('div', { parent: this.mainView, style: { marginTop: '2em' }});		
 		SV.el('div', { parent: controls, className: 'btn', innerHTML: 'Reconcile',
 			events: { click: () => { this.recModal.show(); }}});
+		SV.el('div', { parent: this.mainView, className: 'btn', innerHTML: 'Exit Rec',
+			events: { click: () => { this.emit('closed', this.data); }}});
 
 		this.recModal = this.appendView(new ReconciliationModal());
 
 	}
 	updateTotals() {
 		var totals = { food: 0, tax: 0, alcohol: 0, total: 0 };
-		var tickets = SV.toArray(this.data.reconciliations.tickets).forEach((ticket) => {
+		var tickets = SV.toArray(this.data.tickets).forEach((ticket) => {
 			var ticketTotals = TicketEdit.getTotals(ticket);
 			totals.food += ticketTotals.food;
 			totals.tax += ticketTotals.tax;
 			totals.alcohol += ticketTotals.alcohol;
 			totals.total += ticketTotals.total;
 		});
-		this.data.reconciliations.set('totals', totals);
+		this.data.set('totals', totals);
 	}
 	render() {
 		this.usersContainer.update(this.users);
@@ -245,16 +198,133 @@ class Reconciliation extends SyncView {
 		this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
 		this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
 
-		this.tickets.update(this.data.reconciliations.tickets);
+		this.tickets.update(this.data.tickets);
 
-		this.food.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.food);
-		this.tax.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.tax);
-		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
-		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
-		this.recModal.update(this.data.reconciliations);
-		this.recModal.show();
+		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
+		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
+		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+		this.recModal.update(this.data);
 	}
 }
+
+
+
+class ReconciliationModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Reconciliation' });
+
+		
+		this.nameInput = this.appendView(new SimpleEditInput('name', 'Name'), this.mainView);
+		this.nameInput.node.style.marginBottom = '2em';
+
+		var labelWidth = '10em';
+		var rowStyle = { minHeight: '2em', display: 'flex', alignItems: 'center' };
+		var cellStyle = { display: 'inline-block', fontSize: '1.5em', width: '5em', textAlign: 'right', boxSizing: 'border-box' };
+
+		var row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Beginning Cash', style: { display: 'inline-block', width: labelWidth }});
+		this.beginningDrawer = new SimpleEditInput('beginning', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.beginningDrawer.input.style);
+		row.appendChild(this.beginningDrawer.node);
+		
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Sales', style: { display: 'inline-block', width: labelWidth }});
+		this.sales = SV.el('div', { parent: row, style: cellStyle });
+	
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Ending Cash', style: { display: 'inline-block', width: labelWidth }});
+		this.endingDrawer = new SimpleEditInput('ending', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.endingDrawer.input.style);
+		row.appendChild(this.endingDrawer.node);
+			
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Credit Cards', style: { display: 'inline-block', width: labelWidth }});
+		this.credit = new SimpleEditInput('credit', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.credit.input.style);
+		row.appendChild(this.credit.node);
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Credit Tips', style: { display: 'inline-block', width: labelWidth }});
+		this.creditTips = new SimpleEditInput('creditTips', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.creditTips.input.style);
+		row.appendChild(this.creditTips.node);
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Payouts', style: { display: 'inline-block', width: labelWidth }});
+		this.payouts = new SimpleEditInput('payouts', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.payouts.input.style);
+		row.appendChild(this.payouts.node);
+
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Gift Cards', style: { display: 'inline-block', width: labelWidth }});
+		this.giftCards = new SimpleEditInput('giftCards', null, 
+				{ validator: SimpleEditInput.NumberValidator, 
+					parser: SimpleEditInput.NumberParser,
+					formatter: SV.formatCurrency });
+		SV.mergeMap(cellStyle, this.giftCards.input.style);
+		row.appendChild(this.giftCards.node);
+	
+		row = SV.el('div', { parent: this.mainView, className: 'group', style: rowStyle});
+		SV.el('span', { parent: row, innerHTML: 'Difference', style: { display: 'inline-block', width: labelWidth }});
+		this.difference = SV.el('div', { parent: row, style: cellStyle});
+
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+
+
+		SV.iconButton('done', { parent: footer, className: 'btn btn-big',
+			style: { float: 'right' },
+			events: { click: () => { this.hide(); }}});
+	}
+	updateCalculations() {
+		var runningTotal = this.data.drawer.beginning || 0;
+		runningTotal += this.data.totals.total;
+		runningTotal -= this.data.drawer.giftCards;
+		runningTotal -= this.data.drawer.payouts;
+		runningTotal -= this.data.drawer.creditTips;
+		runningTotal -= this.data.drawer.credit;
+		this.difference.innerHTML = SV.formatCurrency(this.data.drawer.ending - runningTotal);
+	}
+	render() {
+		if(!this.data.drawer) this.data.set('drawer', {
+			beginning: 0,
+			ending: 0,
+			credit: 0,
+			creditTips: 0,
+			giftCards: 0,
+			payouts: 0
+		});
+		this.nameInput.update(this.data);
+		this.beginningDrawer.update(this.data.drawer);
+		this.sales.innerHTML = SV.formatCurrency(this.data.totals.total);
+		this.credit.update(this.data.drawer);
+		this.creditTips.update(this.data.drawer);
+		this.giftCards.update(this.data.drawer);
+		this.payouts.update(this.data.drawer);
+		this.endingDrawer.update(this.data.drawer);
+		this.updateCalculations();
+	}
+}
+
 
 class Tickets extends SyncView {
 	constructor() {
@@ -712,7 +782,7 @@ class TicketEdit extends SyncView {
 
 		this.ticketEditDetailsModal.update(this.data);
 		this.orderItems.update(this.data.orderItems);
-		this.selectMenuItemModal.update(this.data.parent.parent.parent.menu.items);
+		this.selectMenuItemModal.update(this.data.parent.parent.parent.parent.menu.items);
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
@@ -828,7 +898,7 @@ class OrderItemEditModal extends Modal {
 		this.quantity.on('changed', () => { this.emit('totalChanged', this.data); });
 		this.views.push(this.quantity);
 	
-		this.note = this.appendView(new SimpleEditInput('note', 'Note', null, null, true), this.mainView);
+		this.note = this.appendView(new SimpleEditInput('note', 'Note', { isTextArea: true }), this.mainView);
 		this.note.input.rows = 10;
 		this.views.push(this.note);
 	}
@@ -846,6 +916,6 @@ class OrderItemEditModal extends Modal {
 
 SV.startReloader();
 
-var t = new Reconciliation();
+var t = new Reconciliations();
 SV.onLoad(() => { SV.id('container').appendChild(t.node); });
 

@@ -179,6 +179,16 @@ h1, h2, h3, h4, h5, h6 {
 	color: #777;
 }
 
+.rec-list-item {
+	border: 1px solid #999;
+	box-sizing: border-box;
+	padding: 0.5em 1em;
+	display: block;
+	width: 100%;
+	background-color: #CCA177;
+	color: rgba(0,0,0,.87);
+}
+
 .modal {
 	display: none;
 	z-index: 2;

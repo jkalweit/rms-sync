@@ -373,8 +373,11 @@ class ViewsContainer extends SyncView {
 
 
 class SimpleEditInput extends SyncView {
-	constructor(prop, label, validator, formatter, isTextArea) {
+	constructor(prop, label, options) {
 		super();
+
+		this.options = options || {};
+
 		this.doFlash = true;
 		
 		this.prop = prop;
@@ -383,15 +386,16 @@ class SimpleEditInput extends SyncView {
 			SV.el('span', { parent: this.node, innerHTML: label,
 				style: { display: 'inline-block', width: '100px' }});
 		}
-		var elem = isTextArea ? 'textarea' : 'input';
+
+		var elem = this.options.isTextArea ? 'textarea' : 'input';
 		this.input = SV.el(elem, { parent: this.node,
 			events: { blur: () => {
 				var value = this.input.value;			
-				if(validator && !validator(value)) {
+				if(this.options.validator && !this.options.validator(value)) {
 					alert('Invalid value: "' + value + '"');
 					return;
 				}				
-				if(formatter) value = formatter(value);
+				if(this.options.parser) value = this.options.parser(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
 					var update = {};
@@ -408,15 +412,19 @@ class SimpleEditInput extends SyncView {
 		this.input.focus();
 	}
 	render() {
-		if(this.input.value !== this.data[this.prop])
-			this.input.value = this.data[this.prop] || '';
+		if(this.input.value !== this.data[this.prop]) {
+			var val = this.data[this.prop] || '';
+			this.input.value = this.options.formatter ? this.options.formatter(val) : val; 
+		}
 	}
 
 	static NumberValidator(val) {
+		if(typeof val === 'number') return true;
 		if(val.trim() == '') return true;
 		return !isNaN(parseFloat(val));
 	}
-	static NumberFormatter(val) {
+	static NumberParser(val) {
+		if(typeof val === 'number') return val;
 		if(val.trim() == '') return 0;
 		return parseFloat(val);
 	}
