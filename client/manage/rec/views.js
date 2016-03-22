@@ -212,7 +212,7 @@ class Reconciliation extends SyncView {
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.reconciliations.totals.total);
 		this.recModal.update(this.data.reconciliations);
-		this.recModal.show();
+		//this.recModal.show();
 	}
 }
 
