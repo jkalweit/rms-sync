@@ -107,7 +107,7 @@ th {
 	<div id="column">
 
 		<div class="ribbon-wrapper-green"><div class="ribbon-green"><a href="/member">Member Login</a></div></div>
-		
+		<button onclick="doTest()">Test</button>
        <img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px;" />
 		<br/>
 		<br/>
@@ -152,9 +152,29 @@ th {
 		</div>
 	</div>
 
-
 </div>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="/SyncNode.js"></script>
+    <script type="text/javascript" src="/SyncNodeSocket.js"></script>
+    <script type="text/javascript" src="/SyncView.js"></script>
+ 
+<script>
+	SV.startReloader();
+		
+	window.sync = new SyncNodeSocket('/data', {});
 
+	var data = window.sync.local;
+	window.sync.on('updated', (updated) => {
+		console.log('on updated', updated);
+		data = updated;
+	});	
+
+	function doTest() {
+		//data.set('count', { here: 1 });
+		data.set('count2', { here2: 2 });
+	}
+	
+</script>
 
 </body>
 </html>

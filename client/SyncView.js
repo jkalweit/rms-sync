@@ -292,16 +292,25 @@ class SyncView {
 		}
 	}
 	hasChanged(newData) {
-		return true;
+
 		// if(this.name) console.log(this.name + ' doing hasChanged #########################');
-		// if(!this.data && !newData) {
-		// 	if(this.name) console.log(this.name + 'here1 both are null');
-		// 	return false;
-		// }
-		// if((this.data && !newData) || (!this.data && newData)) { 
+		if(!this.data && !newData) {
+		 	if(this.name) console.log(this.name + 'here1 both are null');
+		 	return false;
+		}
+		if((this.data && !newData) || (!this.data && newData)) { 
 		// 	if(this.name) console.log(this.name + 'here2');
-		// 	return true;
-		// }
+		 	return true;
+		}
+
+		if(this.data.version && newData.version) {
+			console.log('checking version #################', this.data.version, newData.version);
+			return this.data.version !== newData.version;
+		}
+
+		console.log('defaulting to true #################', this.data, newData);
+		return true;
+		
 		// if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
 		// 	console.log('direct comparison', this.data, newData);
 		// 	return this.data === newData;

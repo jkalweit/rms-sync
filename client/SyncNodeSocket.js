@@ -21,7 +21,6 @@ class SyncNodeSocket extends EventEmitter {
 		this.openRequests = {};
 		this.defaultObject = defaultObject || {};
 		this.setLocal(new SyncNode(JSON.parse(localStorage.getItem(this.path)))); //get local cache
-		this.serverLastModified = null;
 		host = host || ('//' + location.host);
 		var socketHost = host + path;
 		console.log('Connecting to namespace: "' + socketHost + '"');
@@ -87,7 +86,7 @@ class SyncNodeSocket extends EventEmitter {
 	}
 	getLatest() {
 		this.sendOpenRequests();
-		this.server.emit('getlatest', null); //, this.serverLastModified);
+		this.server.emit('getLatest', this.local.version); //, this.serverLastModified);
 		console.log('sent get latest...');
 	}
 	updateStatus(status) {
@@ -104,6 +103,7 @@ class SyncNodeSocket extends EventEmitter {
 		};
 	}
 	queueUpdate(update) {
+		console.log('update', update);
 		if (!this.updatesDisabled) {
 			var request = new Request(update);
 			this.sendRequest(request);

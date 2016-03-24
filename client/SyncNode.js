@@ -6,16 +6,16 @@ class EventEmitter {
 		SyncNode.addNE(this, '__eventHandlers', {});
 	}
 	on(eventName, handler) {
-		if(!this.__eventHandlers[eventName]) this.__eventHandlers[eventName] = [];
-		this.__eventHandlers[eventName].push(handler);
+		if(!this.__eventHandlers[eventName]) this.__eventHandlers[eventName] = {};
+		this.__eventHandlers[eventName][handler] = handler;
 	}
 	emit(eventName) {
-		var handlers = this.__eventHandlers[eventName] || [];
+		var handlers = this.__eventHandlers[eventName] || {};
 		var args = new Array(arguments.length-1);
 		for(var i = 1; i < arguments.length; ++i) {
 			args[i-1] = arguments[i];
 		}
-		handlers.forEach(handler => { handler.apply(null, args); });
+		Object.keys(handlers).forEach((key) => { handlers[key].apply(null, args); });
 	}
 }
 
@@ -50,6 +50,13 @@ class SyncNode extends EventEmitter {
 				var newUpdated = this;
 				var newMerge = {};
 				newMerge[propName] = merge;
+				console.log('here3');
+				if(updated.version) { 
+					this.version = updated.version;
+				} else {
+					this.version = SyncNode.guidShort();
+				}
+				newMerge.version = this.version;
 				this.emit('updated', newUpdated, newMerge);
 			}
 		}
@@ -60,7 +67,11 @@ class SyncNode extends EventEmitter {
 			var property = obj;
 			obj = {};
 			obj[property] = optionalVal; 
-		}		
+		}	
+
+		console.log('here');
+
+		var newVersion = SyncNode.guidShort();
 
 		Object.keys(obj).forEach((key) => {
 			var val = obj[key];
@@ -71,12 +82,20 @@ class SyncNode extends EventEmitter {
 					SyncNode.addNE(val, 'parent', this);
 					val.on('updated', this.createOnUpdated(key));
 				}
+				val.parent = this;
+				val.version = newVersion;
+				console.log('here1', val.version);
 			}
-			this[key] = val;			
+			this[key] = val;
 		});
+
+		this.version = newVersion;
+
 		if(!this.__isUpdatesDisabled) {
 			var merge = obj;
+			merge.version = newVersion;
 			var updated = this;
+			console.log('here2');
 			this.emit('updated', updated, merge);
 		}
 		return this;

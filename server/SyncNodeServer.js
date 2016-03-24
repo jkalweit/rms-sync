@@ -32,9 +32,9 @@ class SyncNodeServer {
         this.ioNamespace = this.io.of(this.namespace);
         this.ioNamespace.on('connection', (socket) => {
             console.log('someone connected to ' + this.namespace);
-            socket.on('getlatest', (clientLastModified) => {
-                console.log('getlatest', this.data.lastModified, clientLastModified);
-                if (!clientLastModified || clientLastModified < this.data.lastModified) {
+            socket.on('getLatest', (clientVersion) => {
+                console.log('getLatest', this.data.version, clientVersion);
+                if (!clientVersion || clientVersion !== this.data.version) {
                     socket.emit('latest', this.data);
                 }
                 else {
@@ -42,17 +42,15 @@ class SyncNodeServer {
                     socket.emit('latest', null);
                 }
             });
-            socket.on('update', (request) => {
+            socket.on('update', (request, concurrencyVersion) => {
                 var merge = request.data;
-		if(merge.lastModified && this.data.lastModified > merge.lastModified) {
+		if(concurrencyVersion !== this.data.version) {
 			// Probably should stop here and send a concurency error response to client:
-			console.error('WARNING: Server version lastModified GREATER THAN merge lastModified', this.data.lastModified, merge.lastModified);
+			console.error('WARNING: Server version NOT EQUAL TO concurrencyVersion', this.data.version, concurrencyVersion);
 		}
-		var newLastModified = new Date().toISOString();
-                this.doMerge(this.data, merge, newLastModified);
+                this.doMerge(this.data, merge);
                 this.persist();
-		// merge is updated with new lastModified, send to client in updateResponse
-                socket.emit('updateResponse', new Response(request.requestGuid, merge));
+                socket.emit('updateResponse', new Response(request.requestGuid));
                 socket.broadcast.emit('update', merge);
                 if (this.onMerge)
                     this.onMerge(merge);
@@ -100,7 +98,7 @@ class SyncNodeServer {
 		return path.join(this.directory, this.namespace + '.json');
 	}
 
-	doMerge(obj, merge, newLastModified) {
+	doMerge(obj, merge) {
 		if(typeof merge !== 'object') {
 			// end of recursion
 			return merge;
@@ -112,12 +110,26 @@ class SyncNodeServer {
 			else {
 				var nextObj = (obj[key] || {});
 				obj[key] = this.doMerge(nextObj, merge[key]);
-				obj.lastModified = newLastModified;
 			}
 		});
 		return obj;
 	}
+
+	static s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+
+	static guidShort() {
+		return SyncNode.s4() + SyncNode.s4();
+	}
+	static guid() {
+		return SyncNode.s4() + SyncNode.s4() + '-' + SyncNode.s4() + '-' + SyncNode.s4() + '-' +
+			SyncNode.s4() + '-' + SyncNode.s4() + SyncNode.s4() + SyncNode.s4();
+	}
 }
+
 
 exports.SyncNodeServer = SyncNodeServer;
 exports.Response = Response;

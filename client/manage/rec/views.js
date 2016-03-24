@@ -26,8 +26,7 @@ class Reconciliations extends SyncView {
 	constructor() {
 		super();
 		
-		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.on('updated', (data) => {
+		window.sync.on('updated', (data) => {
 			if(!data.reconciliations) {
 				data.set('reconciliations', {});
 			} else {
@@ -36,9 +35,6 @@ class Reconciliations extends SyncView {
 		});
 
 
-		window.membersSync = new SyncNodeSocket('/members', {});
-
-		window.recSettings = new LocalSyncNode('recSettings');	
 		window.recSettings.on('updated', (data) => {
 			this.render();
 		});
@@ -58,9 +54,9 @@ class Reconciliations extends SyncView {
 
 		this.detailsView = SV.el('div', { parent: this.node });
 			
-		this.recDetails = new Reconciliation();
-		this.recDetails.on('closed', () => { window.recSettings.remove('selectedRecKey'); this.render(); });
-		this.detailsView.appendChild(this.recDetails.node);
+		this.recDetailsView = new Reconciliation();
+		this.recDetailsView.on('closed', () => { window.recSettings.remove('selectedRecKey'); this.render(); });
+		this.detailsView.appendChild(this.recDetailsView.node);	
 	}
 	addRec() {
 		var added = new Date().toISOString();
@@ -85,7 +81,7 @@ class Reconciliations extends SyncView {
 				window.recSettings.remove('selectedRecKey');
 				this.render();
 			} else {
-				this.recDetails.update(rec);
+				this.recDetailsView.update(rec);
 			}
 		} else {
 			this.recsView.update(this.data.reconciliations);
@@ -179,6 +175,7 @@ class Reconciliation extends SyncView {
 
 		this.recModal = this.appendView(new ReconciliationModal());
 
+		this.selectTicketModal = this.appendView(new SelectTicketModal());
 	}
 	updateTotals() {
 		var totals = { food: 0, tax: 0, alcohol: 0, total: 0 };
@@ -204,6 +201,7 @@ class Reconciliation extends SyncView {
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.recModal.update(this.data);
+		this.selectTicketModal.update(this.data.tickets);
 	}
 }
 
@@ -420,9 +418,7 @@ class Tickets extends SyncView {
 		}
 
 		SV.toArray(this.ticketsContainer.views).forEach((view) => {
-			
-
-			if(this.hidePaid && view.data.paymentStatus !== 'Unpaid') {
+			if(this.hidePaid && view.data.paymentStatus !== 'Unpaid' && !view.editMode) {
 				view.node.style.display = 'none';
 			} else {
 				view.node.style.display = filtered[view.data.key] ? 'block' : 'none';
@@ -478,9 +474,6 @@ class TicketListItem extends SyncView {
 			style: { padding: '0.5em' },
 			events: { click: () => { this.toggleEditMode(); }}});
 
-		this.options = new OptionsMenu();
-		SV.mergeMap({ float: 'right' }, this.options.node.style);
-		this.mainView.appendChild(this.options.node);
 
 		this.amount = SV.el('span', { 
 			parent: this.mainView,
@@ -534,7 +527,6 @@ class TicketListItem extends SyncView {
 		this.total.innerHTML = SV.formatCurrency(ticket.totals.total);
 		this.editView.update(this.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
-		this.options.update({ expanded: this.editMode });
 
 		if(!this.lastOrderTimeTimer) {
 			this.updateLastOrderTime();
@@ -593,39 +585,10 @@ class TicketEdit extends SyncView {
 		this.node.style.padding = '1em';
 		this.node.classList.add('group');
 
-		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
-		this.selectMenuItemModal.on('selected', (menuItem) => {
-			this.addOrderItem(menuItem);
-		});
-
-
-
-
-	
-		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
-		this.orderItemEditModal.on('totalChanged', (orderItem) => {
-			this.updateTotals();
-			alertify.success('Changed <b>' + orderItem.name + '</b>');
-		});
-		this.orderItemEditModal.on('deleted', (orderItem) => {
-			this.updateTotals();
-			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
-		});
-		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
-		this.orderItems.on('viewAdded', (view) => {
-			view.on('selected', (orderItem) => {
-				this.orderItemEditModal.update(orderItem);
-				this.orderItemEditModal.show();
-				this.orderItemEditModal.note.focus();
-			});
-			view.on('addAgain', (orderItem) => {
-				this.addOrderItem(orderItem, orderItem.quantity);
-			});
-		});
 
 
 		var controls = SV.el('div', { parent: this.node,
-	       		style: { marginTop: '2em', overflow: 'hidden', float: 'right' }});	
+	       		style: { marginBottom: '2em', overflow: 'hidden', float: 'right' }});	
 			
 		var btn = SV.iconButton('more_vert', { parent: controls, 
 			style: { float: 'right' },
@@ -643,16 +606,16 @@ class TicketEdit extends SyncView {
 
 
 		this.paymentButton = SV.el('div', { parent: this.node, className: 'btn', 
-			style: { float: 'left', marginTop: '2em' },
+			style: { float: 'left', marginBottom: '2em' },
 	       		events: { click: () => { this.cyclePaymentStatus(); }}});
 
 		this.printReceiptButton = SV.el('div', { parent: this.node, className: 'btn', innerHTML: 'Print Receipt', 
-			style: { float: 'left', marginTop: '2em' },
+			style: { float: 'left', marginBottom: '2em' },
 	       		events: { click: () => { this.printReceipt(); }}});
 
 
 		var totals = SV.el('div', { parent: this.node,
-	       		style: { marginTop: '2em', marginRight: '.8em', float: 'right', overflow: 'hidden' }});	
+	       		style: { marginBottom: '2em', marginRight: '.8em', float: 'right', overflow: 'hidden' }});	
 		
 		var table = SV.el('table', { parent: totals, 
 	       		style: { float: 'right' }});	
@@ -682,6 +645,38 @@ class TicketEdit extends SyncView {
 	       		style: { textAlign: 'right', width: '5em' }});
 	
 
+
+
+	
+		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
+		this.orderItems.on('viewAdded', (view) => {
+			view.on('selected', (orderItem) => {
+				this.orderItemEditModal.update(orderItem);
+				this.orderItemEditModal.show();
+				this.orderItemEditModal.note.focus();
+			});
+			view.on('addAgain', (orderItem) => {
+				this.addOrderItem(orderItem, orderItem.quantity);
+			});
+		});
+
+
+		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
+		this.orderItemEditModal.on('totalChanged', (orderItem) => {
+			this.updateTotals();
+			alertify.success('Changed <b>' + orderItem.name + '</b>');
+		});
+		this.orderItemEditModal.on('deleted', (orderItem) => {
+			this.updateTotals();
+			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
+		});
+
+
+
+		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
+		this.selectMenuItemModal.on('selected', (menuItem) => {
+			this.addOrderItem(menuItem);
+		});
 
 
 
@@ -741,6 +736,7 @@ class TicketEdit extends SyncView {
 		return totals;
 	}
 	updateTotals() {
+		console.log('updatingTotals');
 		var totals = TicketEdit.getTotals(this.data);	
 		this.data.set('totals', totals);
 		this.emit('totalsChanged', this.data);
@@ -772,7 +768,9 @@ class TicketEdit extends SyncView {
 		this.data.set('paymentStatus', newStatus);
 	}
 	render() {
-		
+	
+		this.data.on('orderItemsChanged', this.updateTotals.bind(this));
+
 		if(this.data.paymentStatus === 'Unpaid') {
 			this.node.style.backgroundColor = '#FFF';
 		} else {			
@@ -797,18 +795,9 @@ class TicketEditDetailsModal extends Modal {
 
 		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Ticket Details' });
 
-		this.selectTable = SV.el('button', { parent: this.mainView, innerHTML: 'Table', className: 'btn btn-big',
-			style: { marginBottom: '1em' },
-			events: { click: () => { this.emit('selectTable', this.data); }}});
-		
-		this.nameInput = new SimpleEditInput('name');
-		this.mainView.appendChild(this.nameInput.node);
-		
+		var controls = SV.el('div', { parent: this.mainView, className: 'group' });
 
-		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
-
-
-		SV.iconButton('delete', { parent: footer,
+		SV.iconButton('delete', { parent: controls,
 			events: { click: () =>{ 
 				Modal.confirm('Delete ticket?', `Delete ${this.data.name}?`,
 			       		() => { 
@@ -817,9 +806,21 @@ class TicketEditDetailsModal extends Modal {
 					});
 			}}});
 
-		SV.iconButton('done', { parent: footer, className: 'btn btn-big',
+		SV.iconButton('done', { parent: controls, className: 'btn btn-big',
 			style: { float: 'right' },
 			events: { click: () => { this.hide(); }}});
+
+
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'group footer' });
+
+		this.selectTable = SV.el('button', { parent: footer, innerHTML: 'Table', className: 'btn btn-big',
+			style: { float: 'left', marginBottom: '1em' },
+			events: { click: () => { this.emit('selectTable', this.data); }}});
+		
+		this.nameInput = new SimpleEditInput('name');
+		this.nameInput.node.style.marginTop = '1em';
+		footer.appendChild(this.nameInput.node);
 	}
 	render() {
 		this.selectTable.innerHTML = this.data.table;
@@ -877,6 +878,7 @@ class OrderItemEditModal extends Modal {
 			style: { float: 'right' },
 			events: { click: () => { this.hide(); }}});
 		SV.iconButton('delete', { parent: footer, className: 'btn btn-big', 
+			style: { float: 'left' },
 			events: { click: () => { 
 					Modal.confirm('Delete Order Item?', this.data.name, () => {
 						this.data.parent.remove(this.data.key); this.hide(); 
@@ -884,6 +886,9 @@ class OrderItemEditModal extends Modal {
 					});
 				}
 			}});
+		SV.iconButton('swap_horiz', { parent: footer, className: 'btn btn-big',
+			style: { float: 'left' },
+			events: { click: () => { this.moveOrderItem(); }}});
 
 		this.addedBy = SV.el('p', { parent: this.mainView });
 
@@ -901,6 +906,28 @@ class OrderItemEditModal extends Modal {
 		this.note.input.rows = 10;
 		this.views.push(this.note);
 	}
+	moveOrderItem() {
+		window.reconciliationsView.recDetailsView.selectTicketModal.select((ticket) => {
+			var currTicket = this.data.parent.parent;
+			//currTicket.orderItems.remove(this.data.key);
+			//currTicket.emit('orderItemsChanged');
+			//ticket.orderItems.set(this.data.key, this.data);
+			//ticket.emit('orderItemsChanged');
+			var merge = {};
+			merge[currTicket.key] = { orderItems: { __remove: this.data.key }};
+
+			var orderItems = {};
+			orderItems[this.data.key] = this.data;
+			merge[ticket.key] = { orderItems: orderItems };
+			currTicket.parent.merge(merge);
+			
+			currTicket.emit('orderItemsChanged');
+			ticket.emit('orderItemsChanged');
+
+			alertify.success('Moved <b>' + this.data.name + '</b> from <b>' + currTicket.name + '</b> to <b>' + ticket.name + '</b>');
+			this.hide();
+		});
+	}
 	render() {
 		var addedAt = moment(this.data.addedAt);
 		this.addedBy.innerHTML = addedAt.from(moment()) + ' by ' + this.data.addedBy + ' at ' + addedAt.format('h:mm:ss a');
@@ -909,12 +936,68 @@ class OrderItemEditModal extends Modal {
 }
 
 
+class SelectTicketModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Ticket' });
+	
+		this.itemsContainer = new ViewsContainer(TicketSimpleView);
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (item) => {
+			       if(this.selectCallBack) this.selectCallBack(item);
+			       this.hide(); 
+			});
+		});
+		this.mainView.appendChild(this.itemsContainer.node);
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+
+		SV.el('button', { parent: footer, innerHTML: 'Cancel', className: 'btn btn-big cancel',
+		       style: { marginTop: '1em' },	
+			events: { click: () => { this.hide(); }}});
+	}
+	select(callback, includePaid) {
+		this.includePaid = includePaid;
+		this.selectCallBack = callback;
+		this.show();
+	}
+	hide() {
+		this.selectCallBack = null;
+		super.hide();
+	}
+	render() {
+		var filtered = this.includePaid ? this.data : SV.filterMap(this.data, (t) => { return t.paymentStatus === 'Unpaid'; }); 
+		this.itemsContainer.update(filtered);
+	}
+}
+
+class TicketSimpleView extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'btn btn-wide', 
+			events: { click: () => { this.emit('selected', this.data); }}}));
+		this.name = SV.el('span', { parent: this.node });
+		this.total = SV.el('span', { parent: this.node, 
+			style: { float: 'right' }});
+	}
+	render() {
+		this.name.innerHTML = this.data.table + ' ' + this.data.name;
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+	}
+}
+
 
 
 
 
 SV.startReloader();
 
-var t = new Reconciliations();
-SV.onLoad(() => { SV.id('container').appendChild(t.node); });
+window.sync = new SyncNodeSocket('/data', {});
+window.membersSync = new SyncNodeSocket('/members', {});
+window.recSettings = new LocalSyncNode('recSettings');	
+
+window.reconciliationsView = new Reconciliations();
+SV.onLoad(() => { 
+	SV.id('container').appendChild(window.reconciliationsView.node); 
+});
 
