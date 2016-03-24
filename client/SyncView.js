@@ -237,6 +237,7 @@ class SV {
 	}
 
 	static formatCurrency(value, precision) {
+		if(value === '') value = 0;
 		precision = precision || 2;
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
 		return number.toFixed(precision);
@@ -395,6 +396,7 @@ class SimpleEditInput extends SyncView {
 					alert('Invalid value: "' + value + '"');
 					return;
 				}				
+			
 				if(this.options.parser) value = this.options.parser(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];

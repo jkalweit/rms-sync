@@ -171,7 +171,6 @@ class Reconciliation extends SyncView {
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
 
-
 		var controls = SV.el('div', { parent: this.mainView, style: { marginTop: '2em' }});		
 		SV.el('div', { parent: controls, className: 'btn', innerHTML: 'Reconcile',
 			events: { click: () => { this.recModal.show(); }}});
