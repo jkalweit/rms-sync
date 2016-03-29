@@ -199,7 +199,7 @@ class SV {
 	static filterMap(map, filterFn) {
 		var result = {};
 		Object.keys(map).forEach(key => {
-			if(key !== 'key' && key !== 'lastModified' && filterFn(map[key])) {
+			if(key !== 'version' && key !== 'key' && key !== 'lastModified' && filterFn(map[key])) {
 				result[key] = map[key];
 			}
 		});
@@ -240,6 +240,10 @@ class SV {
 		if(value === '') value = 0;
 		precision = precision || 2;
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
+		if(typeof number === 'undefined') {
+			console.log('id undefined!', value);
+			return '';
+		}
 		return number.toFixed(precision);
 	}
 
@@ -288,7 +292,7 @@ class SyncView {
 			if(this.doFlash) this.flash(); 
 		}
 		else {
-			if(this.name) console.log(this.name + ' DATA NO CHANGED', this.data, data);
+			if(this.name) console.log(this.name + ' DATA NO CHANGED', this, this.data, data);
 		}
 	}
 	hasChanged(newData) {
@@ -304,7 +308,7 @@ class SyncView {
 		}
 
 		if(this.currentVersion && newData.version) {
-			console.log('checking version #################', this.currentVersion, newData.version);
+			//console.log('checking version #################', this.currentVersion, newData.version);
 			return this.currentVersion !== newData.version;
 		}
 
@@ -411,7 +415,6 @@ class SimpleEditInput extends SyncView {
 					var oldValue = this.data[this.prop];
 					//var update = {};
 					//update[this.prop] = value;
-					console.log('setting', this.data, this.prop, value);
 					this.data.set(this.prop, value);
 					this.emit('changed', value, oldValue);
 				}

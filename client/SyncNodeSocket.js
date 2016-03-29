@@ -47,7 +47,6 @@ class SyncNodeSocket extends EventEmitter {
 			console.log('*************handle update: ', merge);
 			this.updatesDisabled = true;
 			this.data.merge(merge, true);
-			console.log('after merge', this.data);
 			this.updatesDisabled = false;
 		});
 		this.server.on('updateResponse', (response) => {
@@ -57,7 +56,7 @@ class SyncNodeSocket extends EventEmitter {
 		this.server.on('latest', (latest) => {
 			if (!latest) {
 				console.log('already has latest.', this.data);
-				this.data.emit('updated', this.data);
+				this.emit('updated', this.data);
 			}
 			else {
 				console.log('handle latest: ', latest);
@@ -72,7 +71,9 @@ class SyncNodeSocket extends EventEmitter {
 		this.data.on('updated', (updated, merge) => {
 			localStorage.setItem(this.path, JSON.stringify(this.data));
 			this.queueUpdate(merge);
+			this.emit('updated', this.data);
 		});
+		this.emit('updated', this.data);
 	}
 	sendOpenRequests() {
 		var keys = Object.keys(this.openRequests);

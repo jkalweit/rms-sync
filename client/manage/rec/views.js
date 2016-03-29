@@ -26,8 +26,8 @@ class Reconciliations extends SyncView {
 	constructor() {
 		super();
 		
-		window.sync.data.on('updated', (data) => {
-			console.log('here', data);
+		window.sync.on('updated', (data) => {
+			console.log('updated!', data);
 			if(!data.reconciliations) {
 				data.set('reconciliations', {});
 			} else {
@@ -58,6 +58,8 @@ class Reconciliations extends SyncView {
 		this.recDetailsView = new Reconciliation();
 		this.recDetailsView.on('closed', () => { window.recSettings.remove('selectedRecKey'); this.render(); });
 		this.detailsView.appendChild(this.recDetailsView.node);	
+		
+		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
 	}
 	addRec() {
 		var added = new Date().toISOString();
@@ -72,6 +74,10 @@ class Reconciliations extends SyncView {
 		this.data.reconciliations.set(newRec.key, newRec);
 	}
 	render() {
+		console.log('rec render', this.data.menu);
+		
+		this.selectMenuItemModal.update(this.data.menu);
+
 		var isDetailsView = window.recSettings.selectedRecKey;
 		this.listView.style.display = !isDetailsView ? 'block' : 'none';
 		this.detailsView.style.display = isDetailsView ? 'block' : 'none';
@@ -190,6 +196,7 @@ class Reconciliation extends SyncView {
 		this.data.set('totals', totals);
 	}
 	render() {
+		console.log('rec render2');
 		this.usersContainer.update(this.users);
 		this.currentUserSelect.value = window.recSettings.currentUser;
 		this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
@@ -538,44 +545,6 @@ class TicketListItem extends SyncView {
 
 
 
-class SelectMenuItemModal extends Modal {
-	constructor() {
-		super();
-
-		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
-	
-		this.itemsContainer = new ViewsContainer(MenuItem);
-		this.itemsContainer.on('viewAdded', (view) => {
-			view.on('selected', (menuItem) => { this.emit('selected', menuItem); this.hide(); });
-		});
-		this.mainView.appendChild(this.itemsContainer.node);
-
-		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
-
-		SV.el('button', { parent: footer, innerHTML: 'Cancel', className: 'btn btn-big cancel',
-		       style: { marginTop: '1em' },	
-			events: { click: () => { this.hide(); }}});
-	}
-	render() {
-		this.itemsContainer.update(this.data);
-	}
-}
-
-class MenuItem extends SyncView {
-	constructor() {
-		super(SV.el('div', { className: 'btn btn-wide', 
-			events: { click: () => { this.emit('selected', this.data); }}}));
-		this.name = SV.el('span', { parent: this.node });
-		this.price = SV.el('span', { parent: this.node, 
-			style: { float: 'right' }});
-	}
-	render() {
-		this.name.innerHTML = this.data.name;
-		this.price.innerHTML = SV.formatCurrency(this.data.price);
-	}
-}
-
-
 
 
 
@@ -601,7 +570,10 @@ class TicketEdit extends SyncView {
 		btn = SV.iconButton('add', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
-				this.selectMenuItemModal.show();
+				window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
+					console.log('add', menuItem);
+					this.addOrderItem(menuItem);
+				});
 			}}});
 		btn.classList.remove('btn-big');
 
@@ -672,12 +644,6 @@ class TicketEdit extends SyncView {
 			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
 		});
 
-
-
-		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
-		this.selectMenuItemModal.on('selected', (menuItem) => {
-			this.addOrderItem(menuItem);
-		});
 
 
 
@@ -769,7 +735,7 @@ class TicketEdit extends SyncView {
 		this.data.set('paymentStatus', newStatus);
 	}
 	render() {
-	
+		console.log('render here');	
 		this.data.on('orderItemsChanged', this.updateTotals.bind(this));
 
 		if(this.data.paymentStatus === 'Unpaid') {
@@ -780,7 +746,6 @@ class TicketEdit extends SyncView {
 
 		this.ticketEditDetailsModal.update(this.data);
 		this.orderItems.update(this.data.orderItems);
-		this.selectMenuItemModal.update(this.data.parent.parent.parent.parent.menu.items);
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
@@ -984,6 +949,56 @@ class TicketSimpleView extends SyncView {
 	render() {
 		this.name.innerHTML = this.data.table + ' ' + this.data.name;
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+	}
+}
+
+
+
+class SelectMenuItemModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
+	
+		this.itemsContainer = new ViewsContainer(MenuItem);
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (menuItem) => { 
+				if(this.selectCallback) this.selectCallback(menuItem);
+				this.hide(); 
+			});
+		});
+		this.mainView.appendChild(this.itemsContainer.node);
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+
+		SV.el('button', { parent: footer, innerHTML: 'Cancel', className: 'btn btn-big cancel',
+		       style: { marginTop: '1em' },	
+			events: { click: () => { this.hide(); }}});
+	}
+	select(callback) {
+		this.selectCallback = callback;
+		this.show();
+	}
+	hide() {
+		this.selectCallback = null;
+		super.hide();
+	}
+render() {
+		this.itemsContainer.update(this.data.items);
+	}
+}
+
+class MenuItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'btn btn-wide', 
+			events: { click: () => { this.emit('selected', this.data); }}}));
+		this.name = SV.el('span', { parent: this.node });
+		this.price = SV.el('span', { parent: this.node, 
+			style: { float: 'right' }});
+	}
+	render() {
+		this.name.innerHTML = this.data.name;
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
 	}
 }
 

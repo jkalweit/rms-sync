@@ -85,7 +85,17 @@ class SyncNode extends EventEmitter {
 		// });
 
 		if(this[key] !== val) {
-			this[key] = val;
+		 	if(val && typeof val === 'object') {				
+		 		var className = val.constructor.toString().match(/\w+/g)[1];
+		 		if (className !== 'SyncNode') {
+		 			val = new SyncNode(val);
+		 			SyncNode.addNE(val, 'parent', this);
+		 			val.on('updated', this.createOnUpdated(key));
+		 		}
+		 		val.parent = this;
+		 	}
+		 	this[key] = val;
+
 			if(!this.__isUpdatesDisabled) {
 				this.version = SyncNode.guidShort();
 				var merge = {};
@@ -100,7 +110,6 @@ class SyncNode extends EventEmitter {
 		return this;
 	}
 	merge(merge, disableUpdates) {
-		console.log('remember to update version on remove', disableUpdates);
 		this.__isUpdatesDisabled = disableUpdates;
 		Object.keys(merge).forEach((key) => {
 			if (key === '__remove') {
@@ -113,7 +122,6 @@ class SyncNode extends EventEmitter {
 			} else {
 				var nextNode = this[key];			
 				if (!nextNode || typeof nextNode !== 'object') {
-					console.log('here1', this.__isUpdatesDisabled);
 					this.set(key, merge[key]);
 				}
 				else {

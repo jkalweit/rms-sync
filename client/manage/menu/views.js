@@ -7,7 +7,7 @@ class Menu extends SyncView {
 		super();
 	
 		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.data.on('updated', (data) => {
+		this.sync.on('updated', (data) => {
 			if(!data.menu) {
 				data.set('menu', { items: {} });
 			} else { 
@@ -161,13 +161,13 @@ class MenuItem extends SyncView {
 	       		events: { click: () => { this.emit('selected', this.data); }}});
 
 
-		this.name = SV.el('span', { parent: btn, 
+		this.nameSpan = SV.el('span', { parent: btn, 
 			style: { fontWeight: 'default' }});
 		this.price = SV.el('span', { parent: btn, 
 			style: { fontWeight: 'default', float: 'right' }});
 	}
 	render() {
-		this.name.innerHTML = this.data.name;	
+		this.nameSpan.innerHTML = this.data.name;	
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
 	}
 }
@@ -181,9 +181,13 @@ class MenuItemEditModal extends Modal {
 		this.views.push(this.appendView(new SimpleEditInput('description', 'Description'), this.mainView));
 		this.views.push(this.appendView(new SimpleEditInput('price', 'Price'), this.mainView));
 		this.views.push(this.appendView(new SimpleEditSelect('taxType', 'Tax Type', null, null, ['9%', 'Included']), this.mainView));
-		SV.el('button', { parent: this.mainView, innerHTML: 'Ok', className: 'btn',
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+		SV.el('button', { parent: footer, innerHTML: 'Ok', className: 'btn btn-big',
+			style: { float: 'right' },
 			events: { click: () => { this.hide(); }}});
-		SV.el('button', { parent: this.mainView, innerHTML: 'Delete', className: 'btn', 
+		SV.el('button', { parent: footer, innerHTML: 'Delete', className: 'btn btn-big', 
+			style: { float: 'left' },
 			events: { click: () => { 
 					Modal.confirm('Delete Menu Item', 'Delete this item?', () => {
 						this.data.parent.remove(this.data.key); this.hide(); 
