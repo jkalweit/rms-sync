@@ -12,7 +12,6 @@ class SyncNodeSocket extends EventEmitter {
 	constructor(path, defaultObject, host) {
 		super();
 
-		this.listeners = [];
 		this.updatesDisabled = false; //To prevent loop when setting data received from server
 		this.status = 'Initializing...';
 		if (!(path[0] === '/'))
@@ -47,7 +46,8 @@ class SyncNodeSocket extends EventEmitter {
 		this.server.on('update', (merge) => {
 			console.log('*************handle update: ', merge);
 			this.updatesDisabled = true;
-			this.local.merge(merge);
+			this.data.merge(merge, true);
+			console.log('after merge', this.data);
 			this.updatesDisabled = false;
 		});
 		this.server.on('updateResponse', (response) => {
@@ -56,7 +56,8 @@ class SyncNodeSocket extends EventEmitter {
 		});
 		this.server.on('latest', (latest) => {
 			if (!latest) {
-				console.log('already has latest.');
+				console.log('already has latest.', this.data);
+				this.data.emit('updated', this.data);
 			}
 			else {
 				console.log('handle latest: ', latest);
@@ -67,13 +68,11 @@ class SyncNodeSocket extends EventEmitter {
 		});
 	}
 	setLocal(syncNode) {		
-		this.local = syncNode;
-		this.local.on('updated', (updated, merge) => {
-			localStorage.setItem(this.path, JSON.stringify(this.local));
+		this.data = syncNode;
+		this.data.on('updated', (updated, merge) => {
+			localStorage.setItem(this.path, JSON.stringify(this.data));
 			this.queueUpdate(merge);
-			this.notify();
 		});
-		this.notify();
 	}
 	sendOpenRequests() {
 		var keys = Object.keys(this.openRequests);
@@ -86,24 +85,14 @@ class SyncNodeSocket extends EventEmitter {
 	}
 	getLatest() {
 		this.sendOpenRequests();
-		this.server.emit('getLatest', this.local.version); //, this.serverLastModified);
-		console.log('sent get latest...');
+		this.server.emit('getLatest', this.data.version); //, this.serverLastModified);
+		console.log('sent get latest...', this.data.version);
 	}
 	updateStatus(status) {
 		this.status = status;
 		this.emit('statusChanged', this.path, this.status);
 	}
-	createOnUpdated(node) {
-		return (updated, action, path, merge) => {
-			SyncNode.SyncNode.addNE(updated, 'onUpdated', this.createOnUpdated(this));
-			this.syncNode = updated;
-			localStorage.setItem(this.path, JSON.stringify(this.get()));
-			this.queueUpdate(merge.local);
-			this.notify();
-		};
-	}
 	queueUpdate(update) {
-		console.log('update', update);
 		if (!this.updatesDisabled) {
 			var request = new Request(update);
 			this.sendRequest(request);
@@ -114,11 +103,5 @@ class SyncNodeSocket extends EventEmitter {
 		if (this.server['connected']) {
 			this.server.emit('update', request);
 		}
-	}
-	notify() {
-		this.emit('updated', this.get());
-	}
-	get() {
-		return this.local;	
 	}
 }

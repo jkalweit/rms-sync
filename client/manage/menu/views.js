@@ -7,7 +7,7 @@ class Menu extends SyncView {
 		super();
 	
 		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.on('updated', (data) => {
+		this.sync.data.on('updated', (data) => {
 			if(!data.menu) {
 				data.set('menu', { items: {} });
 			} else { 

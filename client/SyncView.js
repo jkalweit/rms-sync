@@ -57,7 +57,7 @@ class SV {
 			result = [];
 			if(!obj) return result;
 			Object.keys(obj).forEach((key) => {
-				if (key !== 'lastModified' && key !== 'key') {
+				if (key !== 'version' && key !== 'lastModified' && key !== 'key') {
 					result.push(obj[key]);
 				}
 			});
@@ -280,7 +280,7 @@ class SyncView {
 	update(data, force) {
 		if(force || this.hasChanged(data)) {
 			//this.lastModified = data.lastModified;
-			//this.currentVersion = data.version;
+			this.currentVersion = data.version;
 			//var oldData = this.data;
 			this.data = data;
 			this.emit('updating', data); //, oldData);
@@ -303,9 +303,9 @@ class SyncView {
 		 	return true;
 		}
 
-		if(this.data.version && newData.version) {
-			console.log('checking version #################', this.data.version, newData.version);
-			return this.data.version !== newData.version;
+		if(this.currentVersion && newData.version) {
+			console.log('checking version #################', this.currentVersion, newData.version);
+			return this.currentVersion !== newData.version;
 		}
 
 		console.log('defaulting to true #################', this.data, newData);
@@ -409,9 +409,10 @@ class SimpleEditInput extends SyncView {
 				if(this.options.parser) value = this.options.parser(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
-					var update = {};
-					update[this.prop] = value;
-					this.data.set(update);
+					//var update = {};
+					//update[this.prop] = value;
+					console.log('setting', this.data, this.prop, value);
+					this.data.set(this.prop, value);
 					this.emit('changed', value, oldValue);
 				}
 			}}});
@@ -502,9 +503,9 @@ class SimpleEditSelect extends SyncView {
 				if(formatter) value = formatter(value);
 				if(this.data[this.prop] !== value) {
 					var oldValue = this.data[this.prop];
-					var update = {};
-					update[this.prop] = value;
-					this.data.set(update);
+					//var update = {};
+					//update[this.prop] = value;
+					this.data.set(this.prop, value);
 					this.emit('changed', value, oldValue);
 				}
 			}}});

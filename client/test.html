@@ -107,7 +107,8 @@ th {
 	<div id="column">
 
 		<div class="ribbon-wrapper-green"><div class="ribbon-green"><a href="/member">Member Login</a></div></div>
-		<button onclick="doTest()">Test</button>
+		<button onclick="doTest()">Add</button>
+		<button onclick="doTest2()">Remove</button>
        <img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px;" />
 		<br/>
 		<br/>
@@ -163,17 +164,23 @@ th {
 		
 	window.sync = new SyncNodeSocket('/data', {});
 
-	var data = window.sync.local;
-	window.sync.on('updated', (updated) => {
+	var data = window.sync.data;
+	window.sync.data.on('updated', (updated) => {
 		console.log('on updated', updated);
 		data = updated;
 	});	
 
 	function doTest() {
-		//data.set('count', { here: 1 });
-		data.set('count2', { here2: 2 });
+		//data.merge({ count: { here: 1 }});
+		//data.merge({ count2: { here2: 2 }});
+		data.count.set('here', 5);
+		//data.count2.set('here2', 2);
 	}
 	
+	function doTest2() {
+		data.count.remove('here');
+	}
+
 </script>
 
 </body>

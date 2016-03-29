@@ -30,7 +30,7 @@ class SyncNode extends EventEmitter {
 
 		Object.keys(obj).forEach((propName) => {
 			var propValue = obj[propName];
-			if (typeof propValue === 'object') {
+			if (typeof propValue === 'object' && !Number.isNaN(propValue)) {
 				var className = propValue.constructor.toString().match(/\w+/g)[1];
 				if (className !== 'SyncNode') {
 					propValue = new SyncNode(propValue);
@@ -50,7 +50,6 @@ class SyncNode extends EventEmitter {
 				var newUpdated = this;
 				var newMerge = {};
 				newMerge[propName] = merge;
-				console.log('here3');
 				if(updated.version) { 
 					this.version = updated.version;
 				} else {
@@ -61,67 +60,73 @@ class SyncNode extends EventEmitter {
 			}
 		}
 	}
-	set(obj, optionalVal) {
+	set(key, val) { //obj, optionalVal) {
 		// Allow for old style setting: set(propName, value)
-		if(typeof obj === 'string') {
-			var property = obj;
-			obj = {};
-			obj[property] = optionalVal; 
-		}	
+		// if(typeof obj === 'string') {
+		// 	var property = obj;
+		// 	obj = {};
+		// 	obj[property] = optionalVal; 
+		// }	
 
-		console.log('here');
+		// if(!this.__isUpdatesDisabled) obj.version = SyncNode.guidShort();
 
-		var newVersion = SyncNode.guidShort();
+		// Object.keys(obj).forEach((key) => {
+		// 	var val = obj[key];
+		// 	if(val && typeof val === 'object') {				
+		// 		var className = val.constructor.toString().match(/\w+/g)[1];
+		// 		if (className !== 'SyncNode') {
+		// 			val = new SyncNode(val);
+		// 			SyncNode.addNE(val, 'parent', this);
+		// 			val.on('updated', this.createOnUpdated(key));
+		// 		}
+		// 		val.parent = this;
+		// 	}
+		// 	this[key] = val;
+		// });
 
-		Object.keys(obj).forEach((key) => {
-			var val = obj[key];
-			if(val && typeof val === 'object') {				
-				var className = val.constructor.toString().match(/\w+/g)[1];
-				if (className !== 'SyncNode') {
-					val = new SyncNode(val);
-					SyncNode.addNE(val, 'parent', this);
-					val.on('updated', this.createOnUpdated(key));
-				}
-				val.parent = this;
-				val.version = newVersion;
-				console.log('here1', val.version);
-			}
+		if(this[key] !== val) {
 			this[key] = val;
-		});
-
-		this.version = newVersion;
-
-		if(!this.__isUpdatesDisabled) {
-			var merge = obj;
-			merge.version = newVersion;
-			var updated = this;
-			console.log('here2');
-			this.emit('updated', updated, merge);
-		}
+			if(!this.__isUpdatesDisabled) {
+				this.version = SyncNode.guidShort();
+				var merge = {};
+				merge[key] = val;
+				merge.version = this.version;
+				this.emit('updated', this, merge);
+			}
+		} else {
+			console.log('Values are equal', key, this[key], val);
+		}	
+		
 		return this;
 	}
-	merge(merge) {
-		this.__isUpdatesDisabled = true;
+	merge(merge, disableUpdates) {
+		console.log('remember to update version on remove', disableUpdates);
+		this.__isUpdatesDisabled = disableUpdates;
 		Object.keys(merge).forEach((key) => {
 			if (key === '__remove') {
 				var propToRemove = merge[key];
 				delete this[propToRemove];
+				if(!this.__isUpdatesDisabled) { 
+					this.version = SyncNode.guidShort();
+					merge.version = this.version;
+				}
 			} else {
 				var nextNode = this[key];			
 				if (!nextNode || typeof nextNode !== 'object') {
-					var val = {};
-					val[key] = merge[key];	
-					this.set(val);
+					console.log('here1', this.__isUpdatesDisabled);
+					this.set(key, merge[key]);
 				}
 				else {
-					nextNode.merge(merge[key]);				
+					nextNode.merge(merge[key], disableUpdates);				
 				}
 			}
 		});
+		if(this.__isUpdatesDisabled) { 
+			this.version = merge.version;			
+		}
 		this.__isUpdatesDisabled = false;
 
-		var newUpdated = this;
-		this.emit('updated', newUpdated, merge);
+		this.emit('updated', this, merge);
 	}
 	remove(key) {
 		if(this.hasOwnProperty(key)) this.merge({ '__remove': key });

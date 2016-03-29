@@ -99,6 +99,7 @@ class SyncNodeServer {
 	}
 
 	doMerge(obj, merge) {
+		console.log('doing merge', merge);
 		if(typeof merge !== 'object') {
 			// end of recursion
 			return merge;

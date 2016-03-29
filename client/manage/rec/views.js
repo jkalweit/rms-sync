@@ -26,7 +26,8 @@ class Reconciliations extends SyncView {
 	constructor() {
 		super();
 		
-		window.sync.on('updated', (data) => {
+		window.sync.data.on('updated', (data) => {
+			console.log('here', data);
 			if(!data.reconciliations) {
 				data.set('reconciliations', {});
 			} else {
@@ -124,7 +125,7 @@ class Reconciliation extends SyncView {
 			this.render();
 		});
 
-		window.membersSync.on('updated', (data) => {
+		window.membersSync.data.on('updated', (data) => {
 			this.users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
 			this.render();
 		});
