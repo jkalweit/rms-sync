@@ -131,8 +131,11 @@ class Reconciliation extends SyncView {
 		});
 
 		window.membersSync.on('updated', (data) => {
-			this.users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			this.render();
+			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			this.usersContainer.update(users);
+			this.currentUserSelect.value = window.recSettings.currentUser;
+			this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
+			this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
 		});
 
 		SV.el('h2', { parent: this.node, innerHTML: 'Reconciliation' });
@@ -197,23 +200,14 @@ class Reconciliation extends SyncView {
 		this.data.merge({ totals: totals });
 	}
 	render() {
-		if(this.users) {
-			this.usersContainer.update(this.users);
-			this.currentUserSelect.value = window.recSettings.currentUser;
-			this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
-			this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
-		}
+		this.tickets.update(this.data.tickets);
 
-		if(this.data) {
-			this.tickets.update(this.data.tickets);
-
-			this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
-			this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
-			this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
-			this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
-			this.recModal.update(this.data);
-			this.selectTicketModal.update(this.data.tickets);
-		}
+		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
+		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
+		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+		this.recModal.update(this.data);
+		this.selectTicketModal.update(this.data.tickets);
 	}
 }
 
@@ -803,21 +797,22 @@ class TicketEditDetailsModal extends Modal {
 		this.nameInput.node.style.marginTop = '1em';
 		footer.appendChild(this.nameInput.node);
 		
-		this.currentUserSelect = SV.el('select', { parent: footer, 
+		this.servedBySelect = SV.el('select', { parent: footer, id: 'teasdasdf',
 			style: { float: 'right' }});
-		this.usersContainer = new ViewsContainer(UserListItem, null, null, this.currentUserSelect);		
+		this.usersContainer = new ViewsContainer(UserListItem, null, null, this.servedBySelect);
+		this.usersContainer.debug = true;
 
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			console.log('users', users);
 			this.usersContainer.update(users);
-
 		});	
 	}
 	render() {
 		this.selectTable.innerHTML = this.data.table;
 		this.nameInput.update(this.data);
 		
-
+		this.servedBySelect.value = this.data.servedBy;
 	}
 }
 

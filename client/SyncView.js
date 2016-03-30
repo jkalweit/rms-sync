@@ -358,16 +358,21 @@ class ViewsContainer extends SyncView {
 		this.sortDirection = direction;
 	}
 	render(force) {
+		if(this.debug) {
+			console.log('renderrrrr', this.data);
+		}
 		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
 		var previous = null;
 		itemsArr.forEach((item) => {
 			var view  = this.views[item.key];
 			if(!view) {
+				if(this.debug) console.log('Adding view', item.data.info.name, this.node);
 				view = new this.ctor();
 				this.views[item.key] = view;
 				// Attempt to preserve order
 				this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
 				view.update(item, force);
+				if(this.debug) console.log('view node', view.node);
 				this.emit('viewAdded', view);
 			} else {
 				view.update(item, force);
@@ -377,6 +382,7 @@ class ViewsContainer extends SyncView {
 		Object.keys(this.views).forEach((key) => {
 			var view = this.views[key];
 			if(!SV.getByKey(this.data, view.data.key)) {
+				console.log('removing view', key);
 				this.node.removeChild(view.node);
 				delete this.views[view.data.key];
 				this.emit('removedView', view);
