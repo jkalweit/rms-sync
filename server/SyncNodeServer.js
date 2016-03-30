@@ -42,11 +42,11 @@ class SyncNodeServer {
                     socket.emit('latest', null);
                 }
             });
-            socket.on('update', (request, concurrencyVersion) => {
+            socket.on('update', (request) => {
                 var merge = request.data;
-		if(concurrencyVersion !== this.data.version) {
+		if(request.concurrencyVersion !== this.data.version) {
 			// Probably should stop here and send a concurency error response to client:
-			console.error('WARNING: Server version NOT EQUAL TO concurrencyVersion', this.data.version, concurrencyVersion);
+			console.error('WARNING: Server version NOT EQUAL TO concurrencyVersion', request.concurrencyVersion, this.data.version);
 		}
                 this.doMerge(this.data, merge);
                 this.persist();
@@ -97,16 +97,29 @@ class SyncNodeServer {
 	buildFilePath() {
 		return path.join(this.directory, this.namespace + '.json');
 	}
-
+	isObject(val) {
+		return typeof val === 'object' && val != null;	
+	}
 	doMerge(obj, merge) {
 		console.log('doing merge', merge);
-		if(typeof merge !== 'object') {
-			// end of recursion
+		if(!this.isObject(merge)) {
+			// not an object, end of recursion
 			return merge;
+		} else if(!this.isObject(obj)) {
+			// merge is an object, so make sure obj is an object:
+			obj = {};
 		}
 		Object.keys(merge).forEach((key) => {			
 			if (key === '__remove') {
-				delete obj[merge[key]];
+				var propsToRemove = merge[key];
+				if(!Array.isArray(propsToRemove) && typeof propsToRemove === 'string') {
+					var arr = [];
+				        arr.push(propsToRemove);
+			       		propsToRemove = arr; 
+				}
+				propsToRemove.forEach((prop) => {
+					delete obj[prop];
+				});
 			}
 			else {
 				var nextObj = (obj[key] || {});

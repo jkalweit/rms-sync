@@ -1,10 +1,11 @@
 "use strict";
 
 class Request {
-	constructor(data) {
+	constructor(data, concurrencyVersion) {
 		this.requestGuid = SyncNode.guid();
 		this.stamp = new Date();
 		this.data = data;
+		this.concurrencyVersion = concurrencyVersion;
 	}
 }
 
@@ -46,8 +47,11 @@ class SyncNodeSocket extends EventEmitter {
 		this.server.on('update', (merge) => {
 			console.log('*************handle update: ', merge);
 			this.updatesDisabled = true;
-			this.data.merge(merge, true);
+			var result = this.data.doMerge(merge, true);
+			this.concurrencyVersion = merge.version;
+			this.emit('updated', this.data, merge);
 			this.updatesDisabled = false;
+			console.log('*************AFTER handle update: ', this.data);
 		});
 		this.server.on('updateResponse', (response) => {
 			//console.log('*************handle response: ', response);
@@ -71,8 +75,10 @@ class SyncNodeSocket extends EventEmitter {
 		this.data.on('updated', (updated, merge) => {
 			localStorage.setItem(this.path, JSON.stringify(this.data));
 			this.queueUpdate(merge);
-			this.emit('updated', this.data);
+			this.concurrencyVersion = merge.version;
+			this.emit('updated', this.data, merge);
 		});
+		this.concurrencyVersion = this.data.version;
 		this.emit('updated', this.data);
 	}
 	sendOpenRequests() {
@@ -95,7 +101,7 @@ class SyncNodeSocket extends EventEmitter {
 	}
 	queueUpdate(update) {
 		if (!this.updatesDisabled) {
-			var request = new Request(update);
+			var request = new Request(update, this.concurrencyVersion);
 			this.sendRequest(request);
 		}
 	}

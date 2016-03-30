@@ -511,7 +511,7 @@ var chokidar = require('chokidar');
 
 /* For Debugging, send signal when file changes */
 chokidar.watch('./client', { depth: 99 }).on('change', (filePath) => {
-	if(filePath.match(/\.js$/i) !== null) {
+	if(filePath.match(/\.js$/i) !== null || filePath.match(/\.html$/i) !== null || filePath.match(/\.css$/i) !== null) {
 		console.log('js file changed', filePath);
 		io.emit('reload');
 	};

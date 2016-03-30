@@ -18,7 +18,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/imgs/icons/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="96x96" href="/imgs/icons/favicon-96x96.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/imgs/icons/favicon-16x16.png">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="/imgs/icons/manifest.json">
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="msapplication-TileImage" content="/imgs/icons/ms-icon-144x144.png">
 <meta name="theme-color" content="#ffffff">
@@ -106,10 +106,15 @@ th {
 
 	<div id="column">
 
-		<div class="ribbon-wrapper-green"><div class="ribbon-green"><a href="/member">Member Login</a></div></div>
-		<button onclick="doTest()">Add</button>
-		<button onclick="doTest2()">Remove</button>
-       <img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px;" />
+		<!--		<div class="ribbon-wrapper-green"><div class="ribbon-green"><a href="/member">Member Login</a></div></div> -->
+		<button onclick="merge(m1)">m1</button>
+		<button onclick="merge(m2)">m2</button>
+		<button onclick="merge(m3)">m3</button>
+		<button onclick="merge(m4)">m4</button>
+		<button onclick="set()">Set</button>
+		<button onclick="doRemove()">Remove</button>
+		<button style="margin-bottom: 200em" onclick="merge()">Merge</button>
+		<!-- <img src="/imgs/logo_york.png" style="width: 100%; max-width: 400px;" /> -->
 		<br/>
 		<br/>
 		<br/>
@@ -165,20 +170,56 @@ th {
 	window.sync = new SyncNodeSocket('/data', {});
 
 	var data = window.sync.data;
-	window.sync.data.on('updated', (updated) => {
-		console.log('on updated', updated);
+	window.sync.on('updated', (updated, merge) => {
+		console.log('on updated', updated, merge);
 		data = updated;
-	});	
+	});
 
-	function doTest() {
-		//data.merge({ count: { here: 1 }});
+	function set() {
+		data.set('test', { deeper: 3 });
+		//var count = data.count ? data.count + 1 : 1;
+		//data.set('count', count);
 		//data.merge({ count2: { here2: 2 }});
-		data.count.set('here', 5);
+		//data.count.set('here', 5);
 		//data.count2.set('here2', 2);
 	}
 	
-	function doTest2() {
-		data.count.remove('here');
+	function doRemove() {
+		data.remove('test');
+	}
+
+
+	var m1 = {
+		a: 1
+	};
+
+	var m2 = {
+		b: {
+		//	c: 3,
+			   c: {
+				   e: 5
+			//	   f: 6
+			   }
+		   }
+	};
+
+	var m3 = {
+		b: {
+			c:  { 
+				e: 7 
+			    }
+		   }	   
+	};
+
+
+	var m4 = {
+		a: 2 
+	};
+
+	function merge(m) {
+		console.log('merge', m);
+		data.merge(m);
+		console.log('data after merge', data);
 	}
 
 </script>

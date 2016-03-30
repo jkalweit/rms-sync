@@ -312,7 +312,8 @@ class SyncView {
 			return this.currentVersion !== newData.version;
 		}
 
-		console.log('defaulting to true #################', this.data, newData);
+
+//		console.log('defaulting to true #################', this.data !== newData, this.currentVersion, newData);
 		return true;
 		
 		// if((typeof this.data !== 'object') && (typeof newData !== 'object')) {
