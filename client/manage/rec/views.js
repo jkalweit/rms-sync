@@ -135,7 +135,7 @@ class Reconciliation extends SyncView {
 			this.render();
 		});
 
-		SV.el('h1', { parent: this.node, innerHTML: 'Reconciliation' });
+		SV.el('h2', { parent: this.node, innerHTML: 'Reconciliation' });
 		
 		this.instructions = SV.el('div', { parent: this.node });
 		SV.el('h1', { parent: this.instructions, innerHTML: 'First select a user.' });
@@ -147,7 +147,7 @@ class Reconciliation extends SyncView {
 		
 	
 		var table = SV.el('table', { parent: this.mainView, 
-	       		style: { float: 'right', marginRight: '9.25em', marginTop: '2em' }});	
+	       		style: { float: 'right', marginRight: '1.5em', marginTop: '2em' }});	
 	
 		var row = SV.el('tr', { parent: table });
 		SV.el('td', { parent: row, innerHTML: 'Food',
@@ -173,10 +173,12 @@ class Reconciliation extends SyncView {
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
 
-		var controls = SV.el('div', { parent: this.mainView, style: { marginTop: '2em' }});		
+		var controls = SV.el('div', { parent: this.mainView, style: { marginTop: '2em', float: 'left', width: '35%' }});		
 		SV.el('div', { parent: controls, className: 'btn', innerHTML: 'Reconcile',
+			style: { display: 'block' },
 			events: { click: () => { this.recModal.show(); }}});
-		SV.el('div', { parent: this.mainView, className: 'btn', innerHTML: 'Exit Rec',
+		SV.el('div', { parent: controls, className: 'btn', innerHTML: 'Exit Rec',
+			style: { display: 'block' },
 			events: { click: () => { this.emit('closed', this.data); }}});
 
 		this.recModal = this.appendView(new ReconciliationModal());
@@ -195,19 +197,23 @@ class Reconciliation extends SyncView {
 		this.data.merge({ totals: totals });
 	}
 	render() {
-		this.usersContainer.update(this.users);
-		this.currentUserSelect.value = window.recSettings.currentUser;
-		this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
-		this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
+		if(this.users) {
+			this.usersContainer.update(this.users);
+			this.currentUserSelect.value = window.recSettings.currentUser;
+			this.mainView.style.display = window.recSettings.currentUser ? 'block' : 'none';
+			this.instructions.style.display = !window.recSettings.currentUser ? 'block' : 'none';
+		}
 
-		this.tickets.update(this.data.tickets);
+		if(this.data) {
+			this.tickets.update(this.data.tickets);
 
-		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
-		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
-		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
-		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
-		this.recModal.update(this.data);
-		this.selectTicketModal.update(this.data.tickets);
+			this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
+			this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
+			this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
+			this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+			this.recModal.update(this.data);
+			this.selectTicketModal.update(this.data.tickets);
+		}
 	}
 }
 
@@ -479,7 +485,7 @@ class TicketListItem extends SyncView {
 		this.node.style.color = '#000';
 
 		this.mainView = SV.el('div', { parent: this.node, 
-			style: { padding: '0.5em' },
+			style: { padding: '1.5em', color: '#FFF' },
 			events: { click: () => { this.toggleEditMode(); }}});
 
 
@@ -490,10 +496,10 @@ class TicketListItem extends SyncView {
 			parent: this.mainView });
 		this.total = SV.el('span', {
 			parent: this.mainView,
-	       		style: { float: 'right', color: '#444' }});
+	       		style: { float: 'right' }});
 		this.lastOrderTime = SV.el('span', {
 			parent: this.mainView,
-	       		style: { fontStyle: 'italic', color: '#444', marginRight: '2em', float: 'right' }});
+	       		style: { fontStyle: 'italic', marginRight: '2em', float: 'right' }});
 
 		this.editMode = false;
 		this.editView = this.appendView(new TicketEdit());
@@ -504,7 +510,9 @@ class TicketListItem extends SyncView {
 		});
 	}
 	toggleEditMode() {
-		this.editMode = !this.editMode; this.render();
+		this.editMode = !this.editMode; 
+		this.render();
+		if(this.editMode) this.node.scrollIntoView();
 	}
 	updateLastOrderTime() {
 		var lastOrderItem;
@@ -519,19 +527,14 @@ class TicketListItem extends SyncView {
 		var ticket = this.data;
 	
 		if(ticket.paymentStatus === 'Unpaid') {
-			this.mainView.style.paddingTop = '1em';
-			this.mainView.style.paddingBottom = '1em';
 			this.node.style.backgroundColor = '#FFF';
-			this.mainView.style.backgroundColor = '#CCA177';
+			this.mainView.style.backgroundColor = '#9575CD';
 		} else {			
-			this.mainView.style.paddingTop = '0.5em';
-			this.mainView.style.paddingBottom = '0.5em';
 			this.node.style.backgroundColor = '#BBB';
 			this.mainView.style.backgroundColor = '#BBB';
 		}
 
 		this.nameSpan.innerHTML = ticket.table + ' ' + ticket.name;
-		this.nameSpan.style.color = ticket.paymentStatus === 'Unpaid' ? '#222' : '#555';
 		this.total.innerHTML = SV.formatCurrency(ticket.totals.total);
 		this.editView.update(this.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
@@ -559,35 +562,69 @@ class TicketEdit extends SyncView {
 
 		var controls = SV.el('div', { parent: this.node,
 	       		style: { marginBottom: '2em', overflow: 'hidden', float: 'right' }});	
-			
-		var btn = SV.iconButton('more_vert', { parent: controls, 
-			style: { float: 'right' },
-			events: { click: () =>{ 
-				this.ticketEditDetailsModal.show();
-			}}});
-		btn.classList.remove('btn-big');
 	
-		btn = SV.iconButton('add', { parent: controls, 
+		var btn = SV.iconButton('add', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
 				window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
 					this.addOrderItem(menuItem);
 				});
 			}}});
-		btn.classList.remove('btn-big');
+
+			
+		btn = SV.iconButton('more_vert', { parent: controls, 
+			style: { float: 'right' },
+			events: { click: () =>{ 
+				this.ticketEditDetailsModal.show();
+			}}});
+
+		
+	
+
+	
+		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
+		this.orderItems.on('viewAdded', (view) => {
+			view.on('selected', (orderItem) => {
+				this.orderItemEditModal.update(orderItem);
+				this.orderItemEditModal.show();
+				this.orderItemEditModal.note.focus();
+			});
+			view.on('addAgain', (orderItem) => {
+				this.addOrderItem(orderItem, orderItem.quantity);
+			});
+		});
 
 
-		this.paymentButton = SV.el('div', { parent: this.node, className: 'btn', 
-			style: { float: 'left', marginBottom: '2em' },
+		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
+		this.orderItemEditModal.on('totalChanged', (orderItem) => {
+			this.updateTotals();
+			alertify.success('Changed <b>' + orderItem.name + '</b>');
+		});
+		this.orderItemEditModal.on('deleted', (orderItem) => {
+			this.updateTotals();
+			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
+		});
+
+
+
+		var btmControls = SV.el('div', { parent: this.node, style: { float: 'left', marginTop: '1em', width: '50%' }});
+
+		this.paymentButton = SV.el('div', { parent: btmControls, className: 'btn', 
+			style: { display: 'block' },
 	       		events: { click: () => { this.cyclePaymentStatus(); }}});
 
-		this.printReceiptButton = SV.el('div', { parent: this.node, className: 'btn', innerHTML: 'Print Receipt', 
-			style: { float: 'left', marginBottom: '2em' },
+		this.sendKitchenButton = SV.el('div', { parent: btmControls, className: 'btn', innerHTML: 'Send Kitchen', 
+			style: { display: 'block' },
+	       		events: { click: () => { this.sendKitchen(); }}});
+		
+		this.printReceiptButton = SV.el('div', { parent: btmControls, className: 'btn', innerHTML: 'Print Receipt', 
+			style: { display: 'block' },
 	       		events: { click: () => { this.printReceipt(); }}});
 
 
+
 		var totals = SV.el('div', { parent: this.node,
-	       		style: { marginBottom: '2em', marginRight: '.8em', float: 'right', overflow: 'hidden' }});	
+	       		style: { marginTop: '2em', marginRight: '0.6em', float: 'right', overflow: 'hidden' }});	
 		
 		var table = SV.el('table', { parent: totals, 
 	       		style: { float: 'right' }});	
@@ -619,29 +656,7 @@ class TicketEdit extends SyncView {
 
 
 
-	
-		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
-		this.orderItems.on('viewAdded', (view) => {
-			view.on('selected', (orderItem) => {
-				this.orderItemEditModal.update(orderItem);
-				this.orderItemEditModal.show();
-				this.orderItemEditModal.note.focus();
-			});
-			view.on('addAgain', (orderItem) => {
-				this.addOrderItem(orderItem, orderItem.quantity);
-			});
-		});
 
-
-		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
-		this.orderItemEditModal.on('totalChanged', (orderItem) => {
-			this.updateTotals();
-			alertify.success('Changed <b>' + orderItem.name + '</b>');
-		});
-		this.orderItemEditModal.on('deleted', (orderItem) => {
-			this.updateTotals();
-			alertify.success('Deleted <b>' + orderItem.name + '</b> from ' + this.data.name);
-		});
 
 
 
@@ -713,6 +728,7 @@ class TicketEdit extends SyncView {
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
 			addedBy: window.recSettings.currentUser,
+			servedBy: window.recSettings.currentUser,
 			name: menuItem.name,
 			price: menuItem.price,
 			quantity: quantity,
@@ -786,10 +802,22 @@ class TicketEditDetailsModal extends Modal {
 		this.nameInput = new SimpleEditInput('name');
 		this.nameInput.node.style.marginTop = '1em';
 		footer.appendChild(this.nameInput.node);
+		
+		this.currentUserSelect = SV.el('select', { parent: footer, 
+			style: { float: 'right' }});
+		this.usersContainer = new ViewsContainer(UserListItem, null, null, this.currentUserSelect);		
+
+		window.membersSync.on('updated', (data) => {
+			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			this.usersContainer.update(users);
+
+		});	
 	}
 	render() {
 		this.selectTable.innerHTML = this.data.table;
 		this.nameInput.update(this.data);
+		
+
 	}
 }
 
