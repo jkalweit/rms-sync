@@ -254,6 +254,13 @@ class SV {
 		button.innerHTML = `<i class="material-icons">${icon}</i>` + button.innerHTML;
 		return button;
 	}
+
+	static substr(str, char) {
+		var pos = str.indexOf(char);
+		if(pos !== -1) {
+			return str.substr(0, pos);
+		} else return str;
+	}
 }
 
 
@@ -519,6 +526,7 @@ class SimpleEditSelect extends SyncView {
 					this.emit('changed', value, oldValue);
 				}
 			}}});
+		if(options) this.updateOptions(options);
 	}
 	focus() {
 		this.input.focus();

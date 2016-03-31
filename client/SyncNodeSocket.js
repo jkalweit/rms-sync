@@ -45,13 +45,13 @@ class SyncNodeSocket extends EventEmitter {
 			console.log('*************************Reconnection failed.');
 		});
 		this.server.on('update', (merge) => {
-			console.log('*************handle update: ', merge);
+			//console.log('*************handle update: ', merge);
 			this.updatesDisabled = true;
 			var result = this.data.doMerge(merge, true);
 			this.concurrencyVersion = merge.version;
 			this.emit('updated', this.data, merge);
 			this.updatesDisabled = false;
-			console.log('*************AFTER handle update: ', this.data);
+			//console.log('*************AFTER handle update: ', this.data);
 		});
 		this.server.on('updateResponse', (response) => {
 			//console.log('*************handle response: ', response);
@@ -59,11 +59,11 @@ class SyncNodeSocket extends EventEmitter {
 		});
 		this.server.on('latest', (latest) => {
 			if (!latest) {
-				console.log('already has latest.', this.data);
+				//console.log('already has latest.', this.data);
 				this.emit('updated', this.data);
 			}
 			else {
-				console.log('handle latest: ', latest);
+				//console.log('handle latest: ', latest);
 				localStorage.setItem(this.path, JSON.stringify(latest));
 				this.setLocal(new SyncNode(latest));
 			}
