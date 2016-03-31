@@ -404,8 +404,8 @@ class SimpleEditInput extends SyncView {
 		this.prop = prop;
 		
 		if(label) {
-			SV.el('span', { parent: this.node, innerHTML: label,
-				style: { display: 'inline-block', width: '100px' }});
+			SV.el('span', { parent: this.node, innerHTML: label, className: 'label',
+				style: { display: 'inline-block', width: '150px' }});
 		}
 
 		var elem = this.options.isTextArea ? 'textarea' : 'input';
@@ -426,9 +426,8 @@ class SimpleEditInput extends SyncView {
 					this.emit('changed', value, oldValue);
 				}
 			}}});
-		if(label) {
-			this.input.style.width = 'calc(100% - 110px)';
-		}
+		var width = label ? 'calc(100% - 155px)' : '100%';
+		this.input.style.width = width;
 	}
 	focus() {
 		this.input.focus();
@@ -499,11 +498,12 @@ class SimpleEditSelect extends SyncView {
 
 		this.editView = el('div', { parent: this.node });
 		if(label) {
-			el('span', { parent: this.editView, innerHTML: label,
-				style: { display: 'inline-block', width: '100px' }});
+			el('span', { parent: this.editView, innerHTML: label, className: 'label',
+				style: { display: 'inline-block', width: '150px' }});
 		}
+		var width = label ? 'calc(100% - 150px)' : '100%';
 		this.input = el('select', { parent: this.editView,
-			style: { width: 'calc(100% - 110px)' },
+			style: { width: width },
 			events: { blur: () => {
 				var value = this.input.value;			
 				if(validator && !validator(value)) {
@@ -519,14 +519,19 @@ class SimpleEditSelect extends SyncView {
 					this.emit('changed', value, oldValue);
 				}
 			}}});
-		SV.toArray(options).forEach((option) => {
-			SV.el('option', { parent: this.input, innerHTML: option });
-		});
 	}
 	focus() {
 		this.input.focus();
 	}
+	updateOptions(options) {
+		this.input.innerHTML = '';
+		SV.toArray(options).forEach((option) => {
+			SV.el('option', { parent: this.input, innerHTML: option });
+		});
+		if(this.data) this.input.value = this.data[this.prop] || '';
+	}
 	render() {
+		console.log('render select', this.input.value, this.prop, this.data[this.prop], this.data);
 		if(this.input.value !== this.data[this.prop])
 			this.input.value = this.data[this.prop] || '';
 	}

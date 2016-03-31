@@ -367,8 +367,9 @@ class Tickets extends SyncView {
 
 		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
 		this.ticketsContainer.on('viewAdded', (view) => {
-			view.on('selectTable', (ticket) => {
-				this.selectTable(ticket);
+			view.on('editTicketDetails', (ticket) => {
+				this.ticketEditDetailsModal.update(ticket);
+				this.ticketEditDetailsModal.show();
 			});
 			view.on('totalsChanged', (ticket) => {
 				this.emit('totalsChanged', ticket);
@@ -382,6 +383,16 @@ class Tickets extends SyncView {
 		});
 		this.ticketsContainer.node.style.marginTop = '2em';
 		
+		this.ticketEditDetailsModal = this.appendView(new TicketEditDetailsModal());
+		this.ticketEditDetailsModal.on('deleted', (ticket) => {
+			this.emit('totalsChanged');
+		});
+		this.ticketEditDetailsModal.on('selectTable', (ticket) => {
+			this.selectTable(ticket);
+		});
+
+
+
 		this.selectTableModal = new SelectTableModal();
 		this.node.appendChild(this.selectTableModal.node);
 	}
@@ -390,6 +401,7 @@ class Tickets extends SyncView {
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
 			addedBy: window.recSettings.currentUser,
+			servedBy: window.recSettings.currentUser,
 			name: this.addInput.value,
 			table: '',
 			orderItems: {},
@@ -410,6 +422,11 @@ class Tickets extends SyncView {
 	}
 	render() {
 		this.ticketsContainer.update(this.data);
+		if(this.ticketEditDetailsModal.data) {
+			var ticket = this.data[this.ticketEditDetailsModal.data.key];
+			console.log('here1111', ticket);
+			if(ticket) this.ticketEditDetailsModal.update(ticket);
+		}
 		
 		this.hidePaidButton.innerHTML = 'Paid Tickets: ' + (this.hidePaid ? 'Hidden' :  'Shown');
 
@@ -498,6 +515,7 @@ class TicketListItem extends SyncView {
 		this.editMode = false;
 		this.editView = this.appendView(new TicketEdit());
 		this.editView.on('selectTable', (ticket) => { this.emit('selectTable', ticket); });
+		this.editView.on('editTicketDetails', (ticket) => { this.emit('editTicketDetails', ticket); });
 		this.editView.on('totalsChanged', (ticket) => { 
 			this.emit('totalsChanged', ticket); 
 			this.updateLastOrderTime(); 
@@ -569,7 +587,7 @@ class TicketEdit extends SyncView {
 		btn = SV.iconButton('more_vert', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
-				this.ticketEditDetailsModal.show();
+				this.emit('editTicketDetails', this.data);
 			}}});
 
 		
@@ -648,20 +666,6 @@ class TicketEdit extends SyncView {
 	       		style: { textAlign: 'right', width: '5em' }});
 	
 
-
-
-
-
-
-
-
-		this.ticketEditDetailsModal = this.appendView(new TicketEditDetailsModal());
-		this.ticketEditDetailsModal.on('deleted', (ticket) => {
-			this.emit('totalsChanged');
-		});
-		this.ticketEditDetailsModal.on('selectTable', (ticket) => {
-			this.emit('selectTable', ticket);
-		});
 	}
 	printReceipt() {
 		console.log('printing receipt');
@@ -753,7 +757,6 @@ class TicketEdit extends SyncView {
 			this.node.style.backgroundColor = '#DDD';
 		}
 
-		this.ticketEditDetailsModal.update(this.data);
 		this.orderItems.update(this.data.orderItems);
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
@@ -778,6 +781,7 @@ class TicketEditDetailsModal extends Modal {
 			       		() => { 
 						this.data.parent.remove(this.data.key); 
 						this.emit('deleted', this.data);
+						this.hide();
 					});
 			}}});
 
@@ -793,26 +797,31 @@ class TicketEditDetailsModal extends Modal {
 			style: { float: 'left', marginBottom: '1em' },
 			events: { click: () => { this.emit('selectTable', this.data); }}});
 		
-		this.nameInput = new SimpleEditInput('name');
-		this.nameInput.node.style.marginTop = '1em';
+		footer = SV.el('div', { parent: this.mainView, className: 'group footer' });
+		this.nameInput = new SimpleEditInput('name', 'Customer');
 		footer.appendChild(this.nameInput.node);
 		
-		this.servedBySelect = SV.el('select', { parent: footer, id: 'teasdasdf',
-			style: { float: 'right' }});
-		this.usersContainer = new ViewsContainer(UserListItem, null, null, this.servedBySelect);
-		this.usersContainer.debug = true;
+		//this.servedBySelect = SV.el('select', { parent: footer, id: 'teasdasdf',
+	//		style: { float: 'right' }});
+		//this.usersContainer = new ViewsContainer(UserListItem, null, null, this.servedBySelect);
+		//this.usersContainer.debug = true;
+		
+		footer = SV.el('div', { parent: this.mainView, className: 'group footer' });
+
+		this.servedBySelect = new SimpleEditSelect('servedBy', 'Server');
+		footer.appendChild(this.servedBySelect.node);
 
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			console.log('users', users);
-			this.usersContainer.update(users);
+			var options = SV.toArray(users).map((user) => { return user.data.info.name; });
+			this.servedBySelect.updateOptions(options);
 		});	
 	}
 	render() {
 		this.selectTable.innerHTML = this.data.table;
 		this.nameInput.update(this.data);
 		
-		this.servedBySelect.value = this.data.servedBy;
+		this.servedBySelect.update(this.data);
 	}
 }
 
