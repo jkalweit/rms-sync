@@ -46,9 +46,9 @@ class Reconciliations extends SyncView {
 		SV.el('button', { parent: this.listView, className: 'btn btn-big', innerHTML: 'Open New Reconciliation',
 			events: { click: () => { this.addRec(); }}});
 
-		this.recsView = new ViewsContainer(ReconciliationListItem);
+		this.recsView = new ViewsContainer(ReconciliationWeek, 'key', 'reverse');
 		this.recsView.on('viewAdded', (view) => {
-			view.on('selected', (rec) => {	
+			view.on('recSelected', (rec) => {	
 				window.recSettings.set('selectedRecKey', rec.key);
 			});
 		});
@@ -64,15 +64,26 @@ class Reconciliations extends SyncView {
 	}
 	addRec() {
 		var added = new Date().toISOString();
-		var name = moment(added).format('dddd MMM Do YYYY');
+		var now = moment();
+		var name = moment(added).format('dddd MMM Do, YYYY') + ' - ' + (now.hour() < 13 ? 'Lunch' : 'Dinner');
 		var newRec = {
-			key: added,
+			key: name,
 			added: added,
 			name: name,
 			tickets: {},
 			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
 		};
-		this.data.reconciliations.set(newRec.key, newRec);
+
+		if(this.data.reconciliations[name]) {
+			Modal.confirm('Duplicate Rec', 'There is already a rec named "' + name + '", are you sure you want to create another one?',
+					() => {
+						newRec.key += (' ' + now.format('h:mma'));
+						newRec.name = newRec.key;
+						this.data.reconciliations.set(newRec.key, newRec);
+					});
+		} else {
+			this.data.reconciliations.set(newRec.key, newRec);
+		}
 	}
 	render() {
 		this.selectMenuItemModal.update(this.data.menu);
@@ -90,10 +101,38 @@ class Reconciliations extends SyncView {
 				this.recDetailsView.update(rec);
 			}
 		} else {
-			this.recsView.update(this.data.reconciliations);
+			var weeks = SV.group(SV.toArray(this.data.reconciliations), (rec) => { 
+				var d = moment(rec.added);
+				return SV.getDayOfWeek(0, d).format('YYYY') + ' Week ' + d.week();
+			});
+			this.recsView.update(weeks);
 		}
 	}
 }
+
+
+class ReconciliationWeek extends SyncView {
+	constructor() {
+		super();
+		
+		this.node.className = 'group';
+		this.nameSpan = SV.el('h2', { parent: this.node });
+
+		this.recsView = this.appendView(new ViewsContainer(ReconciliationListItem));
+		this.recsView.on('viewAdded', (view) => {
+			view.on('selected', (rec) => {	
+				this.emit('recSelected', rec);
+			});
+		});
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.key;
+		this.recsView.update(this.data);
+	}
+}
+
+
+
 
 class ReconciliationListItem extends SyncView {
 	constructor() {
@@ -374,6 +413,23 @@ class Tickets extends SyncView {
 			events: { click: () => { this.hidePaid = !this.hidePaid; this.render(); }}});
 
 		this.ticketGroupsContainer = this.appendView(new ViewsContainer(TicketGroup));
+		this.ticketGroupsContainer.on('viewAdded', (view) => {
+			view.on('editTicketDetails', (ticket) => {
+				this.ticketEditDetailsModal.update(ticket);
+				this.ticketEditDetailsModal.show();
+			});
+			view.on('totalsChanged', (ticket) => {
+				this.emit('totalsChanged', ticket);
+			});
+			view.on('ticketListItemViewAdded', (view) => {
+				if(view.data.key === this.newTicketKey) {
+					// We just added this ticket, so display it in edit mode and store so we can scroll to it:
+					this.newTicketView = view;
+					this.newTicketView.toggleEditMode(); 
+					this.newTicketView.node.scrollIntoView();	
+				}
+			});
+		});
 
 		//this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
 		//this.ticketsContainer.on('viewAdded', (view) => {
@@ -430,11 +486,27 @@ class Tickets extends SyncView {
 		this.selectTableModal.update(ticket);
 		this.selectTableModal.show();
 	}
-	render() {
-
+	sortTicketGroups(groups) {
+		// sort tickets with currentUser first:
 		var groups = SV.group(SV.toArray(this.data), 'servedBy');
-		console.log('groups', groups);
-		this.ticketGroupsContainer.update(groups);
+		var currUser = window.recSettings.currentUser;
+
+		var sorted = {};
+		if(groups[currUser]) {
+			sorted[currUser] = groups[currUser];
+		}
+
+		Object.keys(groups).forEach((key) => {
+			if(key !== currUser) {
+				sorted[key] = groups[key];
+			}
+		});
+
+		console.log('groups', sorted, groups);
+		return sorted;
+	}
+	render() {
+		this.ticketGroupsContainer.update(this.sortTicketGroups());
 
 		//this.ticketsContainer.update(this.data);
 		if(this.ticketEditDetailsModal.data) {
@@ -506,23 +578,25 @@ class SelectTableModal extends Modal {
 class TicketGroup extends SyncView {
 	constructor() {
 		super();
-		this.servedBy = SV.el('h2', { parent: this.node });
+		this.servedBy = SV.el('h3', { parent: this.node,
+				style: { marginTop: '2em' }});
 
 		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
 		this.ticketsContainer.on('viewAdded', (view) => {
 			view.on('editTicketDetails', (ticket) => {
+				console.log('hereeee1');
 				this.emit('editTicketDetails', ticket);
 			});
 			view.on('totalsChanged', (ticket) => {
 				this.emit('totalsChanged', ticket);
 			});
-			this.emit('viewAdded', view);
+			this.emit('ticketListItemViewAdded', view);
 		});
-		this.ticketsContainer.node.style.marginTop = '2em';
 		
 	}
 	render() {
 		this.servedBy.innerHTML = this.data.key;
+		this.ticketsContainer.update(this.data);
 	}
 }
 
