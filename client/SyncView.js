@@ -389,7 +389,6 @@ class ViewsContainer extends SyncView {
 		Object.keys(this.views).forEach((key) => {
 			var view = this.views[key];
 			if(!SV.getByKey(this.data, view.data.key)) {
-				console.log('removing view', key);
 				this.node.removeChild(view.node);
 				delete this.views[view.data.key];
 				this.emit('removedView', view);
@@ -493,6 +492,36 @@ class EditInput extends SyncView {
 	}
 }
 
+class SimpleEditCheckBox extends SyncView {
+	constructor(prop, label) {
+		super();
+		this.prop = prop;
+
+		this.editView = SV.el('div', { parent: this.node });
+		if(label) {
+			SV.el('span', { parent: this.editView, innerHTML: label, className: 'label',
+				style: { display: 'inline-block', width: '150px' }});
+		}
+		this.input = SV.el('input', { parent: this.editView, type: 'checkbox',
+			style: { fontSize: '2em' },
+			events: { change: () => {
+				var value = this.input.checked;			
+				if(this.data[this.prop] !== value) {
+					var oldValue = this.data[this.prop];
+					this.data.set(this.prop, value);
+					this.emit('changed', value, oldValue);
+				}
+			}}});
+	}
+	render() {
+		console.log('thisasdfasdf', this.input.checked, '1', this.data[this.prop], '2', this.prop, this.data);
+		if(this.data[this.prop]) {
+			this.input.setAttribute('checked', true);
+		} else {
+			this.input.removeAttribute('checked');
+		}
+	}
+}
 
 class SimpleEditSelect extends SyncView {
 	constructor(prop, label, validator, formatter, options) {
@@ -501,15 +530,13 @@ class SimpleEditSelect extends SyncView {
 		
 		this.prop = prop;
 
-		var el = SV.el;
-
-		this.editView = el('div', { parent: this.node });
+		this.editView = SV.el('div', { parent: this.node });
 		if(label) {
-			el('span', { parent: this.editView, innerHTML: label, className: 'label',
+			SV.el('span', { parent: this.editView, innerHTML: label, className: 'label',
 				style: { display: 'inline-block', width: '150px' }});
 		}
 		var width = label ? 'calc(100% - 150px)' : '100%';
-		this.input = el('select', { parent: this.editView,
+		this.input = SV.el('select', { parent: this.editView,
 			style: { width: width },
 			events: { blur: () => {
 				var value = this.input.value;			
@@ -539,7 +566,6 @@ class SimpleEditSelect extends SyncView {
 		if(this.data) this.input.value = this.data[this.prop] || '';
 	}
 	render() {
-		console.log('render select', this.input.value, this.prop, this.data[this.prop], this.data);
 		if(this.input.value !== this.data[this.prop])
 			this.input.value = this.data[this.prop] || '';
 	}

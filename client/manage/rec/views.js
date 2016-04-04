@@ -166,7 +166,6 @@ class Reconciliation extends SyncView {
 	
 		this.currentUserSelect.addEventListener('change', () => {
 			window.recSettings.set('currentUser', this.currentUserSelect.value);
-			console.log('test', window.recSettings.currentUser);
 			this.render();
 		});
 
@@ -479,7 +478,6 @@ class Tickets extends SyncView {
 
 		this.newTicketKey = newItem.key;
 		newItem = this.data.set(newItem.key, newItem)[newItem.key];
-		console.log('newItem', newItem);
 		this.selectTable(newItem);
 	}	
 	selectTable(ticket) {
@@ -502,7 +500,6 @@ class Tickets extends SyncView {
 			}
 		});
 
-		console.log('groups', sorted, groups);
 		return sorted;
 	}
 	render() {
@@ -511,7 +508,6 @@ class Tickets extends SyncView {
 		//this.ticketsContainer.update(this.data);
 		if(this.ticketEditDetailsModal.data) {
 			var ticket = this.data[this.ticketEditDetailsModal.data.key];
-			console.log('here1111', ticket);
 			if(ticket) this.ticketEditDetailsModal.update(ticket);
 		}
 		
@@ -584,7 +580,6 @@ class TicketGroup extends SyncView {
 		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
 		this.ticketsContainer.on('viewAdded', (view) => {
 			view.on('editTicketDetails', (ticket) => {
-				console.log('hereeee1');
 				this.emit('editTicketDetails', ticket);
 			});
 			view.on('totalsChanged', (ticket) => {
@@ -612,9 +607,9 @@ class TicketListItem extends SyncView {
 			style: { padding: '1.5em', color: '#FFF', position: 'relative' },
 			events: { click: () => { this.toggleEditMode(); }}});
 		
-		this.servedBy = SV.el('span', { 
-			parent: this.mainView,
-			style: { position: 'absolute', top: '0', left: '0', fontStyle: 'italic' }});
+		//this.servedBy = SV.el('span', { 
+		//	parent: this.mainView,
+		//	style: { position: 'absolute', top: '0', left: '0', fontStyle: 'italic' }});
 
 		this.amount = SV.el('span', { 
 			parent: this.mainView,
@@ -662,7 +657,7 @@ class TicketListItem extends SyncView {
 			this.mainView.style.backgroundColor = '#BBB';
 		}
 
-		this.servedBy.innerHTML = SV.substr(ticket.servedBy, ' ');
+		//this.servedBy.innerHTML = SV.substr(ticket.servedBy, ' ');
 		this.nameSpan.innerHTML = ticket.table + ' ' + ticket.name;
 		this.total.innerHTML = SV.formatCurrency(ticket.totals.total);
 		this.editView.update(this.data);
@@ -781,8 +776,6 @@ class TicketEdit extends SyncView {
 	       		style: { textAlign: 'right' }});
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
-	
-
 	}
 	printReceipt() {
 		console.log('printing receipt');
@@ -847,12 +840,12 @@ class TicketEdit extends SyncView {
 			price: menuItem.price,
 			quantity: quantity,
 			taxType: menuItem.taxType,
-			note: ''
+			note: menuItem.note || '' 
 		};
 		this.data.orderItems.set(orderItem.key, orderItem);
 		this.updateTotals();
 		//toastr.success('to ' + this.data.name, 'Added ' + orderItem.name);
-		alertify.closeLogOnClick(true).maxLogItems(10);
+		alertify.closeLogOnClick(true).maxLogItems(100);
 		alertify.success('Added <b>' + orderItem.name + '</b> to ' + this.data.name + '.');
 	}
 	cyclePaymentStatus() {
@@ -947,7 +940,7 @@ class OrderItem extends SyncView {
 
 		this.time = SV.el('span', { parent: this.node,
 			style: { display: 'block', clear: 'both', margin: '0em', padding: '0', fontStyle: 'italic', 
-		       		color: '#999'}});
+		       		marginLeft: '10em', color: '#999'}});
 		this.nameSpan = SV.el('span', { parent: this.node,
 	       		style: { float: 'left', clear: 'both' }});
 		SV.el('div', { parent: this.node, innerHTML: `<i class="material-icons">edit</i>`,
@@ -1106,10 +1099,19 @@ class SelectMenuItemModal extends Modal {
 		super();
 
 		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
-	
-		this.itemsContainer = new ViewsContainer(MenuItem);
+		
+		this.filterInput = SV.el('input', {
+			parent: this.mainView,
+			style: {
+				width: '100%'
+			},
+			events: {
+				keyup: () => { this.render(); }
+			}});
+
+		this.itemsContainer = new ViewsContainer(MenuItemGroup);
 		this.itemsContainer.on('viewAdded', (view) => {
-			view.on('selected', (menuItem) => { 
+			view.on('menuItemSelected', (menuItem) => { 
 				if(this.selectCallback) this.selectCallback(menuItem);
 				this.hide(); 
 			});
@@ -1130,22 +1132,84 @@ class SelectMenuItemModal extends Modal {
 		this.selectCallback = null;
 		super.hide();
 	}
-render() {
-		this.itemsContainer.update(this.data.items);
+	render() {
+
+		var groupVals = SV.toArray(this.data.categories).map(cat => cat.name);
+		groupVals.unshift('');
+
+		var filtered;
+		var filterText = this.filterInput.value.trim().toLowerCase();
+		if(filterText) {
+			filtered = SV.filterMap(this.data.items,
+					(m) => {
+						return m.name.toLowerCase().indexOf(filterText) !== -1;
+					});
+		} else {
+			filtered = this.data.items;
+		}
+		
+		filtered = SV.toArray(filtered).filter(item => { return !item.isDisabled; });
+
+		var groups = SV.group(filtered, 'category', groupVals);
+		this.itemsContainer.update(groups);
 	}
 }
+
+class MenuItemGroup extends SyncView {
+	constructor() {
+		super();
+
+		this.node.style.marginTop = '2em';
+		this.nameSpan = SV.el('h3', { parent: this.node });
+		
+		this.itemsContainer = new ViewsContainer(MenuItem);
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (menuItem) => {
+				this.emit('menuItemSelected', menuItem);
+			});
+		});
+		this.node.appendChild(this.itemsContainer.node);
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.key;
+		this.itemsContainer.update(this.data);
+	}
+}
+
 
 class MenuItem extends SyncView {
 	constructor() {
 		super(SV.el('div', { className: 'btn btn-wide', 
+			style: { backgroundColor: 'transparent' },
 			events: { click: () => { this.emit('selected', this.data); }}}));
+
+		this.serveTypeImg = SV.el('img', { parent: this.node, 
+			style: { display: 'inline-block', width: '1em', marginRight: '0.5em' }});
+
 		this.nameSpan = SV.el('span', { parent: this.node });
 		this.price = SV.el('span', { parent: this.node, 
 			style: { float: 'right' }});
 	}
 	render() {
+		var src = '';
+		switch(this.data.serveType) {
+			case 'Kitchen':
+				src = 'kitchen.png';
+				break;
+			case 'Bar':
+				src = 'bar.png';
+				break;
+			default:
+				src = '';
+		}
+		if(src !== '') {
+			this.serveTypeImg.src = '/imgs/' + src;
+		} else {
+			this.serveTypeImg.src = '';
+		}
 		this.nameSpan.innerHTML = this.data.name;
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
+		this.node.style.backgroundColor = this.data.isDisabled ? '#DDD' : '#81C784';
 	}
 }
 
