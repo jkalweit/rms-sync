@@ -15,6 +15,55 @@ class Menu extends SyncView {
 			}
 		});
 
+		SV.el('input', { parent: this.node, type: 'file', 
+			events: { change: (e) => { 
+				var f = e.target.files[0];
+				console.log('here1', f);
+				var r = new FileReader();
+				r.onload = (e) => {
+					console.log('here2', e);
+					var contents = e.target.result;
+					var result = JSON.parse(contents);
+					console.log('file', result); 
+
+
+					var menu = { categories: {}, items: {} };
+					
+					result.categories.forEach((cat) => {
+						var newCat = {
+							key: SyncNode.guidShort(),
+							name: cat,
+							created: new Date().toISOString(),	
+							defaultTax: '',	
+							defaultIsAlcohol: false,
+							isDisabled: false 
+						};
+						menu.categories[newCat.key] = newCat;
+					});
+
+					result.items.forEach((item) => {
+						var isAlcohol = item.type === 'Alcohol';
+						var newItem = {
+							key: SyncNode.guidShort(),
+							name: item.name,
+							category: item.category,
+							created: new Date().toISOString(),
+							serveType: isAlcohol ? 'Bar' : 'Kitchen',
+							description: '',
+							price: item.price,
+							tags: {},
+							taxType: isAlcohol ? 'Included' : '9%',	
+							isAlcohol: isAlcohol,
+							isDisabled: item.isDisabled
+						};
+						menu.items[newItem.key] = newItem;
+					});
+					console.log('menu', menu);
+					this.data.parent.set('menu', menu);
+
+				};
+				r.readAsText(f);
+			}}});
 
 		SV.el('button', { parent: this.node, innerHTML: 'Edit Categories', className: 'btn',
 			style: { float: 'right' },
@@ -48,18 +97,19 @@ class Menu extends SyncView {
 			style: {
 				fontSize: '1.5em',
 			}});
-	
 
-		this.itemsContainer = new ViewsContainer(MenuItemGroup, 'key');
-		this.itemsContainer.node.style.marginTop = '2em';
-		this.itemsContainer.on('viewAdded', (view) => {
-			view.on('menuItemSelected', (menuItem) => {
-				this.editMenuItemModal.update(menuItem);
-				this.editMenuItemModal.show();
-			});
+		this.menuCategoryView = this.appendView(new MenuCategoryView());
+		this.menuCategoryView.on('menuItemSelected', (menuItem) => {
+			this.editMenuItemModal.update(menuItem);
+			this.editMenuItemModal.show();
 		});
-		this.node.appendChild(this.itemsContainer.node);
 
+		this.menuListView = this.appendView(new MenuListView());
+		this.menuListView.on('menuItemSelected', (menuItem) => {
+			this.editMenuItemModal.update(menuItem);
+			this.editMenuItemModal.show();
+		});
+	
 		this.editMenuItemModal = new MenuItemEditModal();
 		this.node.appendChild(this.editMenuItemModal.node);
 		
@@ -113,7 +163,12 @@ class Menu extends SyncView {
 		});
 
 		var groups = SV.group(filtered, 'category', groupVals);
-		this.itemsContainer.update(groups);
+		
+		this.menuCategoryView.showDisabled = this.showDisabled;
+		this.menuCategoryView.update(groups);
+
+		this.menuListView.showDisabled = this.showDisabled;
+		this.menuListView.update(groups);
 	}
 
 
@@ -194,6 +249,73 @@ class Menu extends SyncView {
 		return new Blob([uInt8Array], {type: contentType});
 	}
 
+}
+
+class MenuCategoryView extends SyncView {
+	constructor() {
+		super();
+		this.node.className = 'group';
+
+		var categories = SV.el('div', { parent: this.node, 
+			style: { width: '49%', display: 'inline-block', float: 'left' }});
+
+		this.categoriesContainer = this.appendView(new ViewsContainer(MenuItemCategory, 'key'), categories);
+		this.categoriesContainer.node.style.marginTop = '2em';
+		this.categoriesContainer.on('viewAdded', (view) => {
+			view.on('groupSelected', (group) => {
+				this.selectedGroup = group;
+				this.itemsContainer.update(this.selectedGroup);
+			});
+		});
+
+		var items = SV.el('div', { parent: this.node, 
+			style: { width: '49%', display: 'inline-block', float: 'left' }});
+
+		this.itemsContainer = this.appendView(new ViewsContainer(MenuItem, 'key'), items);
+		this.itemsContainer.node.style.marginTop = '2em';
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('menuItemSelected', (menuItem) => {
+				this.emit('menuItemSelected', menuItem);
+			});
+		});
+	}
+	render() {
+		this.categoriesContainer.update(this.data);
+		this.itemsContainer.update(this.selectedGroup);
+	}
+}
+
+class MenuItemCategory extends SyncView {
+	constructor() {
+		super();
+
+		this.nameSpan = SV.el('div', { parent: this.node, className: 'btn btn-wide',
+			style: { },
+			events: { click: () => { this.emit('groupSelected', this.data); }}});	
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.key;
+	}
+}
+
+
+
+class MenuListView extends SyncView {
+	constructor() {
+		super();
+
+		this.itemsContainer = new ViewsContainer(MenuItemGroup, 'key');
+		this.itemsContainer.node.style.marginTop = '2em';
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('menuItemSelected', (menuItem) => {
+				this.emit('menuItemSelected', menuItem);
+			});
+		});
+		this.node.appendChild(this.itemsContainer.node);
+	}
+	render() {
+		this.itemsContainer.update(this.data);
+	}
 }
 
 class MenuItemGroup extends SyncView {
@@ -345,7 +467,9 @@ class MenuCategoriesEditModal extends Modal {
 			key: SyncNode.guidShort(),
 			name: this.addInput.value,
 			created: new Date().toISOString(),
-			defaultTax: ''
+			defaultTax: '',
+			defaultIsAlcohol: false,
+			isDisabled: false
 		};
 		this.data.set(category.key, category);
 	}
