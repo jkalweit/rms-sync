@@ -1,0 +1,2191 @@
+{
+    "categories": [
+        "Alcohol - Beer - Bottle",
+        "Alcohol - Beer - Draft",
+        "Alcohol - Cocktails",
+        "Alcohol - Wine",
+        "Desserts",
+        "Dinner Entrees",
+        "Dinner Sandwiches",
+        "Dressing",
+        "Drinks",
+        "Kid's Menu",
+        "Lunch",
+        "Lunch Kids",
+        "Lunch Sandwiches",
+        "Lunch Sides",
+        "Private Party",
+        "SUMMERFEST",
+        "Salad/Potato",
+        "Sides",
+        "Specials",
+        "Starters",
+        "Temp",
+        "W Sauce"
+    ],
+    "items": [
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "$1 Natty Lite",
+            "price": 1,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "$3 SPECIAL",
+            "price": 3,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "$3.50 Import",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "$4.50 SPECIAL",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Bud Light",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Bud Light Lime",
+            "price": 3,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Budweiser",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Cider",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Cider-PEAR",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Coors Light",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Corona Light",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Craft Bottle",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Dos XX",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Gose",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "HH Discount",
+            "price": -0.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Michelob Ultra",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Miller Light",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Party Soda",
+            "price": 1,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Stella",
+            "price": 4,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Tell Tale Tart",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Bottle",
+            "isDisabled": false,
+            "name": "Yuengling",
+            "price": 2.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Boulevard",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Copper",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Dragon's Milk 10 oz.",
+            "price": 5.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Flight",
+            "price": 8,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Foothills",
+            "price": 4,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Gose",
+            "price": 7,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Green Man",
+            "price": 5.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Growler-BeerIsXtra!",
+            "price": 15,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "HH Discount",
+            "price": -0.75,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Left Hand 10 oz.",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Noda",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "River Rat",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Catawba",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Shock Top",
+            "price": 4,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Sugar Creek",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Sweet Water",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Terrapin",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Beer - Draft",
+            "isDisabled": false,
+            "name": "Thomas Creek",
+            "price": 7,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$2 SPECIAL",
+            "price": 2,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$3 Cocktail",
+            "price": 3,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$4 Cocktail",
+            "price": 4,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$4.50 Cocktail",
+            "price": 4.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$5 Cocktail",
+            "price": 5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$5.50 Cocktail",
+            "price": 5.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$6 Cocktail",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$7 Cocktail",
+            "price": 7,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$8 Cocktail",
+            "price": 8,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "$9 Cocktail",
+            "price": 9,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "Red Bull",
+            "price": 4,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Cocktails",
+            "isDisabled": false,
+            "name": "Red Bull Up",
+            "price": 3.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Alverdi PG",
+            "price": 8,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Alverdi PG Bottle",
+            "price": 25,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "BG Riesling",
+            "price": 8.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "BG Riesling Bottle",
+            "price": 27,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Belstar Prosecco",
+            "price": 27,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Black Ridge Bottle",
+            "price": 19,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Flaco Cabernet Bottle",
+            "price": 19,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "House Red",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "House White",
+            "price": 6,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Il Cantico Bottle",
+            "price": 23,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Il Cantico PG",
+            "price": 7.5,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Michael Sullberg Merlot",
+            "price": 25,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Pennywise Chard. Bottle",
+            "price": 28,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Pennywise Chardonnay",
+            "price": 9,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Red Blend Bottle",
+            "price": 19,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Alcohol - Wine",
+            "isDisabled": false,
+            "name": "Roscato Bottle",
+            "price": 23,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Desserts",
+            "isDisabled": true,
+            "name": "Dessert",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "BLEU MEDALLIONS",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Blackened Salmon",
+            "price": 18,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "CHICKEN ALFREDO",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Cajun Chicken",
+            "price": 14,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Chicken Strips",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Fish Tacos",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "Fish n' Chips",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Hamburger Steak",
+            "price": 14,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "NY Strip 10oz",
+            "price": 18,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "$1 Premium Side",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "Ribeye - 12oz",
+            "price": 18,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": false,
+            "name": "Ribeye - 14oz",
+            "price": 20,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "STEAK ALFREDO",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "Shepard's Pie",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Entrees",
+            "isDisabled": true,
+            "name": "Sirloin",
+            "price": 13,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "$1 Premium Side",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "4oz Ribeye Steak Sandwich",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Add Bacon $1",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Add Bleu Cheese $1",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "BBQ",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": true,
+            "name": "BLT",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "BLT",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Blackened Chicken Sandwich",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Burger-BBQ Bacon",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Burger-Black and Bleu",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Burger-Cheeseburger",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Burger-Hamburger",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Burger-Sriracha",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Club Sandwich (Junebug)",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": true,
+            "name": "Grilled Chicken Sandwich",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Grilled Veggie Melt",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Philly - Chicken",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Philly - Steak",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Dinner Sandwiches",
+            "isDisabled": false,
+            "name": "Turkey Melt",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "1000",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "BC",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "Balsamic",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "Cheese Cake",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "HM",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "Italian",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "Ketchup",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "None",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": true,
+            "name": "Pecan Pie",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "R",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Dressing",
+            "isDisabled": false,
+            "name": "Bal Vin",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Drinks",
+            "isDisabled": false,
+            "name": "Bottled Water",
+            "price": 1.8500000238418579,
+            "type": "Food"
+        },
+        {
+            "category": "Drinks",
+            "isDisabled": false,
+            "name": "Coffee",
+            "price": 2,
+            "type": "Food"
+        },
+        {
+            "category": "Drinks",
+            "isDisabled": false,
+            "name": "Coke",
+            "price": 1.9900000095367432,
+            "type": "Food"
+        },
+        {
+            "category": "Drinks",
+            "isDisabled": false,
+            "name": "Juice/Milk",
+            "price": 2.4900000095367432,
+            "type": "Food"
+        },
+        {
+            "category": "Drinks",
+            "isDisabled": false,
+            "name": "Tea",
+            "price": 1.4900000095367432,
+            "type": "Food"
+        },
+        {
+            "category": "Kid's Menu",
+            "isDisabled": false,
+            "name": "Kids Cheeseburger",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Kid's Menu",
+            "isDisabled": false,
+            "name": "Kids Chicken Strips",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Kid's Menu",
+            "isDisabled": false,
+            "name": "Kids Corn Dog",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Kid's Menu",
+            "isDisabled": false,
+            "name": "Kids Grilled Cheese",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Kid's Menu",
+            "isDisabled": false,
+            "name": "Kids Hot Dog",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Add Pub Chip",
+            "price": 2.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Adult Grilled Chz",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Burger-Cheese",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Burger-NO CHEESE",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad Bar-Large",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad Bar-Small",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad-Add Chicken",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad-Add Crab",
+            "price": 3.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad-Add Salmon",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Salad-Add Steak",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Blcknd Chicken",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Bleu Chicken",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Bleu Chicken Philly",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Club",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Ribeye",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Sandwich-Turkey Me",
+            "price": 8.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-Crab Cake Sand/Wrap",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-Fish Tacos",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-Philly Chicken",
+            "price": 9.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-Philly Steak",
+            "price": 9.5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-RIBEYE STEAK 10oz",
+            "price": 15,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Special-Wings (5)",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Tater-Greater",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Tater-Lesser",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Tater-Veggie",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Wrap-Blck Chicken Bacon",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Wrap-Chicken Buffalo",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Wrap-Chicken Caesar",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch",
+            "isDisabled": false,
+            "name": "L Wrap-Crab",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Kids",
+            "isDisabled": true,
+            "name": "Kids  PB and J",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Kids",
+            "isDisabled": true,
+            "name": "Kids Chicken Strips",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Kids",
+            "isDisabled": true,
+            "name": "Kids Grilled Cheese",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Adult Grilled Cheese",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "BLT",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Chicken Salad",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Club Sandwich (Junebug)",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "French Dip",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Fries Upcharge",
+            "price": 2,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Ham and Egg",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Philly - Chicken",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Philly - Steak",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Ribeye Steak Sandwich",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Substitution Upcharge",
+            "price": 2,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Turkey Melt (Backlot)",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Turkey Reuben",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sandwiches",
+            "isDisabled": true,
+            "name": "Veggie Melt",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Chips",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Fries",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Ham Salad",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Pasta Salad",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Potato Salad",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Side Salad",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Slaw",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Lunch Sides",
+            "isDisabled": true,
+            "name": "Sweet Potato Fries",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "25 Dollar Gift Card",
+            "price": 25,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "BOX OF WINGS",
+            "price": 36,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Deposit",
+            "price": 200,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Fries App",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Gratuity",
+            "price": 0,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Junebug",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "PVT Party Domestic",
+            "price": 3,
+            "type": "Alcohol"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Party Soda",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Steak Dinner",
+            "price": 20,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Ten Strips",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "Valentine's Special",
+            "price": 20,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "chicken breast",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "fried pickles",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "large steak bites",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "onion rings",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "regular steak bites",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Private Party",
+            "isDisabled": false,
+            "name": "strips",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "10oz NY Strip",
+            "price": 15,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "14oz Ribeye",
+            "price": 18,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "BBQ SANDWICH",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "BBQ Sundaeeeeee",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Cheeseburger",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Cheesecake",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Chicken Tenders",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Crab Balls",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "FRIED PICKLES",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "KIDS Hot Dog",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Parking Credit",
+            "price": -5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Pecan Pie",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Polish Dog",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Side Salad",
+            "price": 5,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Soda/Tea",
+            "price": 2,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Steak Bites",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Water",
+            "price": 1,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Wings (5)",
+            "price": 10,
+            "type": "Food - Tax Included"
+        },
+        {
+            "category": "SUMMERFEST",
+            "isDisabled": true,
+            "name": "Other",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Chef Salad",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": true,
+            "name": "Chicken Salad Tater",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": true,
+            "name": "Chili - Bowl",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": true,
+            "name": "Chili - Cup",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Great Tater",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Grilled Chicken Upcharge",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Lesser Tater",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Salmon Upcharge",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Steak Bites Upcharge",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Veggie Tater",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": true,
+            "name": "Wedge Salad",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Salad/Potato",
+            "isDisabled": false,
+            "name": "Woodchopper Salad",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "$1 Premium Side",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Bacon Cheese FF",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Baked Potato",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Chips",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".FF",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Fried Pickles",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Grilled Veggies",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Loaded Potato",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Mac Bites",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".No Side",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Onion Rings",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".SPFF",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": ".Slaw",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "ALL DRUMS/FLAPS PER5",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Add Bacon",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Add Cheddar",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "BANNANA PUDDING",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "BROWNIE",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "Bacon Cheese FF",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "CELERY & CARROTS",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Dessert",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "EXTRA TOPPING",
+            "price": 0.5,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Extra Sauce",
+            "price": 0.25,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "GRILLED MUSH OR PEP",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "Jalapeno Cheddar",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "Mac n' Cheese Bites",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Mozz Stix",
+            "price": 4,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "Pub Chips",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": true,
+            "name": "SWEET POTATO CHIPS",
+            "price": 3,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Salad Bar- Large",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Sides",
+            "isDisabled": false,
+            "name": "Salad Bar- Small",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Bowl of Soup",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Crab Balls App",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Crab Cake/ Side Special",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Flyin' Hawaiian",
+            "price": 16,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Fried Mushrooms",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Pretzel App",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Jalapeno Poppers",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "NY Strip/ Crab Cake",
+            "price": 20,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "NYE Special",
+            "price": 18,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "NYE Vegetable Plate",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Quesa. FF/Chips Up",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Quesadilla- Stk",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Quesadilla- Veg",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Special $10",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Special $10.50",
+            "price": 10.5,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Special $9",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Specials",
+            "isDisabled": false,
+            "name": "Surf N Turf",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Add Bacon",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Add Cheese $1",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "CHIPS AND SALSA",
+            "price": 5.5,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Celery & Carrots $1",
+            "price": 1,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Cheddar Potato App",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Chicken Salad Nachos",
+            "price": 6.9899997711181641,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Chicken Salad Nachos",
+            "price": 6.9899997711181641,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Chicken Strips App",
+            "price": 9,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Chips and Salsa",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Fried Pickles App",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "FF App",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Jalapeno Cheddar App",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Loaded Nachos",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Mac'n'Cheese Bites App",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Mozzarella Sticks App",
+            "price": 8,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Nachos",
+            "price": 10,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Onion Rings App",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Pick 3 Basket",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": true,
+            "name": "Pick Four",
+            "price": 13,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Chips App",
+            "price": 5,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Steak Bites - 10oz",
+            "price": 12,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Steak Bites - 5oz",
+            "price": 7,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Wings - 10 Count",
+            "price": 11,
+            "type": "Food"
+        },
+        {
+            "category": "Starters",
+            "isDisabled": false,
+            "name": "Wings - 5 Count",
+            "price": 6,
+            "type": "Food"
+        },
+        {
+            "category": "Temp",
+            "isDisabled": false,
+            "name": "(a)_R",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Temp",
+            "isDisabled": false,
+            "name": "(b)_MR",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Temp",
+            "isDisabled": false,
+            "name": "(c)_M",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Temp",
+            "isDisabled": false,
+            "name": "(d)_MW",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "Temp",
+            "isDisabled": false,
+            "name": "(e)_W",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "bbq",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "buffalo",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "franks",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "hm",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "plain",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "sriracha",
+            "price": 0,
+            "type": "Food"
+        },
+        {
+            "category": "W Sauce",
+            "isDisabled": false,
+            "name": "thai",
+            "price": 0,
+            "type": "Food"
+        }
+    ]
+}
