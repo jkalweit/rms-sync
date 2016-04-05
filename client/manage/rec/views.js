@@ -577,7 +577,7 @@ class TicketGroup extends SyncView {
 		this.servedBy = SV.el('h3', { parent: this.node,
 				style: { marginTop: '2em' }});
 
-		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem));
+		this.ticketsContainer = this.appendView(new ViewsContainer(TicketListItem, 'table'));
 		this.ticketsContainer.on('viewAdded', (view) => {
 			view.on('editTicketDetails', (ticket) => {
 				this.emit('editTicketDetails', ticket);
@@ -611,11 +611,13 @@ class TicketListItem extends SyncView {
 		//	parent: this.mainView,
 		//	style: { position: 'absolute', top: '0', left: '0', fontStyle: 'italic' }});
 
-		this.amount = SV.el('span', { 
-			parent: this.mainView,
+		this.amount = SV.el('span', { parent: this.mainView,
 			style: { float: 'right' }});
-		this.nameSpan = SV.el('span', {
-			parent: this.mainView });
+
+		this.tableSpan = SV.el('span', { parent: this.mainView,
+	       		style: { display: 'inline-block', width: '4em' }});
+		this.nameSpan = SV.el('span', { parent: this.mainView,
+	       		style: { display: 'inline-block', fontSize: '1.3em', fontWeight: 'bold' }});
 		this.total = SV.el('span', {
 			parent: this.mainView,
 	       		style: { float: 'right' }});
@@ -658,7 +660,8 @@ class TicketListItem extends SyncView {
 		}
 
 		//this.servedBy.innerHTML = SV.substr(ticket.servedBy, ' ');
-		this.nameSpan.innerHTML = ticket.table + ' ' + ticket.name;
+		this.tableSpan.innerHTML = ticket.table;
+		this.nameSpan.innerHTML = ticket.name;
 		this.total.innerHTML = SV.formatCurrency(ticket.totals.total);
 		this.editView.update(this.data);
 		this.editView.node.style.display = this.editMode ? 'block' : 'none';
@@ -938,11 +941,11 @@ class OrderItem extends SyncView {
 	constructor() {
 		super(SV.el('div', { className: 'order-item' })); 
 
-		this.time = SV.el('span', { parent: this.node,
-			style: { display: 'block', clear: 'both', margin: '0em', padding: '0', fontStyle: 'italic', 
-		       		marginLeft: '10em', color: '#999'}});
 		this.nameSpan = SV.el('span', { parent: this.node,
-	       		style: { float: 'left', clear: 'both' }});
+	       		style: { float: 'left', display: 'inline-block', width: '8em', clear: 'both' }});
+		this.time = SV.el('span', { parent: this.node,
+			style: { display: 'inline-block', fontStyle: 'italic', 
+		       		color: '#999'}});
 		SV.el('div', { parent: this.node, innerHTML: `<i class="material-icons">edit</i>`,
 			className: 'btn',
 			style: { float: 'right', height: '100%' },
@@ -955,7 +958,7 @@ class OrderItem extends SyncView {
 	       		style: { float: 'right' }});
 		
 		this.note = SV.el('span', { parent: this.node,
-			style: { display: 'block', float: 'left', marginLeft: '5em', fontStyle: 'italic' }});
+			style: { display: 'block', float: 'left', marginLeft: '5em', marginTop: '0', fontStyle: 'italic' }});
 	}
 	updateTime() {
 		this.time.innerHTML = moment(this.data.addedAt).from(moment());
@@ -1098,30 +1101,43 @@ class SelectMenuItemModal extends Modal {
 	constructor() {
 		super();
 
-		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
-		
-		this.filterInput = SV.el('input', {
-			parent: this.mainView,
-			style: {
-				width: '100%'
-			},
-			events: {
-				keyup: () => { this.render(); }
-			}});
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', className: 'btn btn-big cancel',
+		       style: { marginTop: '1em', float: 'right' },	
+			events: { click: () => { this.hide(); }}});
 
-		this.itemsContainer = new ViewsContainer(MenuItemGroup);
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
+	
+		var container = SV.el('div', { parent: this.mainView, className: 'group' });
+
+		var categories = SV.el('div', { parent: container, 
+			style: { width: '49%', display: 'inline-block', float: 'left' }});
+
+		this.categoriesContainer = this.appendView(new ViewsContainer(MenuCategory, 'name'), categories);
+		this.categoriesContainer.node.style.marginTop = '2em';
+		this.categoriesContainer.on('viewAdded', (view) => {
+			view.on('selected', (category) => {
+				this.selectedCategory = category;
+				this.render();
+			});
+		});
+
+
+		var items = SV.el('div', { parent: container, 
+			style: { width: '49%', display: 'inline-block', float: 'left' }});
+
+
+		this.itemsContainer = this.appendView(new ViewsContainer(MenuItem, 'name'), items);
 		this.itemsContainer.on('viewAdded', (view) => {
-			view.on('menuItemSelected', (menuItem) => { 
+			view.on('selected', (menuItem) => { 
 				if(this.selectCallback) this.selectCallback(menuItem);
 				this.hide(); 
 			});
 		});
-		this.mainView.appendChild(this.itemsContainer.node);
 
 		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
 
 		SV.el('button', { parent: footer, innerHTML: 'Cancel', className: 'btn btn-big cancel',
-		       style: { marginTop: '1em' },	
+		       style: { marginTop: '1em', float: 'right' },	
 			events: { click: () => { this.hide(); }}});
 	}
 	select(callback) {
@@ -1133,27 +1149,30 @@ class SelectMenuItemModal extends Modal {
 		super.hide();
 	}
 	render() {
-
-		var groupVals = SV.toArray(this.data.categories).map(cat => cat.name);
-		groupVals.unshift('');
-
-		var filtered;
-		var filterText = this.filterInput.value.trim().toLowerCase();
-		if(filterText) {
-			filtered = SV.filterMap(this.data.items,
-					(m) => {
-						return m.name.toLowerCase().indexOf(filterText) !== -1;
-					});
-		} else {
-			filtered = this.data.items;
+		this.categoriesContainer.update(SV.filterMap(this.data.categories, (cat) => { return !cat.isDisabled; }));
+		var filtered = {};
+		if(this.selectedCategory) {
+			filtered = SV.filterMap(this.data.items, (item) => { return !item.isDisabled && item.category === this.selectedCategory.name });
 		}
-		
-		filtered = SV.toArray(filtered).filter(item => { return !item.isDisabled; });
-
-		var groups = SV.group(filtered, 'category', groupVals);
-		this.itemsContainer.update(groups);
+		this.itemsContainer.update(filtered);
 	}
 }
+
+class MenuCategory extends SyncView {
+	constructor() {
+		super();
+
+		var btn = SV.el('div', { parent: this.node, className: 'btn btn-wide', 
+	       		events: { click: () => { this.emit('selected', this.data); }}});
+
+		this.nameSpan = SV.el('span', { parent: btn, 
+			style: { }});
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.name;	
+	}
+}
+
 
 class MenuItemGroup extends SyncView {
 	constructor() {
