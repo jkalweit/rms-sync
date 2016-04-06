@@ -26,6 +26,18 @@ class Reconciliations extends SyncView {
 	constructor() {
 		super();
 	
+		this.connectionStatus = SV.el('div', { parent: this.node, 
+			style: { position: 'fixed', zIndex: '100', left: '0', right: '0', bottom: '0', height: '4em', backgroundColor: '#D00',
+		       		color: '#FFF', textAlign: 'center', fontSize: '2em', paddingTop: '1em' }});
+
+		window.sync.on('statusChanged', (path, status) => {
+			if(status !== 'Connected') {
+				this.connectionStatus.style.display = 'block';
+				this.connectionStatus.innerHTML = 'Warning: ' + status;
+			} else {
+				this.connectionStatus.style.display = 'none';
+			}
+		});
 
 		window.sync.on('updated', (data, merge) => {
 			console.log('updated!!', data);
@@ -524,13 +536,15 @@ class Tickets extends SyncView {
 			filtered = this.data;
 		}
 
-		//SV.toArray(this.ticketsContainer.views).forEach((view) => {
-		//	if(this.hidePaid && view.data.paymentStatus !== 'Unpaid' && !view.editMode) {
-		//		view.node.style.display = 'none';
-		//	} else {
-		//		view.node.style.display = filtered[view.data.key] ? 'block' : 'none';
-		//	}
-		//});
+		SV.toArray(this.ticketGroupsContainer.views).forEach((groupView) => {
+			SV.toArray(groupView.ticketsContainer.views).forEach((view) => {
+				if(this.hidePaid && view.data.paymentStatus !== 'Unpaid' && !view.editMode) {
+					view.node.style.display = 'none';
+				} else {
+					view.node.style.display = filtered[view.data.key] ? 'block' : 'none';
+				}
+			});
+		});
 
 		this.addButton.disabled = filterText === '';
 
@@ -659,6 +673,7 @@ class TicketListItem extends SyncView {
 			this.mainView.style.backgroundColor = '#BBB';
 		}
 
+
 		//this.servedBy.innerHTML = SV.substr(ticket.servedBy, ' ');
 		this.tableSpan.innerHTML = ticket.table;
 		this.nameSpan.innerHTML = ticket.name;
@@ -706,12 +721,10 @@ class TicketEdit extends SyncView {
 			}}});
 
 		
-	
-
-	
-		this.orderItems = this.appendView(new ViewsContainer(OrderItem));
-		this.orderItems.on('viewAdded', (view) => {
-			view.on('selected', (orderItem) => {
+		
+		this.orderItemGroups = this.appendView(new ViewsContainer(OrderItemGroup));
+		this.orderItemGroups.on('viewAdded', (view) => {
+			view.on('orderItemSelected', (orderItem) => {
 				this.orderItemEditModal.update(orderItem);
 				this.orderItemEditModal.show();
 				this.orderItemEditModal.note.focus();
@@ -720,6 +733,7 @@ class TicketEdit extends SyncView {
 				this.addOrderItem(orderItem, orderItem.quantity);
 			});
 		});
+
 
 
 		this.orderItemEditModal = this.appendView(new OrderItemEditModal());
@@ -868,14 +882,16 @@ class TicketEdit extends SyncView {
 		} else {			
 			this.node.style.backgroundColor = '#DDD';
 		}
-
-		this.orderItems.update(this.data.orderItems);
+		
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
-
 		this.paymentButton.innerHTML = this.data.paymentStatus;
+
+		var groups = SV.group(this.data.orderItems, (item) => { return item.name + ' ' + item.note; });  
+		this.orderItemGroups.update(groups);
+
 	}
 }
 
@@ -937,15 +953,89 @@ class TicketEditDetailsModal extends Modal {
 	}
 }
 
-class OrderItem extends SyncView {
+class OrderItemGroup extends SyncView {
 	constructor() {
-		super(SV.el('div', { className: 'order-item' })); 
+		super(SV.el('div', { className: 'order-item',
+	       		style: { borderBottom: '1px solid #DDD', marginBottom: '1em', paddingBottom: '0.5em' }})); 
 
-		this.nameSpan = SV.el('span', { parent: this.node,
-	       		style: { float: 'left', display: 'inline-block', width: '8em', clear: 'both' }});
-		this.time = SV.el('span', { parent: this.node,
+		this.showDetails = false;
+
+		var header = SV.el('div', { parent: this.node,
+			events: { click: () => { this.showDetails = !this.showDetails; this.render(); }}});
+
+		this.moreButton = SV.el('div', { parent: header, className: 'btn',
+			style: { float: 'right', height: '100%' }})
+
+		this.nameSpan = SV.el('span', { parent: header,
+	       		style: { float: 'left', display: 'inline-block', width: '8em', fontWeight: 'bold' }});
+		this.time = SV.el('span', { parent: header,
 			style: { display: 'inline-block', fontStyle: 'italic', 
 		       		color: '#999'}});
+		this.price = SV.el('span', { parent: header,
+	       		style: { float: 'right', marginRight: '2.8em', fontWeight: 'bold' }});
+		
+		this.note = SV.el('span', { parent: header,
+			style: { display: 'block', float: 'left', marginLeft: '5em', marginTop: '0', fontStyle: 'italic' }});
+
+
+
+		this.itemsView = SV.el('div', { parent: this.node });
+	
+		this.orderItems = this.appendView(new ViewsContainer(OrderItem), this.itemsView);
+		this.orderItems.on('viewAdded', (view) => {
+			view.on('selected', (orderItem) => {
+				this.emit('orderItemSelected', orderItem);
+			});
+			view.on('addAgain', (orderItem) => {
+				this.emit('addAgain', orderItem);
+			});
+		});
+
+
+	}
+	updateTime() {
+		this.time.innerHTML = moment(this.data.addedAt).from(moment());
+	}
+	render() {
+		var items = SV.toArray(this.data);
+		var model = items[0];
+		
+		this.nameSpan.innerHTML = model.name;
+		var price = SV.formatCurrency(model.price);
+		var totalQuantity = 0;
+		var totalAmount = 0;
+		items.forEach((item) => { 
+			var quantity = parseFloat(item.quantity);
+			var price = parseFloat(item.price);
+			totalQuantity += quantity;
+			totalAmount += (quantity * price); 
+		});
+		var averagePrice = totalAmount / totalQuantity;
+		this.price.innerHTML = (totalQuantity != 1 ? totalQuantity + ' x ' : '') + SV.formatCurrency(averagePrice);
+		//if(!this.timeTimer) {
+		//	this.updateTime();
+		//	this.timeTimer = setInterval(() => { this.updateTime(); }, 30000);
+		//}
+		this.note.innerHTML = model.note;
+
+		var icon = this.showDetails ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+		this.moreButton.innerHTML = `<i class="material-icons">${icon}</i>`; 
+
+		this.orderItems.node.style.display = this.showDetails ? 'block' : 'none';
+		this.orderItems.update(this.data);
+	}
+}
+
+
+class OrderItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'order-item', style: { color: '#888' }})); 
+
+		//this.nameSpan = SV.el('span', { parent: this.node,
+	       	//	style: { float: 'left', display: 'inline-block', width: '8em', clear: 'both' }});
+		this.time = SV.el('span', { parent: this.node, className: 'time',
+			style: { display: 'inline-block', fontStyle: 'italic', 
+		       		color: '#999' }});
 		SV.el('div', { parent: this.node, innerHTML: `<i class="material-icons">edit</i>`,
 			className: 'btn',
 			style: { float: 'right', height: '100%' },
@@ -957,21 +1047,21 @@ class OrderItem extends SyncView {
 		this.price = SV.el('span', { parent: this.node,
 	       		style: { float: 'right' }});
 		
-		this.note = SV.el('span', { parent: this.node,
-			style: { display: 'block', float: 'left', marginLeft: '5em', marginTop: '0', fontStyle: 'italic' }});
+		//this.note = SV.el('span', { parent: this.node,
+		//	style: { display: 'block', float: 'left', marginLeft: '5em', marginTop: '0', fontStyle: 'italic' }});
 	}
 	updateTime() {
 		this.time.innerHTML = moment(this.data.addedAt).from(moment());
 	}
 	render() {
-		this.nameSpan.innerHTML = this.data.name;
+		//this.nameSpan.innerHTML = this.data.name;
 		var price = SV.formatCurrency(this.data.price);
 		this.price.innerHTML = (this.data.quantity != 1 ? this.data.quantity + ' x ' : '') + price;
 		if(!this.timeTimer) {
 			this.updateTime();
 			this.timeTimer = setInterval(() => { this.updateTime(); }, 30000);
 		}
-		this.note.innerHTML = this.data.note;
+		//this.note.innerHTML = this.data.note;
 	}
 }
 

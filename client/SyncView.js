@@ -174,6 +174,7 @@ class SV {
 		}
 
 
+		if(!Array.isArray(arr)) arr = SV.toArray(arr);
 
 		arr.forEach(function (item) {
 			var val;
@@ -834,31 +835,3 @@ class ImageUploader extends SyncView {
 
 
 
-
-//    Utils.group = group;
-//    function formatCurrency(value, precision) {
-//        if (precision === void 0) { precision = 2; }
-//        var number = (typeof value === 'string') ? parseInt(value) : value;
-//        return number.toFixed(precision);
-//    }
-//    Utils.formatCurrency = formatCurrency;
-//    function roundToTwo(num) {
-//        return +(Math.round((num.toString() + 'e+2')) + "e-2");
-//    }
-//    Utils.roundToTwo = roundToTwo;
-//    function snapToGrid(val, grid) {
-//        var offset = val % grid;
-//        if (offset < (grid / 2))
-//            return val - offset;
-//        else
-//            return val + (grid - offset);
-//    }
-//    Utils.snapToGrid = snapToGrid;
-//    function formatDateFromKey(key) {
-//        //var date = Date.parse(key);
-//        //console.log('date2', date.toString(1));
-//    }
-//    function mutableCopy(obj) {
-//        return JSON.parse(JSON.stringify(obj));
-//    }
-//    Utils.mutableCopy = mutableCopy;
