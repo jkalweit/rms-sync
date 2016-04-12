@@ -127,7 +127,7 @@ class Timeclock extends SyncView {
 		super();
 
 		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
 			if(!data.shifts) { 
 				data.set('shifts', {});
 			}

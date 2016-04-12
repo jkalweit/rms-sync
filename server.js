@@ -525,7 +525,7 @@ server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
 });
 
 if(startHTTPS) {
-	sserver.listen(443, process.env.IP || "0.0.0.0", function(){
+	sserver.listen(1443, process.env.IP || "0.0.0.0", function(){
 		var addr = sserver.address();
 		console.log("HTTPS Server listening at", addr.address + ":" + addr.port);
 	});

@@ -43,6 +43,8 @@ class Reconciliations extends SyncView {
 			console.log('updated!!', data);
 			if(!data.hasOwnProperty('reconciliations')) {
 				data.set('reconciliations', {});
+			} if(!data.hasOwnProperty('menuGrids')) {
+				data.set('menuGrids', { grids: {}});
 			} else {
 				this.update(data);
 			}
@@ -73,6 +75,7 @@ class Reconciliations extends SyncView {
 		this.detailsView.appendChild(this.recDetailsView.node);	
 		
 		this.selectMenuItemModal = this.appendView(new SelectMenuItemModal());
+		this.selectMenuItemGridModal = this.appendView(new SelectMenuItemGridModal());
 	}
 	addRec() {
 		var added = new Date().toISOString();
@@ -99,6 +102,8 @@ class Reconciliations extends SyncView {
 	}
 	render() {
 		this.selectMenuItemModal.update(this.data.menu);
+		console.log('menuGrids', this.data.menuGrids);
+		this.selectMenuItemGridModal.update(this.data.menuGrids);
 
 		var isDetailsView = window.recSettings.selectedRecKey;
 		this.listView.style.display = !isDetailsView ? 'block' : 'none';
@@ -708,7 +713,10 @@ class TicketEdit extends SyncView {
 		var btn = SV.iconButton('add', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
-				window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
+				//window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
+				//	this.addOrderItem(menuItem);
+				//});
+				window.reconciliationsView.selectMenuItemGridModal.select((menuItem) => {
 					this.addOrderItem(menuItem);
 				});
 			}}});
@@ -1184,6 +1192,118 @@ class TicketSimpleView extends SyncView {
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 	}
 }
+
+
+
+
+class SelectMenuItemGridModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', className: 'btn btn-big cancel',
+		       style: { marginTop: '1em', float: 'right' },	
+			events: { click: () => { this.hide(); }}});
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Menu Item' });
+
+		this.itemsContainer = this.appendView(new ViewsContainer(MenuItemGrid), this.mainView);
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Add Grid', className: 'btn btn-big',
+		       style: { marginTop: '1em', float: 'right' },	
+			events: { click: () => { 
+				this.newMenuItemGridModal.go(this.addGrid.bind(this));
+			}}});
+		this.newMenuItemGridModal = this.appendView(new NewMenuItemGridModal(), this.mainView);
+	}
+	addGrid(grid) {
+		console.log('this.data at addGrid', this.data);
+		this.data.grids.set(grid.key, grid);
+	}
+	select(callback) {
+		this.selectCallback = callback;
+		this.show();
+	}
+	hide() {
+		this.selectCallback = null;
+		super.hide();
+	}
+	render() {
+		console.log('this.data', this.data);
+		this.itemsContainer.update(this.data.grids);
+	}
+}
+
+
+class NewMenuItemGridModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Cancel', className: 'btn btn-big cancel',
+		       style: { marginTop: '1em', float: 'right' },	
+			events: { click: () => { this.hide(); }}});
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'New Menu Item Grid' });
+		this.nameInput = SV.el('input', { parent: this.mainView });
+
+		SV.el('button', { parent: this.mainView, innerHTML: 'Ok', className: 'btn btn-big',
+		       style: { marginTop: '1em', float: 'right' },	
+			events: { click: () => { 
+				if(this.finishedCallback) {
+					this.finishedCallback({
+						key: SyncNode.guidShort(),
+						name: this.nameInput.value
+					}) 
+				}
+				this.hide(); 
+			}}});
+	}
+	go(callback) {
+		this.finishedCallback = callback;
+		this.show();
+	}
+	hide() {
+		this.finishedCallback = null;
+		super.hide();
+	}
+	render() {
+	}
+}
+
+
+class MenuItemGrid extends SyncView {
+	constructor() {
+		super();
+
+		this.nameSpan = SV.el('span', { parent: this.node });
+
+		this.itemsContainer = this.appendView(new ViewsContainer(MenuItemGridCell), this.mainView);
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.name;
+		this.itemsContainer.update(this.data.items);
+	}
+}
+
+
+class MenuItemGridCell extends SyncView {
+	constructor() {
+		super(SV.el('div', { 
+			style: {
+				width: '100px',
+				height: '100px',
+				display: 'inline-block',
+				float: 'left'
+			},
+			events: { click: () => { this.emit('selected', this.data); }}}));
+		
+		var nameSpan = SV.el('span', { parent: this.node });
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.name;
+	}
+}
+
+
 
 
 

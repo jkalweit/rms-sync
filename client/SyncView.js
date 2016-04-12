@@ -292,7 +292,7 @@ class SyncView {
 	update(data, force) {
 		if(force || this.hasChanged(data)) {
 			//this.lastModified = data.lastModified;
-			this.currentVersion = data.version;
+			this.currentVersion = data ? data.version : null;
 			//var oldData = this.data;
 			this.data = data;
 			this.emit('updating', data); //, oldData);
