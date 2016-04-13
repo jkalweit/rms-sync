@@ -6,7 +6,7 @@ class Notes extends SyncView {
 		super();
 
 		this.sync = new SyncNodeSocket('/data', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
 			console.log('updated!', data);
 			if(!data.notes){
 				data.set({ notes: { members: {}}});
@@ -158,15 +158,15 @@ class NoteEdit extends SyncView {
 	}
 	cycleStatus() {
 		if(!this.data.status || this.data.status === 'New') {
-			this.data.set({ status: 'Accepted' }); 
+			this.data.set('status', 'Accepted'); 
 		} else if(this.data.status === 'Accepted') {
-			this.data.set({ status: 'Ordered'});
+			this.data.set('status', 'Ordered'); 
 		} else if(this.data.status === 'Ordered') {
-			this.data.set({ status: 'Completed' });
+			this.data.set('status', 'Completed'); 
 		} else if(this.data.status === 'Completed') {
-			this.data.set({ status: 'Rejected' });
+			this.data.set('status', 'Rejected'); 
 		} else if(this.data.status === 'Rejected') {
-			this.data.set({ status: 'New' }); 
+			this.data.set('status', 'New'); 
 		}
 	}
 	remove() {

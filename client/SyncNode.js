@@ -64,7 +64,7 @@ class SyncNode extends EventEmitter {
 		 	return true;
 		} else if((obj1 != null && obj2 == null) || (obj1 == null && obj2 != null)) {
 			return false;	
-		} else if(obj1.version && obj2.version) {
+		} else if(obj1 && obj2 && obj1.version && obj2.version) {
 			return obj1.version === obj2.version;
 		} else if(typeof obj1 !== 'object' && typeof obj2 !== 'object') {
 			return obj1 === obj2;

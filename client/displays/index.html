@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="/app.css">
+
 <style type="text/css">
 body {
 	overflow:hidden;
@@ -8,8 +10,6 @@ body {
 	font-family:Verdana, Geneva, sans-serif;
 	font-size:20px;
 	text-align: center;
-	color: #EEE;
-	background-color:#333;
 }
 
 .sign {
@@ -19,7 +19,6 @@ body {
 	width: 1280px;
 	height: 1024px;
 	transition: opacity 2s;
-	background-color: #333;
 	padding-top: 5em;
 }
 
@@ -88,7 +87,7 @@ h4 {
 <title>Digital Signage</title>
 </head>
 <body>
-<div id="sign1" class="sign">	
+<div id="sign1" class="sign hide">	
 	<div class="header">SPECIALS</div>
 	<div class="special">
 		<span class="title">Flyin Hawaiian Chicken</span>
@@ -131,22 +130,16 @@ h4 {
 		<span class="price">$10.50</span>
 	</div>
 </div>
-<div id="sign2" class="sign hide" style="padding-top: 25px">
-	<h2 style="margin: 0.1em">TODAY: Chef Meares'</h2>
-	<h1 style="margin: 0.1em">NEW YEAR'S SPECIAL</h1>
-	<div style="width: 40%; float: left; padding-left: 40px">
-		<br />
-		<h4>Applewood Smoked Ribs</h4>
-		<h4>Black-eyed Peas</h4>
-		<h4>Collard Greens</h4>
-		<h4>Cornbread</h4>
-		<h4>Tea</h4>
-		<h4>$18</h4>
-	</div>
-	<div style="width: 50%; float: left; padding-right: 20px">
-		<img style="float: right; width: 500px" src="/imgs/ribs.jpg" />
-		<img style="float: right; width: 250px" src="/imgs/peas.jpg" />
-		<img style="float: right; width: 250px" src="/imgs/collards.jpg" />
+<div id="sign2" class="sign" style="padding-top: 25px">
+	<div id="container" style="color: #444; min-height: 0">
+		<h2 style="margin: 0.1em">NOW OPEN FOR</h2>
+		<h1 style="margin: 0.1em">LUNCH</h1>
+		<div style="">
+			<br />
+			<h4>Tuesday-Friday</h4>
+			<h4>11:30-2:30</h4>
+		</div>
+		<img style="width: 50%; margin-top: 1em;" src="/imgs/logo_york.png" />
 	</div>
 </div>
 <div id="sign3" class="sign hide">

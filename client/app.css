@@ -32,7 +32,7 @@ input, select, textarea, .label {
 	min-height: 700px;
 	max-width: 600px;
 	background-color: #FFEEB8;
-	box-shadow: 10px 10px 5px #000;
+	box-shadow: 3px 3px 3px #000;
 	box-sizing: border-box;
   	position: relative;
 	overflow: hidden;
@@ -67,7 +67,7 @@ h1, h2, h3, h4, h5, h6 {
 	box-sizing: border-box;
 	padding: 1em;
 	padding-top: 4em;
-	//box-shadow: 4px 4px 4px #444;
+	box-shadow: 1px 1px 2px #444;
 	margin-bottom: 2em;
 	background-color: #EDDAC7;
 }
