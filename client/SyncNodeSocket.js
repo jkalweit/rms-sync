@@ -59,11 +59,11 @@ class SyncNodeSocket extends EventEmitter {
 		});
 		this.server.on('latest', (latest) => {
 			if (!latest) {
-				//console.log('already has latest.', this.data);
+				console.log('already has latest.'); //, this.data);
 				this.emit('updated', this.data);
 			}
 			else {
-				//console.log('handle latest: ', latest);
+				console.log('handle latest');
 				localStorage.setItem(this.path, JSON.stringify(latest));
 				this.setLocal(new SyncNode(latest));
 			}

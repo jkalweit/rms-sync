@@ -2,13 +2,10 @@
 
 var express = require('express');
 var http = require('http');
-var https = require('https');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
 var session = require('express-session');
 var Sync = require('./server/SyncNodeServer.js');
-var helmet = require('helmet');
-var express_enforces_ssl = require('express-enforces-ssl');
 var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
@@ -22,35 +19,16 @@ const EventEmitter = require('events');
 
 
 
-var startHTTPS = process.env.NODE_ENV !== 'debug';
-if(!startHTTPS) console.log('Running in debug mode, no HTTPS', process.env.NODE_ENV);
 
 var app = express();
+var server = http.createServer(app);
+var io = socketio.listen(server);
 
 
 var config = JSON.parse(fs.readFileSync('../data/config.json'));
 
 
-if(startHTTPS) {
-	var forceDomain = require('forcedomain');
-	app.use(forceDomain({
-		hostname: 'www.thecoalyard.com',
-		protocol: 'https'
-	}));
-}
 
-
-//app.use(express_enforces_ssl());
-app.use(helmet());
-app.use(helmet.noCache());
-app.use(helmet.hsts({
-	  maxAge: 10886400000,     // Must be at least 18 weeks to be approved by Google 
-	  includeSubdomains: true, // Must be enabled to be approved by Google 
-	  preload: true
-}))
-
-
-var fs = require('fs');
 var cookieParser = require('cookie-parser')(config.sessions.secret);
 app.use(cookieParser);
 
@@ -100,32 +78,13 @@ app.use(session({
 
 
 
-var server = http.createServer(app);
-var sserver;
-
-var io;
-
-if(startHTTPS) {
-
-	var certPath = '/etc/letsencrypt/live/thecoalyard.com/';
-	var options = {
-		key: fs.readFileSync(certPath + 'privkey.pem', 'utf8'),
-		cert: fs.readFileSync(certPath + 'cert.pem', 'utf8'),
-		ca: fs.readFileSync(certPath + 'chain.pem', 'utf8')
-	};
-	sserver = https.createServer(options, app);
-	io = socketio.listen(sserver);
-} else {
-	io = socketio.listen(server);
-}
-
-
 app.use(function (req, res, next) {
-	if(startHTTPS) {
-		res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
-	} else {		
+	console.error('TODO: Handle CORS');
+	//if(startHTTPS) {
+	//	res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
+	//} else {		
 		res.header("Access-Control-Allow-Origin", "*");
-	}
+	//}
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
@@ -253,8 +212,7 @@ passport.use(new FacebookStrategy({
 app.use(passport.initialize());
 app.use(passport.session({
 	name: 'rmsSession',
-	secret: config.sessions.secret,
-	secure: startHTTPS 
+	secret: config.sessions.secret
 }));
 
 var successRedirect = (req, res) => {
@@ -355,8 +313,6 @@ app.get('/data/reset', function (req, res) {
 app.get('/test', function (req, res) {
     res.send('Test response!');
 });
-
-
 
 
 
@@ -521,12 +477,6 @@ chokidar.watch('./client', { depth: 99 }).on('change', (filePath) => {
 
 server.listen(process.env.PORT || 1337, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
-  console.log("Server listening at", addr.address + ":" + addr.port);
+  console.log("Rec Server listening at", addr.address + ":" + addr.port);
 });
 
-if(startHTTPS) {
-	sserver.listen(1443, process.env.IP || "0.0.0.0", function(){
-		var addr = sserver.address();
-		console.log("HTTPS Server listening at", addr.address + ":" + addr.port);
-	});
-}

@@ -1,21 +1,253 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="/app.css">
-    <script type="text/javascript" src="/bower_components/moment/moment.js"></script>
-    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNode.js"></script>
-    <script type="text/javascript" src="/bower_components/sync-node-client/socket.io.js"></script>
-    <script type="text/javascript" src="/bower_components/sync-node-client/SyncNodeSocket.js"></script>
-    <script type="text/javascript" src="/sync.js"></script>
-    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-</head>
+<style type="text/css">
+body {
+	overflow:hidden;
+	font-weight:bold;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:20px;
+	text-align: center;
+	color: #EEE;
+	background-color:#333;
+}
 
+.sign {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1280px;
+	height: 1024px;
+	transition: opacity 2s;
+	background-color: #333;
+	padding-top: 5em;
+}
+
+.header {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	box-shadow: 0px 10px 5px #000;
+	padding: 0.5em;
+	background-color: #004D40;
+	color: #;
+	font-size: 30px;
+}
+
+.special {
+	float: left;
+	width: 250px;
+	height: 400px;
+	background-color: #555;
+	padding: 0;
+	margin: 0em 0em 1.6em 2.7em;
+	border: 1px solid #000;
+	position: relative;
+	box-shadow: 10px 10px 5px #000;
+}
+
+.title {
+	background-color: #00796B;
+	color: #FFF;
+	padding: 0.5em;
+	display: block;
+	min-height: 2.5em;
+}
+.description {
+	background-color: #555;
+	color: #DDD;
+	padding: 0.5em;
+	padding-top: 1em;
+	display: block;
+}
+.price {
+	background-color: #80CBC4;
+	color: #333;
+	padding: 0.5em;
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+.center {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.hide {
+	opacity: 0;
+}
+
+h4 {
+	margin: 0.5em;
+}
+
+</style>
+<title>Digital Signage</title>
+</head>
 <body>
-    <div id="container">
-    </div>
-    <script type="text/javascript" src="views.js"></script>
+<div id="sign1" class="sign">	
+	<div class="header">SPECIALS</div>
+	<div class="special">
+		<span class="title">Flyin Hawaiian Chicken</span>
+		<span class="description">Two chicken breasts, seasoned and grilled with teriyaki, pineapple, bacon, provolone and cheddar with a side and toast and SALAD BAR</span>
+		<span class="price">$16</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+	<div class="special">
+		<span class="title">Patty Melt</span>
+		<span class="description">Two Beef Patties, Sauteed Onions & Mushrooms, Provolone on Rye Bread</span>
+		<span class="price">$10.50</span>
+	</div>
+</div>
+<div id="sign2" class="sign hide" style="padding-top: 25px">
+	<h2 style="margin: 0.1em">TODAY: Chef Meares'</h2>
+	<h1 style="margin: 0.1em">NEW YEAR'S SPECIAL</h1>
+	<div style="width: 40%; float: left; padding-left: 40px">
+		<br />
+		<h4>Applewood Smoked Ribs</h4>
+		<h4>Black-eyed Peas</h4>
+		<h4>Collard Greens</h4>
+		<h4>Cornbread</h4>
+		<h4>Tea</h4>
+		<h4>$18</h4>
+	</div>
+	<div style="width: 50%; float: left; padding-right: 20px">
+		<img style="float: right; width: 500px" src="/imgs/ribs.jpg" />
+		<img style="float: right; width: 250px" src="/imgs/peas.jpg" />
+		<img style="float: right; width: 250px" src="/imgs/collards.jpg" />
+	</div>
+</div>
+<div id="sign3" class="sign hide">
+	<h1>Upcoming Events</h1>
+</div>
+<div id="sign4" class="sign hide">
+	<h1>Sign 4</h1>
+</div>
+<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+<script type="text/javascript">
+
+var signs = ['sign1'];
+
+
+var currentIndex = 0;
+var timer;
+function cycle() {
+	currentIndex = 0;
+	displaySign(signs[currentIndex]);
+	timer = setInterval(function() {
+		currentIndex += 1;
+		if(currentIndex >= signs.length) currentIndex = 0;
+		displaySign(signs[currentIndex]);
+	}, 7000);
+}
+function stopCycle() {
+	clearTimeout(timer);
+}
+
+
+function displaySign(id) {
+	signs.forEach(function(signId) {
+		if(signId !== id) document.getElementById(signId).classList.add('hide');			
+	});
+	//setTimeout(function() {
+		document.getElementById(id).classList.remove('hide');
+	//}, 1000);
+}
+
+window.onload = function() {
+
+	
+
+
+	cast.receiver.logger.setLevelValue(0);
+	window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+	console.log('Starting Receiver Manager');
+
+	// handler for the 'ready' event
+	castReceiverManager.onReady = function(event) {
+		console.log('Received Ready event: ' + JSON.stringify(event.data));
+		//cycle();
+		window.castReceiverManager.setApplicationState("Digital Sign is ready...");
+	};
+
+	// handler for 'senderconnected' event
+	castReceiverManager.onSenderConnected = function(event) {
+		console.log('Received Sender Connected event: ' + event.data);
+		console.log(window.castReceiverManager.getSender(event.data).userAgent);
+	};
+
+	// handler for 'senderdisconnected' event
+	castReceiverManager.onSenderDisconnected = function(event) {
+		console.log('Received Sender Disconnected event: ' + event.data);
+		//if (window.castReceiverManager.getSenders().length == 0) {
+		//	window.close();
+		//}
+	};
+
+	// create a CastMessageBus to handle messages for a custom namespace
+	window.messageBus =
+		window.castReceiverManager.getCastMessageBus(
+				'urn:x-cast:com.google.cast.sample.helloworld');
+
+	// handler for the CastMessageBus message event
+	window.messageBus.onMessage = function(event) {
+		console.log('Message [' + event.senderId + ']: ' + event.data);
+		// display the message from the sender
+		var command = event.data;
+		console.log(command);
+		switch(command) {
+			case 'cycle':
+				cycle();
+				break;
+			case 'stop cycle':
+				stopCycle();
+				break;
+			default:
+				displaySign(command);
+		}
+		
+		window.castReceiverManager.setApplicationState('Displaying: ' + id);
+		// inform all senders on the CastMessageBus of the incoming message event
+		// sender message listener will be invoked
+		window.messageBus.send(event.senderId, event.data);
+	}
+
+	// initialize the CastReceiverManager with an application status message
+	window.castReceiverManager.start({statusText: "Application is starting"});
+	console.log('Receiver Manager started');
+};
+</script>
 </body>
 </html>

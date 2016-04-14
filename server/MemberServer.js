@@ -30,13 +30,13 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 				this.data[user.key].data = JSON.parse(JSON.stringify(this.defaultData)); // copy to new obj
 			}
 			var userData = this.data[user.key].data || {};
-			socket.on('getlatest', (clientLastModified) => {
-				console.log(user.key, 'getlatest', userData.lastModified, clientLastModified);
-				if (!clientLastModified || clientLastModified < userData.lastModified) {
+			socket.on('getLatest', (clientVersion) => {
+				console.log(user.key, 'memberdata getlatest', userData.version, clientVersion);
+				if (!clientVersion || clientVersion !== userData.version) {
 					socket.emit('latest', userData);
 				}
 				else {
-					console.log('already has latest.');
+					console.log('already has latest member data.');
 					socket.emit('latest', null);
 				}
 			});
