@@ -31,6 +31,7 @@ class TimeclockByEmployee extends Tab {
 class TimeclockSummary extends Tab {
 	constructor() {
 		super();
+		this.node.className = 'text-selectable';
 
 		this.title = 'Summary';
 	}

@@ -18,6 +18,9 @@ var exec = require('child_process').exec;
 const EventEmitter = require('events');
 
 
+var isDebug = process.env.NODE_ENV === 'debug';
+if(isDebug) console.log('RUNNING IN DEBUG MODE');
+
 
 
 var app = express();
@@ -80,11 +83,11 @@ app.use(session({
 
 app.use(function (req, res, next) {
 	console.error('TODO: Handle CORS');
-	//if(startHTTPS) {
-	//	res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
-	//} else {		
+	if(isDebug) {
 		res.header("Access-Control-Allow-Origin", "*");
-	//}
+	} else {		
+		res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
+	}
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
@@ -322,7 +325,7 @@ var twilio = require('twilio')(config.twilio.accountSid, config.twilio.authToken
 
 function sendText(phone, body) {
 	console.log(`Send Text: ${phone} ${body}`);
-	if(!startHTTPS) return;
+	if(isDebug) return;
 
 	twilio.messages.create({
 		body: body,

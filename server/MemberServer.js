@@ -71,7 +71,6 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 			if(sock.request.user && 
 					sock.request.user.key === memberKey) {
 						if(sock !== excludeSocket) {
-							console.log('*****woohoo!');
 							sock.emit('update', merge);
 						} else console.log('excluding socket');
 					}
