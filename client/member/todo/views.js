@@ -192,7 +192,7 @@ class SelectTodoGroupModal extends Modal {
 
 		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Todo Group' });
 	
-		this.itemsContainer = new ViewsContainer(TodoGroupSimpleView);
+		this.itemsContainer = new ViewsContainer(TodoGroupSimpleView, 'text');
 		this.itemsContainer.on('viewAdded', (view) => {
 			view.on('selected', (item) => {
 			       if(this.selectCallBack) this.selectCallBack(item);
