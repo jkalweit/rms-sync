@@ -489,7 +489,7 @@ class EditInput extends SyncView {
 		this.input.value = this.data[this.prop];
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
-			this.display.innerHTML = this.data[this.prop] || this.emptyText || '';
+		this.display.innerHTML = this.data[this.prop] || this.emptyText || '';
 	}
 }
 
