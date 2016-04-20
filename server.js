@@ -82,13 +82,15 @@ app.use(session({
 
 
 app.use(function (req, res, next) {
-	console.error('TODO: Handle CORS');
 	if(isDebug) {
 		res.header("Access-Control-Allow-Origin", "*");
 	} else {		
 		res.header("Access-Control-Allow-Origin", "//www.thecoalyard.com");
 	}
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+	res.header('Expires', '-1');
+	res.header('Pragma', 'no-cache');
 	next();
 });
 
@@ -268,7 +270,8 @@ function userIsAllowed(user, permission) {
 
 var enforcePermission = (route, permission) => {
 	app.all(route, (req, res, next) => {
-		if(!req.user) {
+		if(req.user) console.log('userrrrrr', req.user);
+		if(!req.user || !req.user.logged_in) {
 			res.redirect('/login?url=' + req.url);
 		} else if(userIsAllowed(req.user, permission)) {
 			next();

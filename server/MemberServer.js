@@ -18,10 +18,11 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 		this.memberIoNamespace = this.io.of('/memberdata');
 		this.memberIoNamespace.on('connection', (socket) => {
 			var user = socket.request.user;
-			if(user) {
+			if(user && user.logged_in) {
 				console.log(user.data.info.name + ' connected to ' + this.memberIoNamespace);
 			} else {
 				console.log('WARNING: UNKNOWN user connected to ' + this.memberIoNamespace);
+				return;
 			}
 			if(!this.data[user.key]) {
 				this.data[user.key] = {}
