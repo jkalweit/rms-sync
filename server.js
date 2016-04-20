@@ -218,39 +218,38 @@ app.use(passport.session({
 	secret: config.sessions.secret
 }));
 
+var escapeURI = (uri) => { return uri.replace(/\//g, '%2f');  };
+
 var successRedirect = (req, res) => {
-	console.log('###########uri', req.query.url);
-	var redirect = '/member';
-	var split = req.url.split('?');
-	if(split.length > 1) {
-		var params = split[1].split('=');
-		if(params.length > 1 && params[0].toLowerCase() === 'url') {
-			redirect = params[1].split('&')[0];
-			if(redirect[0] !== '/') redirect = '/' + redirect;
-		}
-	}
+	console.log('########### success', req.params);
+	var redirect = req.params.uri;
 	console.log('authenticated as', req.user.data.info.name);
 	console.log('redirect', redirect);
 	res.redirect(redirect);
 };
 
-app.get('/auth/facebook', (req, res, next) => { 
-	var callbackURL = '/auth/facebook/callback';
-		passport.authenticate(
-			'facebook', 
-			{ scope: "public_profile,email",
-		       	  callbackURL: callbackURL })(req, res, next);
-		});
-app.get('/auth/facebook/callback', (req, res, next) => { 
-	var callbackURL = '/auth/facebook/callback';
-		passport.authenticate(
-			'facebook', 
-			{ 
-				failureRedirect: '/login',
-		       	  callbackURL: callbackURL })(req, res, next);
+app.get('/auth/facebook/:uri', (req, res, next) => { 
+	console.log('###########uri login', req.params);
+	var callbackURL = 'https://www.thecoalyard.com/auth/facebook/callback/' + escapeURI(req.params.uri);
+	passport.authenticate(
+		'facebook', 
+		{ scope: "public_profile,email",
+			callbackURL: callbackURL })(req, res, next);
+});
+app.get('/auth/facebook/callback/:uri', (req, res, next) => { 
+	console.log('###########uri callback', req.params);
+	var callbackURL = 'https://www.thecoalyard.com/auth/facebook/callback/' + escapeURI(req.params.uri);
+	passport.authenticate(
+		'facebook', 
+		{ 
+			failureRedirect: '/login',
+		callbackURL: callbackURL })(req, res, next);
 }, successRedirect);
 
-app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }), successRedirect);
+app.post('/login/:uri', (req, res, next) => {
+	console.log('###########uri local', req.params);
+	passport.authenticate('local', { failureRedirect: '/login' })(req, res, next);
+}, successRedirect);
 
 app.get('/logout', function(req, res){
 	req.logout();

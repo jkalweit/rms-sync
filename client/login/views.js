@@ -7,8 +7,10 @@ class LoginTab extends Tab {
 		this.title = 'Login';
 		this.node.style.position = 'relative';
 
+		console.log('url', window.location.search);
+		var href = '/auth/facebook/' + window.location.search;
 		var fbButton = SV.el('a', { parent: this.node, alt: 'Login with Facebook',
-				href: '/auth/facebook',
+				href: href,
 	       			style: { display: 'block', textAlign: 'center' }});
 		SV.el('img', { parent: fbButton, src: '/imgs/facebook_login.png',
 	       			style: { width: '100%', maxWidth: '300px' }});
@@ -63,8 +65,12 @@ class LoginOrSignup extends SyncView {
 		var card = SV.el('div', { parent: this.node, className: 'card' });
 
 		SV.el('h2', { parent: card, innerHTML: 'Login or Signup with Facebook' });
+		
+		var uri = window.location.search.replace(/\?url=/g, '').replace(/\//g, '%2f');
+		console.log('url', window.location.search, uri);
+		var href = '/auth/facebook/' + uri;
 		var fbButton = SV.el('a', { parent: card, alt: 'Login with Facebook',
-				href: '/auth/facebook',
+				href: href,
 	       			style: { display: 'block', textAlign: 'center' }});
 		SV.el('img', { parent: fbButton, src: '/imgs/facebook_login.png',
 	       			style: { width: '100%', maxWidth: '300px' }});
@@ -76,7 +82,7 @@ class LoginOrSignup extends SyncView {
 	       		style: { fontWeight: 'bold' }}); 
 
 
-		var form = SV.el('form', { parent: card, method: 'post' });
+		var form = SV.el('form', { parent: card, method: 'post', action: '/login/' + uri  });
 		SV.el('input', { parent: form, name: 'username',
 			style: { display: 'block', width: '100%' }});
 		SV.el('input', { parent: form, name: 'password', type: 'password',
