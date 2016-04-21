@@ -11,7 +11,7 @@ class TodoList extends SyncView {
 		this.sync = new SyncNodeSocket('/memberdata', {});
 		this.sync.on('updated', (data) => {
 			console.log('updated!');
-			if(!data.todos) data.set('todos', {});
+			if(!data.todos) data.set('todos', { tags: {}, groups: {} });
 			else this.update(data);
 		});
 		
@@ -30,7 +30,7 @@ class TodoList extends SyncView {
 			style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
 		this.newButton = SV.el('input', { parent: this.newForm, type: 'submit', value: 'Add',
 			style: { width: '80px', fontSize: '2em' } });
-		this.groupViews = new ViewsContainer(TodoGroup, 'text'); 
+		this.groupViews = this.appendView(new ViewsContainer(TodoGroup, 'text')); 
 		this.groupViews.on('viewAdded', (view) => { 
 			view.on('moveItem', (item) => {
 				this.selectTodoGroupModal.select((group) => {
@@ -38,14 +38,23 @@ class TodoList extends SyncView {
 					merge[item.parent.parent.key] = { items: { __remove: item.key } };
 					merge[group.key] = { items: {}};
 					merge[group.key].items[item.key] = item;
-					console.log('merge', merge, this.data.todos);
 					this.data.todos.merge(merge);
 				});
 			});
 		});
-		this.node.appendChild(this.groupViews.node);
+
+		var footer = SV.el('div', { parent: this.node, className: 'footer' });
+		SV.el('button', { parent: footer, className: 'btn', innerHTML: 'Edit Tags', events: { click: () => { this.todoTagsSelectModal.show(); }}});
+
+		this.todoTagsEditModal = this.appendView(new TodoTagsEditModal());
+		this.todoTagsSelectModal = this.appendView(new TodoTagsSelectModal());
 
 		this.selectTodoGroupModal = this.appendView(new SelectTodoGroupModal());
+		
+		this.selectTodoGroupModal = this.appendView(new SelectTodoGroupModal());
+		SV.onLoad(() => {	
+			// this.todoTagsSelectModal.show();
+		});
 	}
 	addTodo() {
 		var todo = {
@@ -53,13 +62,122 @@ class TodoList extends SyncView {
 			text: this.newInput.value,
 			items: {}
 		};
-		this.data.todos.set(todo.key, todo);
+		this.data.todos.groups.set(todo.key, todo);
 		this.newInput.value = '';
 	}
 	render() {
 		this.userinfo.update(this.data.info);
-		this.groupViews.update(this.data.todos);
-		this.selectTodoGroupModal.update(this.data.todos);
+		this.groupViews.update(this.data.todos.groups);
+		this.selectTodoGroupModal.update(this.data.todos.groups);
+		this.todoTagsEditModal.update(this.data.todos.tags);
+		this.todoTagsSelectModal.update(this.data.todos.tags);
+	}
+}
+
+
+class TodoTagsSelectModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Select Todo Tags' });
+
+		this.itemsContainer = this.appendView(new ViewsContainer(TodoTagSelectItem), this.mainView);
+		this.itemsContainer.on('viewAdded', (view) => {
+			view.on('selected', (tag) => { 
+				if(this.selectCallback) this.selectCallback(tag);
+				this.hide();
+			});
+		});
+
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+		SV.el('button', { parent: footer, className: 'btn', innerHTML: 'Close', events: { click: () => { this.hide(); }}});
+	}
+	select(callback) {
+		this.selectCallback = callback;
+		this.show();
+	}
+	hide() {
+		this.selectCallback = null;
+		super.hide();
+	}
+	render() {
+		this.itemsContainer.update(this.data);
+	}
+}
+
+
+class TodoTagSelectItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'group btn btn-wide', 
+			style: { padding: '1em' },
+			events: { click: () => { this.emit('selected', this.data); }}}));
+
+		this.nameSpan = SV.el('span', { parent: this.node, style: { display: 'inline-block', width: '10em' }});
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.name;
+		this.node.style.backgroundColor = this.data.backgroundColor || '#FFF';
+	}
+}
+
+
+
+
+
+class TodoTagsEditModal extends Modal {
+	constructor() {
+		super();
+
+		SV.el('h1', { parent: this.mainView, innerHTML: 'Edit Todo Tags' });
+
+		this.addBox = this.appendView(new SearchBox({
+			buttonText: 'Add',
+			submitCB: (name) => {
+				var newTag = {
+					key: SyncNode.guidShort(),
+					name: name
+				};
+				this.data.set(newTag.key, newTag);
+				this.addBox.clear();
+			}	
+		}), this.mainView);
+
+		this.itemsContainer = this.appendView(new ViewsContainer(TodoTagEditItem), this.mainView);
+
+
+		var footer = SV.el('div', { parent: this.mainView, className: 'footer' });
+		SV.el('button', { parent: footer, className: 'btn', innerHTML: 'Close', events: { click: () => { this.hide(); }}});
+	}
+	render() {
+		this.itemsContainer.update(this.data);
+	}
+}
+
+
+class TodoTagEditItem extends SyncView {
+	constructor() {
+		super(SV.el('div', { className: 'group', 
+			style: { padding: '1em' }}));
+
+		this.nameSpan = SV.el('span', { parent: this.node, style: { display: 'inline-block', width: '10em' }});
+
+		SV.el('button', { parent: this.node, innerHTML: 'x', 
+			style: { float: 'right' },
+			events: { click: () => { 
+				Modal.confirm('Delete Tag', 'Delete ' + this.data.name + '?', () => {
+					this.data.parent.remove(this.data.key); 
+				});
+			}}});
+
+		this.backgroundColor = this.appendView(new SimpleEditSelect('backgroundColor'));
+		this.backgroundColor.updateOptions(['#F00', '#0F0', '#00F']);
+			
+	}
+	render() {
+		this.nameSpan.innerHTML = this.data.name;
+		this.node.style.backgroundColor = this.data.backgroundColor || '#FFF';
+		this.backgroundColor.update(this.data);
 	}
 }
 
@@ -108,6 +226,7 @@ class TodoGroup extends SyncView {
 		var item = {
 			key: new Date().toISOString(),
 			text: this.addItemInput.value,
+			tags: {},
 			isComplete: false
 		};
 		this.data.items.set(item.key, item);
@@ -144,7 +263,7 @@ class TodoItem extends SyncView {
 
 		this.mainView = SV.el('div', { parent: this.node });
 		this.checkbox = SV.el('input', { parent: this.mainView, type: 'checkbox',
-			style: { float: 'left', width: '25px', height: '25px', marginRight: '20px' },
+			style: { float: 'left', width: '25px', height: '25px', marginRight: '5px' },
 			events: { change: () => { this.toggleIsComplete(); } } });
 		SV.el('button', { parent: this.mainView, innerHTML: 'X',
 			events: { click: () => { this.remove(); }},
@@ -152,9 +271,22 @@ class TodoItem extends SyncView {
 		this.moreButton = SV.el('button', { parent: this.mainView, innerHTML: 'i',
 			events: { click: () => { this.isEditing = true; this.render(); }},
 			style: { float: 'right', fontSize: '1.5em' }});
-		this.editableText = new EditInput(SV.el('h2', { className: 'light' }),
-				'text', { fontSize: '1em' });
-		this.mainView.appendChild(this.editableText.node);
+		SV.el('button', { parent: this.mainView, innerHTML: 'Tags',
+			style: { float: 'right', fontSize: '1.5em' },
+			events: { click: () => { 
+				mainView.todoTagsSelectModal.select((tag) => {
+					var tagRef = {
+						key: SyncNode.guidShort(),
+						tagKey: tag.key
+					};
+					this.data.tags.set(tagRef.key, tagRef);
+				});
+		       	}}});
+		this.tagsView = this.appendView(new ViewsContainer(TodoItemTag), this.mainView);
+		this.tagsView.node.style.display = 'inline';
+		this.tagsView.node.style.float = 'left';
+		this.editableText = this.appendView(new EditInput(SV.el('h2', { className: 'light' }),
+				'text', { fontSize: '1em' }), this.mainView);
 
 		this.editView = SV.el('div', { parent: this.node });
 		SV.el('button', { parent: this.editView, innerHTML: 'i',
@@ -178,6 +310,7 @@ class TodoItem extends SyncView {
 		this.editableText.update(this.data);
 		this.checkbox.checked = this.data.isComplete;
 		this.editableText.display.style.textDecoration = this.data.isComplete? 'line-through' : 'none';
+		this.tagsView.update(this.data.tags);
 		this.noteInput.value = this.data.note || '';
 		this.moreButton.style.backgroundColor = this.data.note ? '#77FF77' : 'inherit';
 
@@ -185,6 +318,25 @@ class TodoItem extends SyncView {
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 	}
 }
+
+class TodoItemTag extends SyncView {
+	constructor() {
+		super(SV.el('div', {
+			style: { display: 'inline', 
+				position: 'relative',
+				top: '5px',
+				marginRight: '5px',
+				padding: '0.2em' }}));
+
+		this.nameSpan = SV.el('span', { parent: this.node });
+	}
+	render() {
+		var tag = mainView.data.todos.tags[this.data.tagKey];
+		this.nameSpan.innerHTML = tag.name;
+		this.node.style.backgroundColor = tag.backgroundColor;
+	}
+}
+
 
 class SelectTodoGroupModal extends Modal {
 	constructor() {
@@ -234,6 +386,6 @@ class TodoGroupSimpleView extends SyncView {
 
 SV.startReloader();
 
-var t = new TodoList();
-SV.onLoad(() => { SV.id('container').appendChild(t.node); });
+var mainView = new TodoList();
+SV.onLoad(() => { SV.id('container').appendChild(mainView.node); });
 

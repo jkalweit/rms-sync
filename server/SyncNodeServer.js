@@ -101,7 +101,6 @@ class SyncNodeServer {
 		return typeof val === 'object' && val != null;	
 	}
 	doMerge(obj, merge) {
-		console.log('doing merge', merge);
 		if(!this.isObject(merge)) {
 			// not an object, end of recursion
 			return merge;

@@ -270,7 +270,6 @@ function userIsAllowed(user, permission) {
 
 var enforcePermission = (route, permission) => {
 	app.all(route, (req, res, next) => {
-		if(req.user) console.log('userrrrrr', req.user);
 		if(!req.user || !req.user.logged_in) {
 			res.redirect('/login?url=' + req.url);
 		} else if(userIsAllowed(req.user, permission)) {

@@ -268,6 +268,11 @@ class SV {
 			return str.substr(0, pos);
 		} else return str;
 	}
+
+	static isValidEmail(email) {
+		var re = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+		return re.test(email);
+	}
 }
 
 
@@ -716,6 +721,34 @@ class UserInfo extends SyncView {
 	}
 }
 
+
+class SearchBox extends SyncView {
+	constructor(options) {
+		super();
+
+		this.options = options || {};
+
+		this.searchForm = SV.el('form', {
+			parent: this.node,
+			events: { submit: (e) => { 
+				if(this.options.submitCB) {
+					this.options.submitCB(this.searchInput.value); 
+				}
+				e.preventDefault(); 
+			}}});
+		this.searchInput = SV.el('input', { parent: this.searchForm,
+			style: { width: 'calc(100% - 85px)', fontSize: '2em' } });
+		this.submitButton = SV.el('input', { parent: this.searchForm, type: 'submit', value: this.options.buttonText || 'Go',
+			style: { width: '80px', fontSize: '2em' } });
+	}
+	clear() {
+		this.searchInput.value = '';
+	}
+	render() {
+	}
+}
+
+
 class ImageUploader extends SyncView {
 	constructor(maxSize) {
 		super();
@@ -837,7 +870,6 @@ class ImageUploader extends SyncView {
 	}
 
 }
-
 
 
 

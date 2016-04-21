@@ -7,7 +7,7 @@ class Verify extends SyncView {
 		super();
 		
 		this.sync = new SyncNodeSocket('/members', {});
-		this.sync.onUpdated((data) => {
+		this.sync.on('updated', (data) => {
 			var id = SV.param('id'); 
 			var member;
 			SV.toArray(data).forEach((currMember) => {

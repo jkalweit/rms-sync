@@ -152,15 +152,21 @@ class MemberEdit extends SyncView {
 			this.pointsView = this.appendView(new PointsView());
 	}
 	sendEmailVerification() {
+		var email = this.data.info.email;
+		if(!SV.isValidEmail(email)) {
+			Modal.showNotification('Cannot send email', 'Invalid email address');
+			return;
+		}
 		var verificationId = SyncNode.guidShort();
 		this.data.info.set('emailVerificationId', verificationId);
 		SV.sendEmailFromAdmin({
-			address: this.data.info.email,
+			address: email,
 			subject: 'Welcome to The Coal Yard!',
 			htmlBody: 
 		`Hello ${this.data.info.name}, please verify your email address by clicking this link: <br/><br/>
 		<a href="https://www.thecoalyard.com/verify?id=${verificationId}">Verify Email Address</a>`
 		});
+		Modal.showNotification('Message sent');
 	}
 	render() {
 		SyncView.updateViews(this.views, this.data.info);

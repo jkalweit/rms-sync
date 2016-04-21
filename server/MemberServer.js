@@ -19,9 +19,9 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 		this.memberIoNamespace.on('connection', (socket) => {
 			var user = socket.request.user;
 			if(user && user.logged_in) {
-				console.log(user.data.info.name + ' connected to ' + this.memberIoNamespace);
+				console.log(user.data.info.name + ' connected to /memberdata');
 			} else {
-				console.log('WARNING: UNKNOWN user connected to ' + this.memberIoNamespace);
+				console.log('WARNING: UNKNOWN user connected to /memberdata');
 				return;
 			}
 			if(!this.data[user.key]) {
@@ -32,12 +32,12 @@ class MemberServer extends SyncNodeServer.SyncNodeServer {
 			}
 			var userData = this.data[user.key].data || {};
 			socket.on('getLatest', (clientVersion) => {
-				console.log(user.key, 'memberdata getlatest', userData.version, clientVersion);
+				//console.log(user.key, 'memberdata getlatest', userData.version, clientVersion);
 				if (!clientVersion || clientVersion !== userData.version) {
 					socket.emit('latest', userData);
 				}
 				else {
-					console.log('already has latest member data.');
+					//console.log('already has latest member data.');
 					socket.emit('latest', null);
 				}
 			});
