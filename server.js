@@ -138,7 +138,11 @@ passport.serializeUser(function(user, cb) {
 });
 
 passport.deserializeUser(function(id, cb) {
-	cb(null, membersServer.data[id]);
+	if(membersServer.data) {
+		cb(null, membersServer.data[id]);
+	} else {
+		cb('No memberServer data...', null);
+	}
 });
 
 

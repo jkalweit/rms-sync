@@ -10,7 +10,7 @@ class TodoList extends SyncView {
 
 		this.sync = new SyncNodeSocket('/memberdata', {});
 		this.sync.on('updated', (data) => {
-			console.log('updated!');
+			console.log('updated!', data);
 			if(!data.todos) data.set('todos', { tags: {}, groups: {} });
 			else this.update(data);
 		});
@@ -185,7 +185,9 @@ class TodoTagEditItem extends SyncView {
 class TodoGroup extends SyncView {
 	constructor() {
 		super();
+		this.node.style.marginTop = '1em';
 
+		this.node.className = 'group';
 		//this.name = 'TodoGroup';
 
 		this.mainView = SV.el('div', { parent: this.node });
@@ -196,11 +198,15 @@ class TodoGroup extends SyncView {
 			style: { width: '45px', fontSize: '2em', float: 'right' },
 			events: { click: () => { this.isEditing = true;
 				this.render(); this.addItemInput.focus();  } } });
-		this.editableText = this.appendView(new EditInput(SV.el('h1', { className: 'light' }),
+		this.todoCount = SV.el('span', { parent: this.node,
+	       		style: { float: 'left', backgroundColor: '#FFF', borderRadius: '3px',
+				fontSize: '1.2em',
+		       		padding: '0.2em 0.5em', position: 'relative', top: '3px',
+		       		marginRight: '5px' },
+			events: { click: () => { this.data.set('isCollapsed', !this.data.isCollapsed); }}}); 
+		this.editableText = this.appendView(new EditInput(SV.el('span', { className: 'light', style: { fontSize: '2em' }}),
 				'text', { fontSize: '2em' }));
 
-		this.todoCount = SV.el('span', { parent: this.node,
-	       		style: { float: 'left', backgroundColor: '#FFF', borderRadius: '3px' }}); 
 
 
 		this.editView = SV.el('div', { parent: this.node });
@@ -218,11 +224,11 @@ class TodoGroup extends SyncView {
 				this.render(); ev.preventDefault(); } } });
 		SV.el('input', { parent: this.newForm, type: 'submit', value: '+',
 			style: { width: '45px', fontSize: '1.5em' } });
-		this.itemViews = new ViewsContainer(TodoItem); 
+		this.itemViews = this.appendView(new ViewsContainer(TodoItem)); 
 		this.itemViews.on('viewAdded', (view) => {
 			view.on('moveItem', (item) => { this.emit('moveItem', item); });
 		});
-		this.node.appendChild(this.itemViews.node);
+		this.itemViews.node.style.marginLeft = '2em';
 	}
 	addItem() {
 		var item = {
@@ -245,7 +251,9 @@ class TodoGroup extends SyncView {
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
 		this.todoCount.innerHTML = SV.toArray(this.data.items).length;
+		this.todoCount.style.backgroundColor = this.data.isCollapsed ? '#DDD' : '#FFF';
 		this.itemViews.update(this.data.items);
+		this.itemViews.node.style.display = this.data.isCollapsed ? 'none' : 'block';
 	}
 }
 

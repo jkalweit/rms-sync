@@ -90,6 +90,8 @@ h1, h2, h3, h4, h5, h6 {
 	color: #FFF; 
 
 }
+
+
 .btn {
 	border: 1px solid #999;
 	box-sizing: border-box;
@@ -102,7 +104,7 @@ h1, h2, h3, h4, h5, h6 {
 	-ms-user-select: none;      /* IE 10+ */
 	user-select: none;
 }
-.btn:hover {
+.btn:enabled:hover {
 	//box-shadow: 3px 3px 3px #777;
 	/* box-shadow: 3px 3px 3px #777; */
 	background-color: #FF800B;
@@ -111,7 +113,7 @@ h1, h2, h3, h4, h5, h6 {
 	left: -3px; */
 	color: #FFF;
 }
-.btn:active {
+.btn:enabled:active {
 	//box-shadow: none;
 	top: 0;
 	left: 0;
@@ -135,9 +137,14 @@ h1, h2, h3, h4, h5, h6 {
 	padding: 0.5em 1em;
 	display: block;
 	width: 100%;
-	background-color: #CCA177;
 	color: rgba(0,0,0,.87);
 }
+
+
+.ticket-list-item .btn {
+	background-color: #B2DFDB;
+}
+
 /*
 .ticket-list-item:hover {
 	box-shadow: 3px 3px 3px #777;

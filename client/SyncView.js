@@ -255,7 +255,7 @@ class SV {
 	}
 
 	static iconButton(icon, options) {
-		var button = SV.el('div', options);
+		var button = SV.el('button', options);
 		button.classList.add('btn');
 		button.classList.add('btn-big');
 		button.innerHTML = `<i class="material-icons">${icon}</i>` + button.innerHTML;

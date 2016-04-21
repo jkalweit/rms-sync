@@ -672,7 +672,7 @@ class TicketListItem extends SyncView {
 	
 		if(ticket.paymentStatus === 'Unpaid') {
 			this.node.style.backgroundColor = '#FFF';
-			this.mainView.style.backgroundColor = '#9575CD';
+			this.mainView.style.backgroundColor = '#009688';
 		} else {			
 			this.node.style.backgroundColor = '#BBB';
 			this.mainView.style.backgroundColor = '#BBB';
@@ -710,7 +710,7 @@ class TicketEdit extends SyncView {
 		var controls = SV.el('div', { parent: this.node,
 	       		style: { marginBottom: '2em', overflow: 'hidden', float: 'right' }});	
 	
-		var btn = SV.iconButton('add', { parent: controls, 
+		this.addButton = SV.iconButton('add', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
 				//window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
@@ -722,7 +722,7 @@ class TicketEdit extends SyncView {
 			}}});
 
 			
-		btn = SV.iconButton('more_vert', { parent: controls, 
+		this.moreButton = SV.iconButton('more_vert', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
 				this.emit('editTicketDetails', this.data);
@@ -758,16 +758,16 @@ class TicketEdit extends SyncView {
 
 		var btmControls = SV.el('div', { parent: this.node, style: { float: 'left', marginTop: '1em', width: '50%' }});
 
-		this.paymentButton = SV.el('div', { parent: btmControls, className: 'btn', 
-			style: { display: 'block' },
+		this.paymentButton = SV.el('button', { parent: btmControls, className: 'btn', 
+			style: { width: '100%' },
 	       		events: { click: () => { this.cyclePaymentStatus(); }}});
 
-		this.sendKitchenButton = SV.el('div', { parent: btmControls, className: 'btn', innerHTML: 'Send Kitchen', 
-			style: { display: 'block' },
+		this.sendKitchenButton = SV.el('button', { parent: btmControls, className: 'btn', innerHTML: 'Send Kitchen', 
+			style: { width: '100%' },
 	       		events: { click: () => { this.sendKitchen(); }}});
 		
-		this.printReceiptButton = SV.el('div', { parent: btmControls, className: 'btn', innerHTML: 'Print Receipt', 
-			style: { display: 'block' },
+		this.printReceiptButton = SV.el('button', { parent: btmControls, className: 'btn', innerHTML: 'Print Receipt', 
+			style: { width: '100%' },
 	       		events: { click: () => { this.printReceipt(); }}});
 
 
@@ -801,6 +801,8 @@ class TicketEdit extends SyncView {
 	       		style: { textAlign: 'right' }});
 		this.total = SV.el('td', { parent: row,
 	       		style: { textAlign: 'right', width: '5em' }});
+
+
 	}
 	printReceipt() {
 		console.log('printing receipt');
@@ -885,12 +887,19 @@ class TicketEdit extends SyncView {
 	render() {
 		this.data.on('orderItemsChanged', this.updateTotals.bind(this));
 
-		if(this.data.paymentStatus === 'Unpaid') {
-			this.node.style.backgroundColor = '#FFF';
-		} else {			
-			this.node.style.backgroundColor = '#DDD';
-		}
+		var isPaid = this.data.paymentStatus !== 'Unpaid';
 		
+		if(isPaid) {
+			this.node.style.backgroundColor = '#DDD';
+		} else {			
+			this.node.style.backgroundColor = '#FFF';
+		}
+
+
+		this.addButton.disabled = isPaid;
+		this.moreButton.disabled = isPaid;
+
+
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
 		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax);
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol);
