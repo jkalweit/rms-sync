@@ -38,13 +38,13 @@ class TodoList extends SyncView {
 					merge[item.parent.parent.key] = { items: { __remove: item.key } };
 					merge[group.key] = { items: {}};
 					merge[group.key].items[item.key] = item;
-					this.data.todos.merge(merge);
+					this.data.todos.groups.merge(merge);
 				});
 			});
 		});
 
 		var footer = SV.el('div', { parent: this.node, className: 'footer' });
-		SV.el('button', { parent: footer, className: 'btn', innerHTML: 'Edit Tags', events: { click: () => { this.todoTagsSelectModal.show(); }}});
+		SV.el('button', { parent: footer, className: 'btn', innerHTML: 'Edit Tags', events: { click: () => { this.todoTagsEditModal.show(); }}});
 
 		this.todoTagsEditModal = this.appendView(new TodoTagsEditModal());
 		this.todoTagsSelectModal = this.appendView(new TodoTagsSelectModal());
@@ -110,7 +110,7 @@ class TodoTagsSelectModal extends Modal {
 class TodoTagSelectItem extends SyncView {
 	constructor() {
 		super(SV.el('div', { className: 'group btn btn-wide', 
-			style: { padding: '1em' },
+			style: { padding: '1em', color: '#FFF' },
 			events: { click: () => { this.emit('selected', this.data); }}}));
 
 		this.nameSpan = SV.el('span', { parent: this.node, style: { display: 'inline-block', width: '10em' }});
@@ -158,7 +158,7 @@ class TodoTagsEditModal extends Modal {
 class TodoTagEditItem extends SyncView {
 	constructor() {
 		super(SV.el('div', { className: 'group', 
-			style: { padding: '1em' }}));
+			style: { padding: '1em', color: '#FFF' }}));
 
 		this.nameSpan = SV.el('span', { parent: this.node, style: { display: 'inline-block', width: '10em' }});
 
@@ -171,7 +171,7 @@ class TodoTagEditItem extends SyncView {
 			}}});
 
 		this.backgroundColor = this.appendView(new SimpleEditSelect('backgroundColor'));
-		this.backgroundColor.updateOptions(['#F00', '#0F0', '#00F']);
+		this.backgroundColor.updateOptions(['#D32F2F', '#303F9F', '#0097A7', '#00796B', '#388E3C', '#5D4037', '#616161', '#212121', '#455A64', '#512DA8', '#BA68C8', '#EF6C00', '#FF5722', '#E65100' ]);
 			
 	}
 	render() {
@@ -196,9 +196,11 @@ class TodoGroup extends SyncView {
 			style: { width: '45px', fontSize: '2em', float: 'right' },
 			events: { click: () => { this.isEditing = true;
 				this.render(); this.addItemInput.focus();  } } });
-		this.editableText = new EditInput(SV.el('h1', { className: 'light' }),
-				'text', { fontSize: '2em' });
-		this.node.appendChild(this.editableText.node);
+		this.editableText = this.appendView(new EditInput(SV.el('h1', { className: 'light' }),
+				'text', { fontSize: '2em' }));
+
+		this.todoCount = SV.el('span', { parent: this.node,
+	       		style: { float: 'left', backgroundColor: '#FFF', borderRadius: '3px' }}); 
 
 
 		this.editView = SV.el('div', { parent: this.node });
@@ -242,6 +244,7 @@ class TodoGroup extends SyncView {
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
+		this.todoCount.innerHTML = SV.toArray(this.data.items).length;
 		this.itemViews.update(this.data.items);
 	}
 }
@@ -279,6 +282,7 @@ class TodoItem extends SyncView {
 						key: SyncNode.guidShort(),
 						tagKey: tag.key
 					};
+					if(!this.data.tags) this.data.set('tags', {});
 					this.data.tags.set(tagRef.key, tagRef);
 				});
 		       	}}});
@@ -324,16 +328,24 @@ class TodoItemTag extends SyncView {
 		super(SV.el('div', {
 			style: { display: 'inline', 
 				position: 'relative',
-				top: '5px',
+				top: '7px',
+				borderRadius: '3px',
+				color: '#FFF',
 				marginRight: '5px',
-				padding: '0.2em' }}));
+				padding: '0.2em' },
+			events: { click: () => {  
+				Modal.confirm('Remove tag?', 'Remove "' + this.tag.name + '"?',
+					() => {
+						this.data.parent.remove(this.data.key);
+					});
+			}}}));
 
 		this.nameSpan = SV.el('span', { parent: this.node });
 	}
 	render() {
-		var tag = mainView.data.todos.tags[this.data.tagKey];
-		this.nameSpan.innerHTML = tag.name;
-		this.node.style.backgroundColor = tag.backgroundColor;
+		this.tag = mainView.data.todos.tags[this.data.tagKey];
+		this.nameSpan.innerHTML = this.tag.name;
+		this.node.style.backgroundColor = this.tag.backgroundColor;
 	}
 }
 
