@@ -102,7 +102,6 @@ class Reconciliations extends SyncView {
 	}
 	render() {
 		this.selectMenuItemModal.update(this.data.menu);
-		console.log('menuGrids', this.data.menuGrids);
 		this.selectMenuItemGridModal.update(this.data.menuGrids);
 
 		var isDetailsView = window.recSettings.selectedRecKey;
@@ -713,12 +712,12 @@ class TicketEdit extends SyncView {
 		this.addButton = SV.iconButton('add', { parent: controls, 
 			style: { float: 'right' },
 			events: { click: () =>{ 
-				//window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
-				//	this.addOrderItem(menuItem);
-				//});
-				window.reconciliationsView.selectMenuItemGridModal.select((menuItem) => {
+				window.reconciliationsView.selectMenuItemModal.select((menuItem) => {
 					this.addOrderItem(menuItem);
 				});
+				//window.reconciliationsView.selectMenuItemGridModal.select((menuItem) => {
+				//	this.addOrderItem(menuItem);
+				//});
 			}}});
 
 			
