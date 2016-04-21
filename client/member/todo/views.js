@@ -250,8 +250,10 @@ class TodoGroup extends SyncView {
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
-		this.todoCount.innerHTML = SV.toArray(this.data.items).length;
-		this.todoCount.style.backgroundColor = this.data.isCollapsed ? '#DDD' : '#FFF';
+		var count = SV.toArray(this.data.items).length;
+		this.todoCount.innerHTML = count;
+		this.todoCount.style.backgroundColor = count === 0 ? '#DDD' : '#FFF';
+		this.todoCount.style.border = this.data.isCollapsed ? 'none' : '1px solid #00F';
 		this.itemViews.update(this.data.items);
 		this.itemViews.node.style.display = this.data.isCollapsed ? 'none' : 'block';
 	}
@@ -274,7 +276,8 @@ class TodoItem extends SyncView {
 
 		this.mainView = SV.el('div', { parent: this.node });
 		this.checkbox = SV.el('input', { parent: this.mainView, type: 'checkbox',
-			style: { float: 'left', width: '25px', height: '25px', marginRight: '5px' },
+			style: { float: 'left', width: '25px', height: '25px', 
+				marginRight: '5px', position: 'relative', top: '-4px' },
 			events: { change: () => { this.toggleIsComplete(); } } });
 		SV.el('button', { parent: this.mainView, innerHTML: 'X',
 			events: { click: () => { this.remove(); }},
@@ -282,7 +285,7 @@ class TodoItem extends SyncView {
 		this.moreButton = SV.el('button', { parent: this.mainView, innerHTML: 'i',
 			events: { click: () => { this.isEditing = true; this.render(); }},
 			style: { float: 'right', fontSize: '1.5em' }});
-		SV.el('button', { parent: this.mainView, innerHTML: 'Tags',
+		SV.el('button', { parent: this.mainView, innerHTML: 'T',
 			style: { float: 'right', fontSize: '1.5em' },
 			events: { click: () => { 
 				mainView.todoTagsSelectModal.select((tag) => {
@@ -297,7 +300,7 @@ class TodoItem extends SyncView {
 		this.tagsView = this.appendView(new ViewsContainer(TodoItemTag), this.mainView);
 		this.tagsView.node.style.display = 'inline';
 		this.tagsView.node.style.float = 'left';
-		this.editableText = this.appendView(new EditInput(SV.el('h2', { className: 'light' }),
+		this.editableText = this.appendView(new EditInput(SV.el('h4', { className: 'light' }),
 				'text', { fontSize: '1em' }), this.mainView);
 
 		this.editView = SV.el('div', { parent: this.node });
@@ -336,10 +339,11 @@ class TodoItemTag extends SyncView {
 		super(SV.el('div', {
 			style: { display: 'inline', 
 				position: 'relative',
-				top: '7px',
+				top: '-2px',
+				fontSize: '.8em',
 				borderRadius: '3px',
 				color: '#FFF',
-				marginRight: '5px',
+				marginRight: '3px',
 				padding: '0.2em' },
 			events: { click: () => {  
 				Modal.confirm('Remove tag?', 'Remove "' + this.tag.name + '"?',
