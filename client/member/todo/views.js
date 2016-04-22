@@ -250,7 +250,8 @@ class TodoGroup extends SyncView {
 		this.mainView.style.display = !this.isEditing ? 'block' : 'none';
 		this.editView.style.display = this.isEditing ? 'block' : 'none';
 		this.editableText.update(this.data);
-		var count = SV.toArray(this.data.items).length;
+		var count = SV.toArray(this.data.items)
+			.filter((item) => { return !item.isComplete; }).length;
 		this.todoCount.innerHTML = count;
 		this.todoCount.style.backgroundColor = count === 0 ? '#DDD' : '#FFF';
 		this.todoCount.style.border = this.data.isCollapsed ? 'none' : '1px solid #00F';
