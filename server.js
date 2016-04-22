@@ -10,6 +10,7 @@ var passportSocketIo = require('passport.socketio');
 var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
+var fetch = require('node-fetch');
 var MemberServer = require('./server/MemberServer.js').MemberServer;
 
 var pdf = require('html-pdf');
@@ -397,10 +398,21 @@ io.on('connection', (socket) => {
 		console.log('sending email: ', msg);
 		sendEmailFromAdmin(msg.address, msg.subject, msg.htmlBody);
 	});
+	socket.on('send kitchen order', (order) => {	
+		console.log('sending order: ', order);
+		fetch('http://192.168.6.5:1337/api/kitchen/orders', { 
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},	
+			body: JSON.stringify(order) })
+			.then((res) => {
+				console.log('Send kitchen order status:', res.status);
+			}).catch((error) => {
+				console.log('Twas an error while sending kitchen order: ', error);
+			});
+	});
 });
-
-
-
 
 
 

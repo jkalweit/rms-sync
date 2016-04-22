@@ -726,6 +726,12 @@ class TicketEdit extends SyncView {
 			events: { click: () =>{ 
 				this.emit('editTicketDetails', this.data);
 			}}});
+			
+		this.togoButton = SV.el('button', { parent: controls, className: 'btn btn-big',
+			style: { float: 'right', color: '#FFF' },
+			events: { click: () =>{ 
+				this.data.set('isTogo', !this.data.isTogo);
+			}}});
 
 		
 		
@@ -802,6 +808,51 @@ class TicketEdit extends SyncView {
 	       		style: { textAlign: 'right', width: '5em' }});
 
 
+	}
+	sendKitchen() {
+		var now = new Date().toISOString();
+		var order = {
+			key: now, //SyncNode.guidShort(),
+			submittedAt: now,
+			submittedBy: window.recSettings.currentUser,
+			servedBy: this.data.servedBy,
+			location: this.data.table,
+			name: this.data.name,
+			isTogo: this.data.isTogo,
+			items: []	
+		};
+
+		var merge = { orderItems: {}};
+
+		SV.toArray(this.data.orderItems).forEach((orderItem) => {
+			if(!orderItem.submittedToKitchenAt) {
+				merge.orderItems[orderItem.key] = { submittedToKitchenAt: now };
+				order.items.push({
+					key: SyncNode.guidShort(),
+					description: orderItem.name,
+					note: orderItem.note,
+					quantity: orderItem.quantity,
+					type: 'Food'
+				});
+			}
+		});
+
+		io().emit('send kitchen order', order);
+
+		/*
+		var req = new XMLHttpRequest();
+		req.onreadystatechange = function() {
+			if (req.readyState == 4 && req.status == 200) {
+				console.log('success!');
+				//this.data.merge(merge);
+			} else {
+				console.log('something else happened: ', req.readyState, req.status);
+			}
+		};
+		req.open('POST', 'http://192.168.6.5:1337/api/kitchen/orders', true);
+		req.setRequestHeader("Content-type", "application/json");	
+		req.send(JSON.stringify(order));
+		*/
 	}
 	printReceipt() {
 		console.log('printing receipt');
@@ -897,6 +948,8 @@ class TicketEdit extends SyncView {
 
 		this.addButton.disabled = isPaid;
 		this.moreButton.disabled = isPaid;
+		this.togoButton.innerHTML = this.data.isTogo ? 'Togo: YES' : 'Togo: No';
+		this.togoButton.style.backgroundColor = this.data.isTogo ? '#EF5350' : '#717171';
 
 
 		this.food.innerHTML = SV.formatCurrency(this.data.totals.food);
