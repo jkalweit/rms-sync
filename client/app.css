@@ -161,6 +161,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 */
 
+.menu-category {
+	background-color: #6A1B9A;
+	color: #FFF;
+}
+
+.menu-item {
+	background-color: #9C27B0;
+	color: #FFF;
+}
+
 .order-item {
 	box-sizing: border-box;
 	padding: 0;
