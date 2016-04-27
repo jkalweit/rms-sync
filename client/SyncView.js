@@ -99,11 +99,7 @@ class SV {
 
 	// for debugging, receive reload signals from server when source files change
 	static startReloader() {
-		var reloader = io();
-		reloader.on('connect', () => {
-			//    console.log('connected')
-		});
-		reloader.on('reload', function() {
+		io().on('reload', function() {
 			console.log('               reload!!!!');
 			location.reload();
 		});

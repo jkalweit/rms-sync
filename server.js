@@ -11,6 +11,7 @@ var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
 var fetch = require('node-fetch');
+var sass = require('node-sass-middleware');
 var MemberServer = require('./server/MemberServer.js').MemberServer;
 
 var pdf = require('html-pdf');
@@ -307,9 +308,11 @@ app.all('/member/*', (req, res, next) => {
 });
 
 
-//var CalendarServer = require('./server/calendar-server.js');
-//new CalendarServer(app, io, userIsAllowed);
-
+app.use(sass({
+	src: __dirname + '/client',
+	dest: __dirname + '/client',
+	debug: true
+}));
 
 app.use('/', express.static('client/'));
 
@@ -487,7 +490,10 @@ var chokidar = require('chokidar');
 
 /* For Debugging, send signal when file changes */
 chokidar.watch('./client', { depth: 99 }).on('change', (filePath) => {
-	if(filePath.match(/\.js$/i) !== null || filePath.match(/\.html$/i) !== null || filePath.match(/\.css$/i) !== null) {
+	if(filePath.match(/\.js$/i) !== null 
+		|| filePath.match(/\.html$/i) !== null 
+		|| filePath.match(/\.css$/i) !== null
+		|| filePath.match(/\.scss$/i) !== null) {
 		console.log('js file changed', filePath);
 		io.emit('reload');
 	};

@@ -3,35 +3,58 @@
 <head lang="en">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="/min.css">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 
 <title>The CY</title>
 
 </head>
 <body>
-<nav class="nav" tabindex="-1" onclick="this.focus()">
-	<div class="container">
-		<a class="pagename current" href="index.html">The Coal Yard</a>
-		<a class="current" href="#">Docs</a>
-		<!--
-																		<a href="bootstrapconverter.html">Bootstrap Converter</a>
-					<a href="examples.html">Examples</a>
-				-->
-		<a href="download.html">Download</a>
-		<a href="https://github.com/owenversteeg/min">Github</a>
-		<button class="btn btn-sm btn-close">x</button>
+
+<div class="container group">
+
+	<div class="col col-3 colh-7 parent">
+
+		<div class="col col-3 colh-3 dark">
+			<img src="/imgs/logo_bare_white.png" class="vertical" />
+		</div>
+
+		<div class="col col-3 colh-6 dark">
+			<h3 style="margin-bottom: 0">The Coal Yard</h3>
+			<h5>Restaurant & Lounge</h5>
+			<a href="#">Hours</a>
+			<p>Location</p>
+			<p>Menus</p>
+			<p>Events</p>
+			<p>Contact</p>
+		</div>
+
+
 	</div>
-</nav>
 
-<div class="container">
-	<h1>Welcome!</h1>
-	<p>Text</p>
-	<a class="btn smooth">Test</a>
+
+	<div class="col col-9 colh-3">
+		<h1>Now open for Lunch!</h1>
+		<p>Tuesday-Friday 11am-2:30pm</p>
+	</div>
+
+	<div class="col col-9 colh-2">
+		<h2>Welcome!</h2>
+		<p>Text 24</p>
+	</div>
+
+	<div class="col col-9 colh-4">
+		<h2>Welcome!</h2>
+		<p>Text 24</p>
+	</div>
 </div>
 
-</div>
-
-
+<script> 
+io().on('reload', function() {
+		location.reload();
+		});
+</script>
 </body>
 </html>
 
