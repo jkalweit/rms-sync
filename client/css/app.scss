@@ -1,3 +1,5 @@
+@import 'palette';
+
 $typeGrid: 4px;
 $baseGrid: 2 * $typeGrid;
 $margin: 2 * $baseGrid;
@@ -26,6 +28,10 @@ select {
 	border-radius: 0;
 	font: 16px sans-serif;
 	margin: 0
+}
+
+body {
+	background-color: palette(Grey, 700);
 }
 
 a { 
@@ -111,6 +117,7 @@ a {
 
 .dark {
 	color: #FFF;
-	background-color: rgba(0,0,0,0.54);
+	//background-color: rgba(0,0,0,0.54);
+	background-color: palette(Cyan, 700);
 }
 

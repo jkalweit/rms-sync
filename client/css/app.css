@@ -1,3 +1,7 @@
+/**
+ * google-material-color v1.2.6
+ * https://github.com/danlevan/google-material-color
+ */
 body,
 textarea,
 input,
@@ -6,6 +10,9 @@ select {
   border-radius: 0;
   font: 16px sans-serif;
   margin: 0; }
+
+body {
+  background-color: #616161; }
 
 a {
   text-decoration: none;
@@ -189,4 +196,4 @@ h6 {
 
 .dark {
   color: #FFF;
-  background-color: rgba(0, 0, 0, 0.54); }
+  background-color: #0097A7; }
