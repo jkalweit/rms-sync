@@ -6,7 +6,7 @@ $margin: 2 * $baseGrid;
 $increment: 56px;
 
 $fakeColor1: #DDD; $fakeColor2: #FDD; $fakeBorder: 1px solid #999;
-//$fakeColor1: transparent; $fakeColor2: transparent; $fakeBorder: none;
+$fakeColor1: palette(Cyan, 700); $fakeColor2: #FFF; $fakeBorder: none;
 
 @mixin group {
 	&:after {
@@ -45,6 +45,7 @@ a {
 
 @mixin h-base {
 	color: rgba(0,0,0,0.54);
+	margin-top: 2 * $typeGrid;
 	.dark > & {
 		color: #FFF;
 	}
@@ -54,6 +55,7 @@ a {
 @for $i from 1 through 6 {
 	h#{$i} {
 		font-size: #{32px - (($i - 1) * ($typeGrid + 1))};		
+		margin-bottom: #{(6 - $i) * $typeGrid};
 		@include h-base;
 	}
 }
@@ -64,7 +66,8 @@ a {
 	@include group;
 	background-color: $fakeColor1;
 	margin: auto;
-	max-width: $increment * 12;
+	margin-bottom: $increment * 2;
+	max-width: $increment * 15;
 }
 
 .col {
@@ -91,7 +94,7 @@ a {
 	}
 }
 
-@for $i from 1 through 12 {
+@for $i from 1 through 15 {
 	.col-#{$i} {
 		width: #{$i * $increment};		
 		@include no-overflow;
@@ -102,7 +105,7 @@ a {
 }
 
 
-@media (max-width: 12 * $increment) {
+@media (max-width: 15 * $increment) {
 	article {
 		width: 100%;
 	}
@@ -110,9 +113,14 @@ a {
 	@for $i from 1 through 12 {
 		.col-#{$i} {
 			width: 100%;		
+			height: auto;
 		}
 	}
+
+	img {
+	}
 }
+
 
 
 .dark {
@@ -121,3 +129,6 @@ a {
 	background-color: palette(Cyan, 700);
 }
 
+.dark2 {
+	background-color: palette(Deep Purple, 700);
+}
