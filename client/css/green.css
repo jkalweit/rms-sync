@@ -70,7 +70,7 @@ h6 {
     color: #FFF; }
 
 .container {
-  background-color: #673AB7;
+  background-color: #4CAF50;
   margin: auto;
   margin-bottom: 112px;
   max-width: 840px; }
@@ -124,7 +124,7 @@ nav a {
   border-radius: 4px;
   color: rgba(0, 0, 0, 0.5);
   font-weight: bold;
-  background-color: #69F0AE;
+  background-color: #B388FF;
   padding: 8px;
   margin: 4px auto;
   text-align: center; }
@@ -219,9 +219,9 @@ nav a {
 
 .dark {
   color: #FFF;
-  background-color: #673AB7; }
+  background-color: #4CAF50; }
   .dark .bold {
     color: #FFF; }
 
 .dark2 {
-  background-color: #4527A0; }
+  background-color: #2E7D32; }

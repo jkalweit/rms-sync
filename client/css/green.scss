@@ -65,7 +65,7 @@ a {
 
 .container {
 	@include group;
-	background-color: palette(Deep Purple, 500);
+	background-color: palette(Green, 500);
 	margin: auto;
 	margin-bottom: $increment * 2;
 	max-width: $increment * 15;
@@ -132,7 +132,7 @@ nav {
 	border-radius: 4px;
 	color: rgba(0,0,0,0.5);
 	font-weight: bold;
-	background-color: palette(Green, A200);
+	background-color: palette(Deep Purple, A100);
 	padding: $typeGrid * 2;
 	margin: $typeGrid auto;
 	text-align: center;
@@ -208,7 +208,7 @@ nav {
 .dark {
 	color: #FFF;
 	//background-color: rgba(0,0,0,0.54);
-	background-color: palette(Deep Purple, 500);
+	background-color: palette(Green, 500);
 
 	.bold {
 		color: #FFF; 
@@ -216,6 +216,6 @@ nav {
 }
 
 .dark2 {
-	background-color: palette(Deep Purple, 800);
+	background-color: palette(Green, 800);
 }
 
