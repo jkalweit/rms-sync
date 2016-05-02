@@ -492,8 +492,9 @@ var chokidar = require('chokidar');
 chokidar.watch('./client', { depth: 99 }).on('change', (filePath) => {
 	if(filePath.match(/\.js$/i) !== null 
 		|| filePath.match(/\.html$/i) !== null 
-		|| filePath.match(/\.css$/i) !== null
-		|| filePath.match(/\.scss$/i) !== null) {
+//		|| filePath.match(/\.css$/i) !== null
+//		|| filePath.match(/\.scss$/i) !== null
+		) {
 		console.log('js file changed', filePath);
 		io.emit('reload');
 	};
