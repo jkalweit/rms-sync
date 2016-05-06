@@ -15,6 +15,14 @@ body {
   background-color: #212121;
   background-image: url("/imgs/lines_bg.jpg"); }
 
+.col-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  background-color: #FF0000; }
+
 a {
   text-decoration: none;
   color: #000; }
@@ -79,26 +87,6 @@ h6 {
     display: table;
     clear: both; }
 
-.company-name {
-  display: block;
-  font-size: 32px;
-  padding: 32px 16px 0 16px;
-  background-color: transparent;
-  text-align: center; }
-
-.company-name-line2 {
-  display: block;
-  font-size: 20px;
-  padding: 0 16px 0 16px;
-  background-color: transparent;
-  text-align: center; }
-
-nav a {
-  display: block;
-  margin: 16px;
-  text-align: center;
-  font-size: 20px; }
-
 .col {
   position: relative;
   box-sizing: border-box;
@@ -134,6 +122,16 @@ nav a {
   font-weight: bold; }
 
 @media (min-width: 840px) {
+  .col {
+    border-bottom: none;
+    float: left; }
+    .col img.vertical {
+      width: auto;
+      height: 100%; }
+    .col img.logo {
+      width: 100px; }
+    .col.parent {
+      padding: 0; }
   .col-1 {
     width: 56px; }
   .colh-1 {
@@ -200,16 +198,6 @@ nav a {
   .company-name-line2 {
     font-size: 12px;
     text-align: left; }
-  .col {
-    border-bottom: none;
-    float: left; }
-    .col img.vertical {
-      width: auto;
-      height: 100%; }
-    .col img.logo {
-      width: 100px; }
-    .col.parent {
-      padding: 0; }
   nav a {
     font-size: 16px;
     text-align: left; } }

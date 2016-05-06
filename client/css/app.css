@@ -2,24 +2,65 @@
  * google-material-color v1.2.6
  * https://github.com/danlevan/google-material-color
  */
-body,
-textarea,
-input,
-select {
-  background: 0;
-  border-radius: 0;
-  font: 16px sans-serif;
-  margin: 0; }
-
 body {
-  background-color: #212121;
-  background-image: url("/imgs/lines_bg.jpg"); }
+  margin: 0;
+  padding: 0;
+  background-color: #FFF;
+  color: rgba(0, 0, 0, 0.87);
+  font: 16px sans-serif; }
 
-a {
-  text-decoration: none;
-  color: #000; }
-  .dark > a {
-    color: #FFF; }
+.row, .col {
+  overflow: hidden;
+  position: absolute;
+  box-sizing: border-box; }
+
+.row {
+  left: 0;
+  right: 0; }
+
+.col {
+  top: 0;
+  bottom: 0; }
+
+.scroll-x {
+  overflow-x: auto; }
+
+.scroll-y {
+  overflow-y: auto; }
+
+.header.row {
+  height: 56px;
+  line-height: 56px;
+  top: 0;
+  padding-left: 16px;
+  background-color: #673AB7;
+  color: #FFF; }
+
+.body.row {
+  top: 56px;
+  bottom: 56px; }
+
+.footer.row {
+  height: 56px;
+  line-height: 56px;
+  bottom: 0;
+  padding-left: 16px;
+  background-color: #673AB7;
+  color: #FFF; }
+
+.left.col {
+  width: 280px;
+  border-right: 1px solid rgba(0, 0, 0, 0.5); }
+
+.right.col {
+  left: 280px;
+  right: 0; }
+
+.list .item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  height: 56px;
+  line-height: 56px;
+  padding-left: 16px; }
 
 h1 {
   font-size: 32px;
@@ -69,159 +110,17 @@ h6 {
   .dark > h6 {
     color: #FFF; }
 
-.container {
-  background-color: #673AB7;
-  margin: auto;
-  margin-bottom: 112px;
-  max-width: 840px; }
-  .container:after {
-    content: "";
-    display: table;
-    clear: both; }
-
-.company-name {
-  display: block;
-  font-size: 32px;
-  padding: 32px 16px 0 16px;
-  background-color: transparent;
-  text-align: center; }
-
-.company-name-line2 {
-  display: block;
-  font-size: 20px;
-  padding: 0 16px 0 16px;
-  background-color: transparent;
-  text-align: center; }
-
-nav a {
-  display: block;
-  margin: 16px;
-  text-align: center;
-  font-size: 20px; }
-
-.col {
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  background-color: #FFF;
-  border: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.23);
-  padding: 16px;
-  overflow: hidden; }
-  .col img {
-    display: block;
-    width: 100%; }
-    .col img.logo {
-      width: 200px;
-      margin: auto; }
-  .col.parent {
-    padding: 0; }
-
 .btn {
   display: inline-block;
   box-sizing: border-box;
   width: 100%;
   border-radius: 4px;
-  color: rgba(0, 0, 0, 0.5);
+  color: #FFF;
   font-weight: bold;
-  background-color: #69F0AE;
+  background-color: #2196F3;
   padding: 8px;
   margin: 4px auto;
   text-align: center; }
 
-.address {
-  text-align: center;
-  font-weight: bold; }
-
-@media (min-width: 840px) {
-  .col-1 {
-    width: 56px; }
-  .colh-1 {
-    height: 56px; }
-  .col-2 {
-    width: 112px; }
-  .colh-2 {
-    height: 112px; }
-  .col-3 {
-    width: 168px; }
-  .colh-3 {
-    height: 168px; }
-  .col-4 {
-    width: 224px; }
-  .colh-4 {
-    height: 224px; }
-  .col-5 {
-    width: 280px; }
-  .colh-5 {
-    height: 280px; }
-  .col-6 {
-    width: 336px; }
-  .colh-6 {
-    height: 336px; }
-  .col-7 {
-    width: 392px; }
-  .colh-7 {
-    height: 392px; }
-  .col-8 {
-    width: 448px; }
-  .colh-8 {
-    height: 448px; }
-  .col-9 {
-    width: 504px; }
-  .colh-9 {
-    height: 504px; }
-  .col-10 {
-    width: 560px; }
-  .colh-10 {
-    height: 560px; }
-  .col-11 {
-    width: 616px; }
-  .colh-11 {
-    height: 616px; }
-  .col-12 {
-    width: 672px; }
-  .colh-12 {
-    height: 672px; }
-  .col-13 {
-    width: 728px; }
-  .colh-13 {
-    height: 728px; }
-  .col-14 {
-    width: 784px; }
-  .colh-14 {
-    height: 784px; }
-  .col-15 {
-    width: 840px; }
-  .colh-15 {
-    height: 840px; }
-  .company-name {
-    font-size: 20px;
-    text-align: left; }
-  .company-name-line2 {
-    font-size: 12px;
-    text-align: left; }
-  .col {
-    border-bottom: none;
-    float: left; }
-    .col img.vertical {
-      width: auto;
-      height: 100%; }
-    .col img.logo {
-      width: 100px; }
-    .col.parent {
-      padding: 0; }
-  nav a {
-    font-size: 16px;
-    text-align: left; } }
-
 .bold {
   color: rgba(0, 0, 0, 0.67); }
-
-.dark {
-  color: #FFF;
-  background-color: #673AB7; }
-  .dark .bold {
-    color: #FFF; }
-
-.dark2 {
-  background-color: #4527A0; }

@@ -35,6 +35,15 @@ body {
 	background-image: url("/imgs/lines_bg.jpg");
 }
 
+.col-left {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 100px;
+	background-color: #FF0000;
+}
+
 a { 
 	text-decoration: none; 
 	color: #000;
@@ -65,36 +74,13 @@ a {
 
 .container {
 	@include group;
-	background-color: palette(Green, 500);
+	background-color: $fakeColor1;
 	margin: auto;
 	margin-bottom: $increment * 2;
 	max-width: $increment * 15;
-}
 
-.company-name {
-	display: block;
-	font-size: 32px;
-	padding: $margin*2 $margin 0 $margin;
-	background-color: transparent;
-	text-align: center;
-}
-.company-name-line2 {
-	display: block;
-	font-size: 20px;
-	padding: 0 $margin 0 $margin;
-	background-color: transparent;
-	text-align: center;
-}
 
-nav {
-	a {
-		display: block;
-		margin: $margin;
-		text-align: center;
-		font-size: 20px;
-	}
 }
-
 
 .col {
 	position: relative;
@@ -130,9 +116,9 @@ nav {
 	box-sizing: border-box;
 	width: 100%;
 	border-radius: 4px;
-	color: rgba(0,0,0,0.5);
+	color: #FFF;
 	font-weight: bold;
-	background-color: palette(Deep Purple, A100);
+	background-color: #2196F3;
 	padding: $typeGrid * 2;
 	margin: $typeGrid auto;
 	text-align: center;
@@ -145,26 +131,6 @@ nav {
 
 
 @media (min-width: 15 * $increment) {
-
-
-	@for $i from 1 through 15 {
-		.col-#{$i} {
-			width: #{$i * $increment};		
-		}
-		.colh-#{$i} {
-			height: #{$i * $increment};		
-		}
-	}
-
-	.company-name {
-		font-size: 20px;
-		text-align: left;
-	}
-	.company-name-line2 {
-		font-size: 12px;
-		text-align: left;
-}
-
 
 
 	.col {
@@ -180,7 +146,7 @@ nav {
 				width: 100px;
 			}
 
-			
+
 		}
 
 
@@ -189,6 +155,27 @@ nav {
 			padding: 0;		
 		}
 	}
+
+
+	@for $i from 1 through 15 {
+		.col-#{$i} {
+			width: #{$i * $increment};		
+		}
+		.colh-#{$i} {
+			height: #{$i * $increment};		
+		}
+	}
+
+
+	.company-name {
+		font-size: 20px;
+		text-align: left;
+	}
+	.company-name-line2 {
+		font-size: 12px;
+		text-align: left;
+	}
+
 
 	nav {
 		a {
@@ -208,7 +195,7 @@ nav {
 .dark {
 	color: #FFF;
 	//background-color: rgba(0,0,0,0.54);
-	background-color: palette(Green, 500);
+	background-color: palette(Cyan, 700);
 
 	.bold {
 		color: #FFF; 
@@ -216,6 +203,6 @@ nav {
 }
 
 .dark2 {
-	background-color: palette(Green, 800);
+	background-color: palette(Deep Purple, 700);
 }
 
