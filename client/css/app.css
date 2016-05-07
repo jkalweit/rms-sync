@@ -2,6 +2,10 @@
  * google-material-color v1.2.6
  * https://github.com/danlevan/google-material-color
  */
+.test {
+  background-color: #FFD;
+  border: 1px solid #000; }
+
 body {
   margin: 0;
   padding: 0;
@@ -9,18 +13,14 @@ body {
   color: rgba(0, 0, 0, 0.87);
   font: 16px sans-serif; }
 
-.row, .col {
-  overflow: hidden;
-  position: absolute;
-  box-sizing: border-box; }
-
-.row {
-  left: 0;
-  right: 0; }
-
 .col {
-  top: 0;
-  bottom: 0; }
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  float: left;
+  height: 100%;
+  width: 280px;
+  border-right: 1px solid rgba(0, 0, 0, 0.5); }
 
 .scroll-x {
   overflow-x: auto; }
@@ -28,7 +28,7 @@ body {
 .scroll-y {
   overflow-y: auto; }
 
-.header.row {
+.header {
   height: 56px;
   line-height: 56px;
   top: 0;
@@ -36,11 +36,11 @@ body {
   background-color: #673AB7;
   color: #FFF; }
 
-.body.row {
+.body {
   top: 56px;
   bottom: 56px; }
 
-.footer.row {
+.footer {
   height: 56px;
   line-height: 56px;
   bottom: 0;
@@ -48,19 +48,18 @@ body {
   background-color: #673AB7;
   color: #FFF; }
 
-.left.col {
-  width: 280px;
-  border-right: 1px solid rgba(0, 0, 0, 0.5); }
-
-.right.col {
-  left: 280px;
-  right: 0; }
-
 .list .item {
   border-bottom: 1px solid rgba(0, 0, 0, 0.5);
   height: 56px;
   line-height: 56px;
   padding-left: 16px; }
+
+.list .btn {
+  margin: 0; }
+
+.list input {
+  padding: 8px;
+  width: 100%; }
 
 h1 {
   font-size: 32px;
@@ -123,4 +122,8 @@ h6 {
   text-align: center; }
 
 .bold {
-  color: rgba(0, 0, 0, 0.67); }
+  color: rgba(0, 0, 0, 0.67);
+  font-weight: bold; }
+
+.italic {
+  font-style: italic; }

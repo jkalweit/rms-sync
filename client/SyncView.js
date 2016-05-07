@@ -288,6 +288,7 @@ class SyncView {
 			this.node = SV.el('div', { innerHTML: content || ''});
 		}
 		this.eventHandlers = {};
+		if(this.init) this.init();
 	}
 	appendView(syncview, parent) {
 		(parent || this.node).appendChild(syncview.node);
