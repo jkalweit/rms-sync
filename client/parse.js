@@ -209,7 +209,7 @@ function buildComponent(componentName, args) {
 
 
 	var componentInstance = new component.ctor();
-	componentInstance.node.className = component.classes;
+	componentInstance.node.className += ' ' + component.classes;
 	var lines = component.code.split('\n');
 	var el;
 	for(var i = 0; i < lines.length; i++) {

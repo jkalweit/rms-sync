@@ -21,6 +21,8 @@ body {
   height: 100%;
   width: 280px;
   border-right: 1px solid rgba(0, 0, 0, 0.5); }
+  .col.wide {
+    width: 392px; }
 
 .scroll-x {
   overflow-x: auto; }
@@ -47,6 +49,26 @@ body {
   padding-left: 16px;
   background-color: #673AB7;
   color: #FFF; }
+
+.light {
+  background-color: #B39DDB; }
+
+.label-set {
+  height: 56px;
+  line-height: 56px;
+  width: 100%;
+  padding: 0;
+  margin: 0; }
+  .label-set .label {
+    box-sizing: border-box;
+    width: 125px;
+    padding-left: 16px;
+    display: inline-block; }
+  .label-set input {
+    box-sizing: border-box;
+    width: calc(100% - 125px - 16px);
+    display: inline-block;
+    padding: 8px; }
 
 .list .item {
   border-bottom: 1px solid rgba(0, 0, 0, 0.5);
@@ -118,7 +140,7 @@ h6 {
   font-weight: bold;
   background-color: #2196F3;
   padding: 8px;
-  margin: 4px auto;
+  margin: 0;
   text-align: center; }
 
 .bold {

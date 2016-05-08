@@ -7,11 +7,6 @@
 <script type="text/javascript" src="/SyncView.js"></script>
 <script type="text/javascript" src="/parse.js"></script>
 
-<style>
-
-
-
-</style>
 </head>
 <body>
 
@@ -50,9 +45,11 @@ MenuItemOptionTypeList[list]
 			typeDetails.update(this.selected);
 			this.list.update(this.data);
 
-MenuItemOptionTypeDetails
-	#header 'Details'
+MenuItemOptionTypeDetails[col wide]
+	#header[header] 'Details'
 	#nameInput:SimpleEditInput(name, Name)
+	#noteInput:SimpleEditInput(note, Note)
+	#values:MenuItemOptionValues
 	:button[btn] 'Delete'
 		events:
 			click: 
@@ -72,7 +69,25 @@ MenuItemOptionTypeDetails
 			} else {
 				this.node.style.display = 'block';
 				this.nameInput.update(this.data)
+				this.noteInput.update(this.data)
 			}
+	
+
+
+MenuItemOptionValues
+	#header[header light] 'Values'
+	#list:List(MenuItemOptionValue)
+	:button
+		events:
+			click: console.log('yayy');
+	#render:function
+		this.list.update(this.data);
+	
+
+MenuItemOptionValue[item]
+	#nameSpan
+	#render:function
+		this.nameSpan.innerHTML = this.data.name
 	
 	
 

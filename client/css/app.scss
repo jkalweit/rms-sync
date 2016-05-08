@@ -48,6 +48,10 @@ $col-width: 5 * $increment;
 	height: 100%;
 	width: $col-width; 
 	border-right: 1px solid rgba(0,0,0,0.5); 
+
+	&.wide {
+		width: $increment * 7;
+	}
 }
 
 .scroll-x { overflow-x: auto; }
@@ -76,6 +80,30 @@ $footer-height: $increment;
 	color: #FFF;
 }
 
+.light {
+	background-color: $color-light;
+}
+
+.label-set {
+	height: $increment;
+	line-height: $increment;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+
+	.label {
+		box-sizing: border-box;
+		width: 125px;
+		padding-left: $margin;
+		display: inline-block;
+	}
+	input {
+		box-sizing: border-box;
+		width: calc(100% - 125px - #{$margin});
+		display: inline-block;
+		padding: $typeGrid * 2;
+	}
+}
 
 .list {
 	.item {
@@ -124,7 +152,7 @@ $footer-height: $increment;
 	font-weight: bold;
 	background-color: #2196F3;
 	padding: $typeGrid * 2;
-	margin: $typeGrid auto;
+	margin: 0;
 	text-align: center;
 }
 

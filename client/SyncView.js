@@ -412,6 +412,7 @@ class SimpleEditInput extends SyncView {
 	constructor(prop, label, options) {
 		super();
 
+		this.node.className = 'label-set';
 		this.options = options || {};
 
 		this.doFlash = true;
@@ -419,8 +420,7 @@ class SimpleEditInput extends SyncView {
 		this.prop = prop;
 		
 		if(label) {
-			SV.el('span', { parent: this.node, innerHTML: label, className: 'label',
-				style: { display: 'inline-block', width: '150px' }});
+			SV.el('span', { parent: this.node, innerHTML: label, className: 'label' });
 		}
 
 		var elem = this.options.isTextArea ? 'textarea' : 'input';
@@ -441,8 +441,6 @@ class SimpleEditInput extends SyncView {
 					this.emit('changed', value, oldValue);
 				}
 			}}});
-		var width = label ? 'calc(100% - 155px)' : '100%';
-		this.input.style.width = width;
 	}
 	focus() {
 		this.input.focus();
