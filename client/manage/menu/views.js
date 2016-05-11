@@ -70,7 +70,7 @@ class Menu extends SyncView {
 						else category.items[newItem.key] = newItem;
 					});
 					console.log('menu', menu);
-					//this.data.parent.remove('menu');
+					this.data.parent.remove('menu');
 					this.data.parent.set('menu', menu);
 
 				};

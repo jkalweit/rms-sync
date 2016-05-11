@@ -20,7 +20,7 @@
 #menuItems:MenuItems[col right]
 
 TicketList
-	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name' }) 
+	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name', addBtn: true }) 
 		events:
 			selected(item): 
 				ticketDetails.update(item);
@@ -33,9 +33,16 @@ TicketList
 		name = name.trim();
 		if(!name) return;
 		var newItem = { 
-			key: new Date().toISOString(), 
+			key: SyncNode.guidShort(), 
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			servedBy: window.recSettings.currentUser,
 			name: name,
-			items: {} };
+			table: '',
+			orderItems: {},
+			paymentStatus: 'Unpaid',
+			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
+		};
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
 		this.list.select(result.key);
 	#render:function 
@@ -74,7 +81,7 @@ TicketDetails[col wide]
 
 
 OrderItemList
-	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem' })[has-header3]
+	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem', addBtn: true })[has-header3]
 		events:
 			selected(item): 
 				orderItemDetails.update(item);
@@ -123,10 +130,59 @@ OrderItemDetails[col wide]
 			this.node.style.display = this.data ? 'block' : 'none';
 	
 MenuCategories[col right]
-	#header:SimpleHeader({ text: 'Categories' })
+	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name', clearBtn: true }) 
+		events:
+			selected(item): 
+				menuItems.update(item.items);
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+	#init:function
+		this.list.postFilter = (data) => {
+			console.log('post filter', data);
+			return SV.filterMap(data, item => !item.isDisabled);
+		}
+	#render:function 
+		this.list.update(this.data);
+		menuItems.update((this.list.selected || {}).items);
+
+MenuItemCategory[item]
+	#nameSpan$(data.name)[name]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+
 
 MenuItems[col right]
-	#header:SimpleHeader({ text: 'Menu Items' })
+	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name', clearBtn: true })
+		events:
+			selected(item): 
+				this.add(item);
+	#add:function(item)
+		if(!ticketDetails.data) {
+			console.log('no ticket selected');
+			return;
+		}
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: item.name,
+			options: {} };
+		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
+		ticketDetails.items.list.select(result.key);
+	#render:function 
+		this.list.update(this.data);
+
+MenuItem[item]
+	#price[right]
+	#nameSpan$(data.name)[name]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+	#render:function()
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
+
+
+
 
 </script>
 
@@ -152,8 +208,10 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {
+			console.log('data', data);
 			var rec = data.reconciliations[window.recSettings.selectedRecKey];
 			ticketList.update(rec.tickets);
+			menuCategories.update(data.menu.categories);			
 		});
 });
 

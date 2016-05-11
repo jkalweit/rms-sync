@@ -1,5 +1,7 @@
 <script id="components" type="text/other">
 
+	
+
 Button[btn]
 	#text:span[absolute-center]
 	events:
@@ -7,7 +9,6 @@ Button[btn]
 			console.log('clicked')
 	#init:function(text) 
 		this.text.innerHTML = text;
-	
 
 SimpleHeader[header]
 	#text:span
@@ -42,19 +43,26 @@ SearchHeader
 				if(e.keyCode === 13) this.add();
 			keyup(e):
 				this.emit('searchChanged', this.newInput.value);
-	:div[touch material-icons] 'add'
+	#addBtn:div[touch material-icons] 'add'
 		events:
 			click: 
 				this.add();
+	#clearBtn:div[touch material-icons] 'clear'
+		events:
+			click: 
+				this.clear();
 	#add:function 
 			this.emit('add', this.newInput.value);
 	#clear:function
 			this.newInput.value = '';
+			this.emit('searchChanged', this.newInput.value);
 	#init:function(options)
 			if(options.text) this.header.innerHTML = options.text;
+			this.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
+			this.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
 
 SearchList
-	#header:SearchHeader({ text: 'Search' })
+	#header:SearchHeader({ text: 'Search', addBtn: true })
 		events:
 			add(value):
 				this.emit('add', value);
@@ -76,11 +84,14 @@ SearchList
 				});
 			}
 		}
+		if(this.postFilter) filtered = this.postFilter(filtered);
 		this.list.update(filtered);
 
 	#init:function(options)
 		this.searchProp = options.searchProp;
 		if(options.text) this.header.header.innerHTML = options.text;
+		this.header.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
+		this.header.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
 		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));
 		this.list.node.classList.add('has-header2');
 		this.list.node.classList.add('list');

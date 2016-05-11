@@ -143,6 +143,7 @@ $footer-height: $increment;
 
 
 	.item {
+		box-sizing: border-box;
 		border-bottom: 1px solid rgba(0,0,0,0.5);
 		height: $increment;
 		line-height: $increment;
