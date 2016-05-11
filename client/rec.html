@@ -1,0 +1,162 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+<link rel="import" id="components.html" href="/components.html">
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#ticketList:TicketList[col]
+#ticketDetails:TicketDetails[col]
+#orderItemDetails:OrderItemDetails[col]
+#menuCategories:MenuCategories[col right]
+#menuItems:MenuItems[col right]
+
+TicketList
+	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name' }) 
+		events:
+			selected(item): 
+				ticketDetails.update(item);
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+				
+	#add:function(name)
+		var name = name || '';
+		name = name.trim();
+		if(!name) return;
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: name,
+			items: {} };
+		var result = this.data.set(newItem.key, newItem)[newItem.key];
+		this.list.select(result.key);
+	#render:function 
+		this.list.update(this.data);
+		ticketDetails.update(this.list.selected);
+
+Ticket[item]
+	#nameSpan$(data.name)[name]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+
+
+TicketDetails[col wide]
+	#header:SimpleHeader({ text: 'Ticket Details', close: true, del: true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', this.data.name, () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#items:OrderItemList
+	#close:function
+			orderItemDetails.close();
+			this.update(null);
+	#init:function
+			this.render();
+	#render:function
+			this.node.style.display = this.data ? 'block' : 'none';
+			if(this.data) this.items.update(this.data.orderItems);
+
+
+
+OrderItemList
+	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem' })[has-header3]
+		events:
+			selected(item): 
+				orderItemDetails.update(item);
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+	#add:function(name)
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: name,
+			options: {} };
+		var result = this.data.set(newItem.key, newItem)[newItem.key];
+		this.list.select(result.key);
+	#render:function 
+		this.list.update(this.data);
+		orderItemDetails.update(this.list.selected);
+
+OrderItem[item]
+	#price[right]
+	#nameSpan$(data.name)[name]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+	#render:function()
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
+
+
+OrderItemDetails[col wide]
+	#header:SimpleHeader({ text: 'Order Item Details', close: true, del: true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', this.data.name, () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
+	#close:function
+			this.update(null);
+	#init:function
+			this.render();
+	#render:function
+			this.node.style.display = this.data ? 'block' : 'none';
+	
+MenuCategories[col right]
+	#header:SimpleHeader({ text: 'Categories' })
+
+MenuItems[col right]
+	#header:SimpleHeader({ text: 'Menu Items' })
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+window.recSettings = new LocalSyncNode('recSettings');	
+
+
+
+SV.onLoad(() => { 
+
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			var rec = data.reconciliations[window.recSettings.selectedRecKey];
+			ticketList.update(rec.tickets);
+		});
+});
+
+</script>
+</body>
+</html>
