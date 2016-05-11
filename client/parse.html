@@ -1,5 +1,6 @@
 <html>
 <head>
+<link rel="import" id="components.html" href="components.html">
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
@@ -99,7 +100,7 @@ MenuItem[item]
 
 
 MenuItemDetails[col wide]
-	#header:SimpleHeader({ "text": "Item Details", "close": true, 'del': true})
+	#header:SimpleHeader({ text: 'Item Details', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -122,127 +123,9 @@ MenuItemDetails[col wide]
 
 
 
-
-
-
-
-
-
-
-
-
-Button[btn]
-	#text:span[absolute-center]
-	events:
-		click:
-			console.log('clicked')
-	#init:function(text) 
-		this.text.innerHTML = text;
-	
-
-SimpleHeader[header]
-	#text:span
-	#add[touch material-icons] 'add'
-		events:
-			click: 
-				this.emit('add');
-	#close[touch material-icons] 'done'
-		events:
-			click: 
-				this.emit('close');
-	#del[touch material-icons] 'delete'
-		events:
-			click: 
-				this.emit('delete');
-	#init:function(options) 
-		this.text.innerHTML = options.text;
-		if(!options.close)
-			this.close.style.display = 'none';	
-		if(!options.del)
-			this.del.style.display = 'none';	
-		if(!options.add)
-			this.add.style.display = 'none';	
-
-SearchHeader
-	:style 
-		border-bottom: 1px solid rgba(0,0,0,0.5);
-	#header[header] 'Search'
-	#newInput:input[input-test]
-		events:
-			keydown(e): 
-				if(e.keyCode === 13) this.add();
-			keyup(e):
-				this.emit('searchChanged', this.newInput.value);
-	:div[touch material-icons] 'add'
-		events:
-			click: 
-				this.add();
-	#add:function 
-			this.emit('add', this.newInput.value);
-	#clear:function
-			this.newInput.value = '';
-	#init:function(options)
-			if(options.text) this.header.innerHTML = options.text;
-
-SearchList
-	#header:SearchHeader({ text: 'Search' })
-		events:
-			add(value):
-				this.emit('add', value);
-			searchChanged(value):
-				this.search(value);
-				this.emit('searchChanged', value);
-	#search:function(value)
-		value = value || '';
-		this.searchValue = value.trim().toLowerCase();
-		this.doFilter();
-	#doFilter:function() 
-		var filtered = this.data;
-		if(this.searchProp) {
-			if(this.searchValue) {
-				filtered = SV.filterMap(this.data, (item) => { 
-					var itemVal = item[this.searchProp];
-					if(!itemVal) return false;
-					return itemVal.trim().toLowerCase().indexOf(this.searchValue) !== -1;	
-				});
-			}
-		}
-		this.list.update(filtered);
-
-	#init:function(options)
-		this.searchProp = options.searchProp;
-		if(options.text) this.header.header.innerHTML = options.text;
-		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));
-		this.list.node.classList.add('has-header2');
-		this.list.node.classList.add('list');
-		this.list.on('viewAdded', (view) => {
-			view.on('selected', (item) => {
-					this.select(item.key);
-				});
-		});
-	#clearSearch:function()
-		this.header.clear();
-		this.search('');
-	#select:function(key)
-		this.selected = this.data[key];
-		this.updateSelected();
-		this.emit('selected', this.selected);
-	#updateSelected:function()
-		SV.toArray(this.list.views).forEach((view) => {
-			var isSelected = this.selected ? this.selected.key === view.data.key : false;
-			view.node.classList.toggle('selected', isSelected);
-			if(isSelected) view.node.scrollIntoViewIfNeeded();
-		});
-	#render:function()
-		this.doFilter();
-		if(this.selected) this.selected = this.data[this.selected.key];
-		this.updateSelected();
-		
-
 </script>
 
 
-</textarea>
 
 
 <script>
@@ -256,6 +139,7 @@ var sync = new SyncNodeSocket('/data', {});
 
 
 SV.onLoad(() => { 
+		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {

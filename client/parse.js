@@ -222,7 +222,10 @@ function findComponents(lines) {
 	}
 }
 
-
+function importCode(id) {
+	var code = document.getElementById(id).import.children[0].innerText;
+	parse(code);
+}
 
 function parse(code, container) {
 
@@ -327,7 +330,6 @@ function buildComponent(componentName, options) {
 					}
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
-					console.log('style', style);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');

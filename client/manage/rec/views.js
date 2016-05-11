@@ -2,16 +2,6 @@
 
 
 
-class LocalSyncNode extends SyncNode  {
-	constructor(id) {
-		var data = JSON.parse(localStorage.getItem(id));
-		super(data);
-		this.on('updated', () => {
-			localStorage.setItem(id, JSON.stringify(this));
-		});
-	}
-}
-
 class UserListItem extends SyncView {
 	constructor() {
 		super(SV.el('option'));

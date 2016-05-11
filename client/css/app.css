@@ -44,6 +44,10 @@ body {
   border-right: 1px solid rgba(0, 0, 0, 0.5); }
   .col.wide {
     width: 392px; }
+  .col.right {
+    float: right;
+    border-right: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.5); }
 
 .scroll-x {
   overflow-x: auto; }

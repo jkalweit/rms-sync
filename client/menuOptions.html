@@ -1,5 +1,6 @@
 <html>
 <head>
+<link rel="import" id="components.html" href="components.html">
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
@@ -48,40 +49,6 @@ MenuItemOptionType[item]
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
-
-
-Button[btn]
-	#text:span[absolute-center]
-	events:
-		click:
-			console.log('clicked')
-	#init:function(text) 
-		this.text.innerHTML = text;
-	
-
-SimpleHeader[header]
-	#text:span
-	#add[touch material-icons] 'add'
-		events:
-			click: 
-				this.emit('add');
-	#close[touch material-icons] 'done'
-		events:
-			click: 
-				this.emit('close');
-	#del[touch material-icons] 'delete'
-		events:
-			click: 
-				this.emit('delete');
-	#init:function(options) 
-		this.text.innerHTML = options.text;
-		if(!options.close)
-			this.close.style.display = 'none';	
-		if(!options.del)
-			this.del.style.display = 'none';	
-		if(!options.add)
-			this.add.style.display = 'none';	
-
 
 
 MenuItemOptionTypeDetails[col wide]
@@ -159,7 +126,6 @@ MenuItemOptionValueDetails[col wide]
 </script>
 
 
-</textarea>
 
 
 <script>
@@ -173,6 +139,7 @@ var sync = new SyncNodeSocket('/data', {});
 
 
 SV.onLoad(() => { 
+		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {

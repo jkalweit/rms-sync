@@ -185,3 +185,15 @@ class SyncNode extends EventEmitter {
 			SyncNode.s4() + '-' + SyncNode.s4() + SyncNode.s4() + SyncNode.s4();
 	}
 }
+
+
+class LocalSyncNode extends SyncNode  {
+	constructor(id) {
+		var data = JSON.parse(localStorage.getItem(id));
+		super(data);
+		this.on('updated', () => {
+			localStorage.setItem(id, JSON.stringify(this));
+		});
+	}
+}
+
