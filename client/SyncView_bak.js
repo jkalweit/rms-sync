@@ -244,13 +244,14 @@ class SV {
 		precision = precision || 2;
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
 		if(typeof number === 'undefined') {
+			console.log('id undefined!', value);
 			return '';
 		}
 		return number.toFixed(precision);
 	}
 
 	static iconButton(icon, options) {
-		var button = SV.el('div', options);
+		var button = SV.el('button', options);
 		button.classList.add('btn');
 		button.classList.add('btn-big');
 		button.innerHTML = `<i class="material-icons">${icon}</i>` + button.innerHTML;
@@ -272,6 +273,7 @@ class SV {
 
 
 
+
 class SyncView2 {
 	constructor(content, ctx) {
 		if(content instanceof HTMLElement) {
@@ -280,14 +282,11 @@ class SyncView2 {
 			this.node = SV.el('div', { innerHTML: content || ''});
 		}
 		this.eventHandlers = {};
-		this.bindings = {};
 
 		this.ctx = new SyncNode(ctx || {});
 		this.ctx.on('updated', (updated) => {
 			this.update(updated);
 		});
-		
-		if(this.init) this.init();
 	}
 	appendView(syncview, parent) {
 		(parent || this.node).appendChild(syncview.node);
@@ -308,7 +307,6 @@ class SyncView2 {
 			this.currentVersion = ctx ? ctx.version : null;
 			this.ctx = ctx;
 			this.emit('updating', ctx);
-			this.bind();
 			if(this.render) this.render();
 			if(this.doFlash) this.flash(); // For debugging
 		}
@@ -330,29 +328,6 @@ class SyncView2 {
 
 		return true;
 	}
-	bind() {
-
-		function traverse(curr, pathArr) {
-			if(pathArr.length === 0) return curr;	
-			else {
-				var next = pathArr.shift();
-				return traverse(curr[next], pathArr);  
-			}
-		}
-
-		Object.keys(this.bindings).forEach((id) => { 
-			var props = this.bindings[id];
-			Object.keys(props).forEach((prop) => { 
-				var valuePath = props[prop];
-				var value = traverse(this.ctx, valuePath.split('.'));
-				if(prop === 'update') {
-					this[id].update(value);
-				} else {
-					this[id][prop] = value;
-				}
-			});
-		});	
-	}
 	on(eventName, handler) {
 		if(!this.eventHandlers[eventName]) this.eventHandlers[eventName] = [];
 		this.eventHandlers[eventName].push(handler);
@@ -369,14 +344,7 @@ class SyncView2 {
 		// to visualize changes for debugging
 		SV.flash(this.node);
 	}
-	static isSyncView(val) {
-		if(!SyncNode.isObject(val)) return false;
-		var className = val.constructor.toString().match(/\w+/g)[1];
- 		return className === 'SyncView';
-	}
 }
-
-
 
 
 
@@ -391,11 +359,17 @@ class SyncView {
 			this.node = SV.el('div', { innerHTML: content || ''});
 		}
 		this.eventHandlers = {};
-		this.bindings = {};
 	}
 	appendView(syncview, parent) {
 		(parent || this.node).appendChild(syncview.node);
 		return syncview;
+	}
+	appendChild(child) {
+		if(child instanceof HTMLElement) {
+			this.node.appendChild(child);
+		} else {
+			this.node.appendChild(child.node);
+		}
 	}
 	static updateViews(views, data) {
 		views.forEach(view => { view.update(data); });
@@ -407,37 +381,12 @@ class SyncView {
 			//var oldData = this.data;
 			this.data = data;
 			this.emit('updating', data); //, oldData);
-			this.bind();
 			if(this.render) this.render(force);
 			if(this.doFlash) this.flash(); 
 		}
 		else {
 			if(this.name) console.log(this.name + ' DATA NO CHANGED', this, this.data, data);
 		}
-	}
-	bind() {
-
-		function traverse(curr, pathArr) {
-			if(pathArr.length === 0) return curr;	
-			else {
-				var next = pathArr.shift();
-				if(curr == null || !curr.hasOwnProperty(next)) return null;
-				return traverse(curr[next], pathArr);  
-			}
-		}
-
-		Object.keys(this.bindings).forEach((id) => { 
-			var props = this.bindings[id];
-			Object.keys(props).forEach((prop) => { 
-				var valuePath = props[prop];
-				var value = traverse(this, valuePath.split('.'));
-				if(prop === 'update') {
-					this[id].update(value);
-				} else {
-					this[id][prop] = value;
-				}
-			});
-		});	
 	}
 	hasChanged(newData) {
 
@@ -489,11 +438,6 @@ class SyncView {
 		// to visualize changes for debugging
 		SV.flash(this.node);
 	}
-	static isSyncView(val) {
-		if(!SyncNode.isObject(val)) return false;
-		var className = val.constructor.toString().match(/\w+/g)[1];
- 		return className === 'SyncView';
-	}
 }
 
 
@@ -543,9 +487,8 @@ class ViewsContainer extends SyncView {
 
 class SimpleEditInput extends SyncView {
 	constructor(prop, label, options) {
-		super();
+		super(SV.el('div', { className: 'label-set' }));
 
-		this.node.className = 'label-set';
 		this.options = options || {};
 
 		this.doFlash = true;
@@ -558,30 +501,28 @@ class SimpleEditInput extends SyncView {
 
 		var elem = this.options.isTextArea ? 'textarea' : 'input';
 		this.input = SV.el(elem, { parent: this.node,
-			events: { 
-				blur: () => {
-					var value = this.input.value;			
-					if(this.options.validator && !this.options.validator(value)) {
-						alert('Invalid value: "' + value + '"');
-						return;
-					}				
-
-					if(this.options.parser) value = this.options.parser(value);
-					if(this.data[this.prop] !== value) {
-						var oldValue = this.data[this.prop];
-						//var update = {};
-						//update[this.prop] = value;
-						this.data.set(this.prop, value);
-						this.emit('changed', value, oldValue);
-					}
+			events: { blur: () => {
+				var value = this.input.value;			
+				if(this.options.validator && !this.options.validator(value)) {
+					alert('Invalid value: "' + value + '"');
+					return;
+				}				
+			
+				if(this.options.parser) value = this.options.parser(value);
+				if(this.data[this.prop] !== value) {
+					var oldValue = this.data[this.prop];
+					//var update = {};
+					//update[this.prop] = value;
+					this.data.set(this.prop, value);
+					this.emit('changed', value, oldValue);
 				}
-			}});
+			}}});
 	}
 	focus() {
 		this.input.focus();
 	}
 	render() {
-		if(this.data && this.input.value !== this.data[this.prop]) {
+		if(this.input.value !== this.data[this.prop]) {
 			var val = this.data[this.prop] || '';
 			this.input.value = this.options.formatter ? this.options.formatter(val) : val; 
 		}
@@ -748,6 +689,7 @@ class Modal extends SyncView {
 		modal.mainView.appendChild(SV.el('h1', { innerHTML: title }));
 		modal.mainView.appendChild(SV.el('p', { innerHTML: message }));
 		modal.mainView.appendChild(SV.iconButton('done', { className: 'btn btn-big',
+			style: { float: 'right' },
 	       		events: { click: () => { modal.hide(); callback(); }}}));
 		modal.mainView.appendChild(SV.el('div', { innerHTML: 'Cancel', className: 'btn btn-big',
 	       		events: { click: () => { modal.hide(); }}}));

@@ -1,20 +1,14 @@
 @import 'palette';
 
 $typeGrid: 4px;
-$margin: 16px;
+$margin: 24px;
+$big-margin: 80px;
 $increment: 56px;
 
 $color-primary: palette(Deep Purple, 500);
 $color-secondary: palette(Deep Purple, 700);
 $color-light: palette(Deep Purple, 200);
 $color-dark: palette(Deep Purple, 900);
-
-
-
-.test {
-	background-color: #FFD;
-	border: 1px solid #000;
-}
 
 
 .group {
@@ -25,48 +19,33 @@ $color-dark: palette(Deep Purple, 900);
 	}
 }
 
-.no-overflow {
+@mixin no-overflow {
 	overflow: hidden;
 }
 
-body, input {
-	color: rgba(0,0,0,0.87);
-	font: 16px sans-serif;
-}
 
 body {
 	margin: 0;
 	padding: 0;
 	background-color: #FFF;
+	color: rgba(0,0,0,0.87);
+	font: 16px sans-serif;
 }
 
-.touch {
-	float: right;
-	width: $increment;
-	height: $increment;
-	line-height: $increment;
-	text-align: center;
-	transition: all 0.2s;
-}	
-.touch:hover {
-	color: rgba(0,0,0,0.5);
+.container {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
 }
 
-
-
-$col-width: 5 * $increment;
 .col { 
+	float: left;
 	overflow: hidden; 
-	position: relative; 
 	box-sizing: border-box;
-	float: left; 
 	height: 100%;
-	width: $col-width; 
-	border-right: 1px solid rgba(0,0,0,0.5); 
-
-	&.wide {
-		width: $increment * 7;
-	}
+	width: 5*$increment;
 }
 
 .scroll-x { overflow-x: auto; }
@@ -74,101 +53,116 @@ $col-width: 5 * $increment;
 
 $header-height: $increment;
 $footer-height: $increment;
-.header { 
+.header.row { 
 	height: $header-height; 
 	line-height: $header-height; 
-	padding-left: $margin;
-	font-weight: bold;
-}	
-.dark {
+	top: 0; 
 	background-color: $color-primary;
-	color: rgba(255,255,255,0.87);
+	color: #FFF;
 }
-
-.body { 
+.body.row { 
 	top: $header-height; 
 	bottom: $footer-height; 
 }
-.footer { 
+.footer.row { 
 	height: $footer-height; 
 	line-height: $footer-height; 
 	bottom: 0; 
-	padding-left: $margin;
 	background-color: $color-primary;
 	color: #FFF;
 }
 
-.light {
-	background-color: $color-light;
-	color: #FFF;
+.header.row, .footer.row {
+	box-shadow: 0px 2px 2px rgba(0,0,0,0.5);
+
+	span {
+		margin-left: $margin;
+	}
+	button {
+		width: 100%; height: 100%;
+		margin: 0;
+		border-radius: 0;
+	}
 }
 
-.label-set {
+
+//$left-col-width: 5 * $increment;
+//.left.col { 
+//	width: $left-col-width; 
+//	border-right: 1px solid rgba(0,0,0,0.5); 
+//}
+//.right.col { 
+//	left: $left-col-width; 
+//	right: 0; 
+//}
+
+.list .item {
+	border-bottom: 1px solid rgba(0,0,0,0.5);
 	height: $increment;
 	line-height: $increment;
-	width: 100%;
-	padding: 0;
-	margin: 0;
-
-	.label {
-		box-sizing: border-box;
-		width: 125px;
-		padding-left: $margin;
-		display: inline-block;
-	}
-	input {
-		box-sizing: border-box;
-		width: calc(100% - 125px - #{$margin});
-		display: inline-block;
-		padding: $typeGrid * 2;
-	}
+	padding-left: $margin;
 }
 
-.shadow {
-	box-shadow: 0px 2px 3px rgba(0,0,0,.5);
-}
+.details {
+	padding: 3*$margin $margin $margin $big-margin;
 
-.list {
-
-	overflow-x: hidden;
+	width: 8*$increment;
+	position: relative;
 	overflow-y: auto;
-	height: 100%;
-	width: 100%;
 
-
-	.item {
-		border-bottom: 1px solid rgba(0,0,0,0.5);
+	.header {
 		height: $increment;
 		line-height: $increment;
-		padding-left: $margin;
-		padding-right: $margin;
-
-		&.selected {
-			background-color: #FFA;
-			//box-shadow: 0px 2px 3px rgba(0,0,0,.5);
-		}
-
-		.right {
+		position: relative;
+		font-size: 7*$typeGrid;
+		margin-bottom: $margin;
+		color: rgba(0,0,0,0.5);
+	
+		.touch {
 			float: right;
+			width: $increment;
+			height: $increment;
+			line-height: $increment;
+			text-align: center;
+			transition: all 0.2s;
+		}	
+		.touch:hover {
+			color: rgba(0,0,0,0.8);
+		}
+
+		.controls {
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
 		}
 	}
+}
 
-	.btn {
-		//margin: 0;
+.form {
+	max-width: 8 * $increment;
+
+	.label-set {
+		margin: 0;
+		margin-bottom: $typeGrid;
+		//margin-top: 3 * $typeGrid;
+		//margin-bottom: 3 * $typeGrid;
+		font-size: 4*$typeGrid;
+		.label {
+			display: inline-block;
+			color: rgba(0,0,0,0.77);
+			width: 145px;
+		}
+
+		input {
+			display: inline-block;
+			font-size: 4*$typeGrid;
+			padding: $typeGrid;
+			width: calc(100% - 165px);
+		}
 	}
-
 }
 
-$button-width: $increment;
-$input-height: $increment - $margin;
-.input-test {
-	width: calc(100% - #{$increment + $margin - $typeGrid});
-        height: $input-height;
-	padding-left: $typeGrid;
-	margin-left: $margin - $typeGrid;
-	margin-top: $margin/2;
-	margin-bottom: $margin/2;
-}
 
 @mixin h-base {
 	color: rgba(0,0,0,0.54);
@@ -188,33 +182,29 @@ $input-height: $increment - $margin;
 }
 
 
-@for $i from 1 through 6 {
-	.has-header#{$i} {
-		height: calc(100% - #{$i*$header-height});
-	}
+.btn {
+	display: inline-block;
+	box-sizing: border-box;
+	width: 100%;
+	border-radius: 4px;
+	color: #FFF;
+	font-weight: bold;
+	background-color: #2196F3;
+	padding: $typeGrid * 2;
+	margin: $typeGrid auto;
+	text-align: center;
 }
 
 
-.btn {
-	box-sizing: border-box;
-	height: $increment;
-	line-height: $increment;
-	border-radius: 4px;
-	font-weight: bold;
-	color: #FFF;
-	background-color: #2196F3;
-	margin: $typeGrid;
-	text-align: center;
+button {
+	min-height: $increment;
+	min-width: $increment;
+	padding: 0 $margin;
 }
 
 
 .bold {
 	color: rgba(0,0,0,0.67);
-	font-weight: bold;
-}
-
-.italic {
-	font-style: italic;
 }
 
 
@@ -229,6 +219,7 @@ $input-height: $increment - $margin;
 	background-color: rgba(0,0,0,0.7);
 	padding: 1em;
 	overflow-y: scroll;
+
 }
 
 .modal .main-view {
@@ -265,10 +256,10 @@ $input-height: $increment - $margin;
 	font-weight: normal;
 	font-style: normal;
 	font-size: 24px;
-	//line-height: 1;
+	line-height: 1;
 	letter-spacing: normal;
 	text-transform: none;
-	//display: inline-block;
+	display: inline-block;
 	white-space: nowrap;
 	word-wrap: normal;
 	direction: ltr;

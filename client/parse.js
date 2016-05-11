@@ -1,16 +1,69 @@
 "use strict"
 
+class Input extends SyncView {
+	constructor(options) {
+		super();
 
+		this.node.className = 'label-set';
+		this.options = options || {};
 
-class List extends SyncView {
-	constructor(ctor, sort, direction, element) {
-		super(element);
-		this.views = {};
-		this.ctor = ctor;
-		this.sort = sort;
-		this.sortDirection = direction;
+		this.doFlash = true;
+		
+		if(options.label) {
+			SV.el('span', { parent: this.node, innerHTML: this.options.label, className: 'label' });
+		}
+
+		var elem = this.options.isTextArea ? 'textarea' : 'input';
+		this.input = SV.el(elem, { parent: this.node,
+			events: { 
+				blur: () => {
+					var value = this.input.value;			
+					if(this.options.validator && !this.options.validator(value)) {
+						alert('Invalid value: "' + value + '"');
+						return;
+					}				
+
+					if(this.options.parser) value = this.options.parser(value);
+					if(this.data[this.options.prop] !== value) {
+						var oldValue = this.data[this.options.prop];
+						this.data.set(this.options.prop, value);
+						this.emit('changed', value, oldValue);
+					}
+				}
+			}});
+	}
+	focus() {
+		this.input.focus();
 	}
 	render() {
+		if(this.data && this.input.value !== this.data[this.options.prop]) {
+			var val = this.data[this.options.prop] || '';
+			this.input.value = this.options.formatter ? this.options.formatter(val) : val; 
+		}
+	}
+
+	static NumberValidator(val) {
+		if(typeof val === 'number') return true;
+		if(val.trim() == '') return true;
+		return !isNaN(parseFloat(val));
+	}
+	static NumberParser(val) {
+		if(typeof val === 'number') return val;
+		if(val.trim() == '') return 0;
+		return parseFloat(val);
+	}
+}
+
+class List extends SyncView {
+	constructor(options) {
+		super();
+		this.views = {};
+		this.ctor = options.ctor;
+		this.sort = options.sort;
+		this.sortDirection = options.direction;
+	}
+	render() {
+		if(!this.data) return;
 		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
 		var previous = null;
 		itemsArr.forEach((item) => {
@@ -70,6 +123,11 @@ function getName(str) {
 	if(result) return result[1];
 	else return '';
 }
+function getBinding(str) { 
+	var result = /\$[(](.*?)[)]/.exec(str);
+	if(result) return result[1];
+	else return '';
+}
 
 function getId(str) { 
 	var result = /[#](\w*)/.exec(str);
@@ -103,7 +161,7 @@ function getProp(str) {
 	else return '';
 }
 function getCode(str) { 
-	var result = /[:](.*)/.exec(str);
+	var result = /[:](.*?)/.exec(str);
 	if(result) return result[1];
 	else return '';
 }
@@ -115,6 +173,15 @@ function getArgs(str) {
 		return args.map((arg) => { return arg.trim(); });
 	}
 	else return [];
+}
+
+function getOptions(str) { 
+	var exp = /[^$][\(](.*?)[\)]/;
+	var result = new RegExp(exp).exec(str);
+	if(result) { 
+		return eval('(' + result[1] + ')');
+	}
+	else return {};
 }
 
 var components = {};
@@ -138,6 +205,7 @@ function findComponents(lines) {
 					ctor: new Function(`
 							this.node = SV.el('div');
 							this.eventHandlers = {};
+							this.bindings = {};
 						`),
 					code: ''
 				};
@@ -175,7 +243,7 @@ function parse(code, container) {
 				var id = getId(trimmed);
 				var componentName = getTag(trimmed);
 				var classes = getClasses(trimmed);
-				componentInstance = buildComponent(componentName, getArgs(trimmed));
+				componentInstance = buildComponent(componentName, getOptions(trimmed));
 				componentInstance.node.className += ' ' + classes;
 				container.appendChild(componentInstance.node);
 				window[id] = componentInstance;
@@ -186,13 +254,12 @@ function parse(code, container) {
 }
 
 
-function buildComponent(componentName, args) {
+function buildComponent(componentName, options) {
 
 
 	if(typeof componentName === 'function') {
-		args.unshift(null);
-		var instance = new (Function.prototype.bind.apply(componentName, args));
-		if(instance.init) instance.init();
+		//args.unshift(null);
+		var instance = new (Function.prototype.bind.call(componentName, this, options));
 		return instance;
 	}
 
@@ -201,8 +268,8 @@ function buildComponent(componentName, args) {
 
 	if(!component) {
 		var ctor = window[componentName];
-		args.unshift(null);
-		var instance = new (Function.prototype.bind.apply(ctor, args));
+		//args.unshift(null);
+		var instance = new (Function.prototype.bind.call(ctor, this, options));
 		if(instance.init) instance.init();
 		return instance;
 	}
@@ -215,26 +282,59 @@ function buildComponent(componentName, args) {
 	for(var i = 0; i < lines.length; i++) {
 		var line = lines[i];
 		var trimmed = line.trim();
-		if(trimmed !== '') {
+		if(trimmed !== '' && trimmed[0] !== '/' && trimmed[1] !== '/') { // ignore commented lines
 			var tabs = numTabs(line);
 			if(tabs === 1) {
 				var id = getId(trimmed);
+				var binding = getBinding(trimmed);
 				var tag = getTag(trimmed) || 'div';
 				var classes = getClasses(trimmed);
 				var inner = getText(trimmed);
 				
-				
+				if(binding) { 
+					var split = binding.split('=');
+					var prop = 'innerHTML';
+					var value = split[0];
+					if(split.length > 1) {
+						prop = split[0]; 
+						value = split[1];
+					}
+					var existing = componentInstance.bindings[id] || {};
+					existing[prop] = value;
+					componentInstance.bindings[id] = existing;
+				}
+
 				if(isCapitalized(tag)) {
-					el = buildComponent(tag, getArgs(trimmed));
+					var options2 = getOptions(trimmed);
+					el = buildComponent(tag, options2);
+					if(classes) el.node.className += ' ' + classes;
 					if(id) el.node.id = id;
 					componentInstance.node.appendChild(el.node);
 				} else if(tag === 'function') {
+					var args2 = getArgs(trimmed);
 					var code = getCode(trimmed).substr(trimmed.indexOf('function') +3,trimmed.length);
 					while(i+1 < lines.length && numTabs(lines[i+1]) > 1) {
 						i = i+1;
 						code += lines[i] + '\n';
 					}
-					el = new Function(code).bind(componentInstance);
+					el = new Function(args2, code).bind(componentInstance);
+					//if(id === 'init') console.log('code', id, args, code);
+				} else if(tag === 'style') {
+					var style = getCode(trimmed);
+					while(i+1 < lines.length && numTabs(lines[i+1]) > 1) {
+						i = i+1;
+						style += lines[i] + '\n';
+					}
+					style.replace('\n', ' ');
+					var styleArr = style.split(';');
+					console.log('style', style);
+					styleArr.forEach((item) => {
+						if(item === '') return;
+						var pair = item.split(':');
+						pair = pair.map((s) => s.trim());
+						componentInstance.node.style[pair[0]] = pair[1];
+					});
+
 				} else {
 
 					el = SV.el(tag, { 
@@ -256,6 +356,7 @@ function buildComponent(componentName, args) {
 					}
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
+					console.log('style', style);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');
@@ -284,7 +385,7 @@ function buildComponent(componentName, args) {
 		}
 	}
 
-	if(componentInstance.init) componentInstance.init();
+	if(componentInstance.init) componentInstance.init.call(componentInstance, options);
 
 	return componentInstance;
 }

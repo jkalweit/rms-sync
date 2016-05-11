@@ -1,0 +1,193 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+MenuItemOptionTypeList[list]
+	#header[header] 'Option Types'
+	#newOption:input[input-test]
+		events:
+			keydown(e): 
+				if(e.keyCode === 13) this.add();
+	:button[input-test-btn touch material-icons] 'add'
+		events:
+			click: 
+				this.add();
+	#add:function
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: this.newOption.value,
+			values: {} };
+		var result = this.data.set(newItem.key, newItem)[newItem.key];
+		this.newOption.value = '';
+		this.selected = result;
+		this.render();
+	#list:List({ ctor:'MenuItemOptionType', sort: 'name'})
+		events:
+			viewAdded(view): 
+				view.on('selected', (type) => {
+					this.selected = type;
+					typeDetails.update(type);
+				});
+	#render:function 
+			if(this.selected) this.selected = this.data[this.selected.key];	
+			else this.selected = SV.toArray(this.data)[0];
+			typeDetails.update(this.selected);
+			this.list.update(this.data);
+
+MenuItemOptionType[item]
+	#name$(data.name)[name bold]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+
+
+Button[btn]
+	#text:span[absolute-center]
+	events:
+		click:
+			console.log('clicked')
+	#init:function(text) 
+		this.text.innerHTML = text;
+	
+
+SimpleHeader[header]
+	#text:span
+	#add[touch material-icons] 'add'
+		events:
+			click: 
+				this.emit('add');
+	#close[touch material-icons] 'done'
+		events:
+			click: 
+				this.emit('close');
+	#del[touch material-icons] 'delete'
+		events:
+			click: 
+				this.emit('delete');
+	#init:function(options) 
+		this.text.innerHTML = options.text;
+		if(!options.close)
+			this.close.style.display = 'none';	
+		if(!options.del)
+			this.del.style.display = 'none';	
+		if(!options.add)
+			this.add.style.display = 'none';	
+
+
+
+MenuItemOptionTypeDetails[col wide]
+	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#values:MenuItemOptionValues$(update=data.values)
+	#close:function
+			this.update(null);
+			valueDetails.close();
+	#init:function
+			this.render();
+	#render:function
+			this.node.style.display = this.data ? 'block' : 'none';
+	
+
+
+MenuItemOptionValues
+	#header:SimpleHeader({ text: 'Values', add: 'true'})[light]
+		events:
+			add:
+				var value = { key: new Date().toISOString(), name: 'New Value' };
+				var result = this.data.set(value.key, value)[value.key]; 
+				valueDetails.update(result);
+	#list:List({ ctor: 'MenuItemOptionValue'})[list]
+		events:
+			viewAdded(view): 
+				view.on('selected', (item) => {
+					this.selected = item;
+					valueDetails.update(item);
+				});
+	#render:function
+		this.list.update(this.data);
+	
+
+MenuItemOptionValue[item]
+	#nameSpan$(data.name)
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+	
+	
+MenuItemOptionValueDetails[col wide]
+	#header:SimpleHeader({ text: 'Details', close: true, del: true})
+		events:
+			close:
+				this.close();
+			delete:
+				this.data.parent.remove(this.data.key);
+				this.update(null);
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
+	#init:function 
+			this.render();
+	#close:function
+			this.update(null);
+	#render:function
+			this.node.style.display = this.data ? 'block' : 'none';
+	
+
+
+#typesView:MenuItemOptionTypeList[col]
+#typeDetails:MenuItemOptionTypeDetails[col]
+#valueDetails:MenuItemOptionValueDetails[col]
+
+</script>
+
+
+</textarea>
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+
+SV.onLoad(() => { 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			if(!data.menu.menuOptions) {
+				data.menu.set('menuOptions', { 
+					types: {}, 
+					options: {} 
+				});
+			} else { 
+				typesView.update(data.menu.menuOptions.types);
+			}
+		});
+
+});
+
+</script>
+</body>
+</html>

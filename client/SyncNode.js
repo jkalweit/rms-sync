@@ -184,5 +184,4 @@ class SyncNode extends EventEmitter {
 		return SyncNode.s4() + SyncNode.s4() + '-' + SyncNode.s4() + '-' + SyncNode.s4() + '-' +
 			SyncNode.s4() + '-' + SyncNode.s4() + SyncNode.s4() + SyncNode.s4();
 	}
-
 }

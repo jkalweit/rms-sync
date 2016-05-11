@@ -6,93 +6,238 @@
 <script type="text/javascript" src="/SyncNodeSocket.js"></script>
 <script type="text/javascript" src="/SyncView.js"></script>
 <script type="text/javascript" src="/parse.js"></script>
-
 </head>
 <body>
 
 
 <script id="view" type="text/other">
-MenuItemOptionType[item]
-	#name[name bold]
+
+#categoryList:MenuItemCategoryList[col]
+#categoryDetails:MenuItemCategoryDetails[col]
+#itemDetails:MenuItemDetails[col]
+
+
+MenuItemCategoryList
+	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name' }) 
+		events:
+			selected(item): 
+				categoryDetails.update(item);
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+				
+	#add:function(name)
+		var name = name || '';
+		name = name.trim();
+		if(!name) return;
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: name,
+			items: {} };
+		var result = this.data.set(newItem.key, newItem)[newItem.key];
+		this.list.select(result.key);
+	#render:function 
+		this.list.update(this.data);
+		categoryDetails.update(this.list.selected);
+
+MenuItemCategory[item]
+	#nameSpan$(data.name)[name]
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
-	#render:function 
-		this.name.innerHTML = this.data.name;
 
 
-MenuItemOptionTypeList[list]
-	#header[header] 'Option Types'
-	#newOption:input
-	#add:button[btn] 'Add'
-		click:
-			var newItem = { 
-				key: new Date().toISOString(), 
-				name: this.newOption.value };
-			var result = this.data.set(newItem.key, newItem)[newItem.key];
-			this.newOption.value = '';
-			this.selected = result;
-			this.render();
-	#list:List(MenuItemOptionType, name)
+MenuItemCategoryDetails[col wide]
+	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
 		events:
-			viewAdded(view): 
-				view.on('selected', (type) => {
-					this.selected = type;
-					typeDetails.update(type);
-				});
-	#render:function 
-			if(this.selected) this.selected = this.data[this.selected.key];	
-			typeDetails.update(this.selected);
-			this.list.update(this.data);
-
-MenuItemOptionTypeDetails[col wide]
-	#header[header] 'Details'
-	#nameInput:SimpleEditInput(name, Name)
-	#noteInput:SimpleEditInput(note, Note)
-	#values:MenuItemOptionValues
-	:button[btn] 'Delete'
-		events:
-			click: 
-				//Modal.confirm('Delete?', 'jhg', () => {
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', '', () => {
 					this.data.parent.remove(this.data.key);
-					this.update(null);
-				//});
-	:button[btn] 'Ok'
-		events:
-			click: 
-				this.update(null);
-	#init:function 
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#items:MenuItemList
+	#close:function
+			itemDetails.close();
+			this.update(null);
+	#init:function
 			this.render();
 	#render:function
-			if(!this.data) {
-				this.node.style.display = 'none';
-			} else {
-				this.node.style.display = 'block';
-				this.nameInput.update(this.data)
-				this.noteInput.update(this.data)
-			}
-	
+			this.node.style.display = this.data ? 'block' : 'none';
+			if(this.data) this.items.update(this.data.items);
 
-
-MenuItemOptionValues
-	#header[header light] 'Values'
-	#list:List(MenuItemOptionValue)
-	:button
+MenuItemList
+	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name' })[has-header3]
 		events:
-			click: console.log('yayy');
-	#render:function
+			selected(item): 
+				itemDetails.update(item);
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+	#add:function(name)
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: name,
+			options: {} };
+		var result = this.data.set(newItem.key, newItem)[newItem.key];
+		this.list.select(result.key);
+	#render:function 
 		this.list.update(this.data);
-	
+		itemDetails.update(this.list.selected);
 
-MenuItemOptionValue[item]
-	#nameSpan
+MenuItem[item]
+	#price[right]
+	#nameSpan$(data.name)[name]
+	#init:function
+		this.node.addEventListener('click', 
+			() => { this.emit('selected', this.data); });
+	#render:function()
+		this.price.innerHTML = SV.formatCurrency(this.data.price);
+
+
+MenuItemDetails[col wide]
+	#header:SimpleHeader({ "text": "Item Details", "close": true, 'del': true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
+	//#values:MenuItemOptionValues$(update=data.values)
+	#close:function
+			this.update(null);
+	#init:function
+			this.render();
 	#render:function
-		this.nameSpan.innerHTML = this.data.name
-	
+			this.node.style.display = this.data ? 'block' : 'none';
 	
 
-#typesView:MenuItemOptionTypeList[col]
-#typeDetails:MenuItemOptionTypeDetails[col]
+
+
+
+
+
+
+
+
+
+
+
+Button[btn]
+	#text:span[absolute-center]
+	events:
+		click:
+			console.log('clicked')
+	#init:function(text) 
+		this.text.innerHTML = text;
+	
+
+SimpleHeader[header]
+	#text:span
+	#add[touch material-icons] 'add'
+		events:
+			click: 
+				this.emit('add');
+	#close[touch material-icons] 'done'
+		events:
+			click: 
+				this.emit('close');
+	#del[touch material-icons] 'delete'
+		events:
+			click: 
+				this.emit('delete');
+	#init:function(options) 
+		this.text.innerHTML = options.text;
+		if(!options.close)
+			this.close.style.display = 'none';	
+		if(!options.del)
+			this.del.style.display = 'none';	
+		if(!options.add)
+			this.add.style.display = 'none';	
+
+SearchHeader
+	:style 
+		border-bottom: 1px solid rgba(0,0,0,0.5);
+	#header[header] 'Search'
+	#newInput:input[input-test]
+		events:
+			keydown(e): 
+				if(e.keyCode === 13) this.add();
+			keyup(e):
+				this.emit('searchChanged', this.newInput.value);
+	:div[touch material-icons] 'add'
+		events:
+			click: 
+				this.add();
+	#add:function 
+			this.emit('add', this.newInput.value);
+	#clear:function
+			this.newInput.value = '';
+	#init:function(options)
+			if(options.text) this.header.innerHTML = options.text;
+
+SearchList
+	#header:SearchHeader({ text: 'Search' })
+		events:
+			add(value):
+				this.emit('add', value);
+			searchChanged(value):
+				this.search(value);
+				this.emit('searchChanged', value);
+	#search:function(value)
+		value = value || '';
+		this.searchValue = value.trim().toLowerCase();
+		this.doFilter();
+	#doFilter:function() 
+		var filtered = this.data;
+		if(this.searchProp) {
+			if(this.searchValue) {
+				filtered = SV.filterMap(this.data, (item) => { 
+					var itemVal = item[this.searchProp];
+					if(!itemVal) return false;
+					return itemVal.trim().toLowerCase().indexOf(this.searchValue) !== -1;	
+				});
+			}
+		}
+		this.list.update(filtered);
+
+	#init:function(options)
+		this.searchProp = options.searchProp;
+		if(options.text) this.header.header.innerHTML = options.text;
+		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));
+		this.list.node.classList.add('has-header2');
+		this.list.node.classList.add('list');
+		this.list.on('viewAdded', (view) => {
+			view.on('selected', (item) => {
+					this.select(item.key);
+				});
+		});
+	#clearSearch:function()
+		this.header.clear();
+		this.search('');
+	#select:function(key)
+		this.selected = this.data[key];
+		this.updateSelected();
+		this.emit('selected', this.selected);
+	#updateSelected:function()
+		SV.toArray(this.list.views).forEach((view) => {
+			var isSelected = this.selected ? this.selected.key === view.data.key : false;
+			view.node.classList.toggle('selected', isSelected);
+			if(isSelected) view.node.scrollIntoViewIfNeeded();
+		});
+	#render:function()
+		this.doFilter();
+		if(this.selected) this.selected = this.data[this.selected.key];
+		this.updateSelected();
+		
 
 </script>
 
@@ -103,7 +248,7 @@ MenuItemOptionValue[item]
 <script>
 "use strict"
 
-window.SimpleEditInput = SimpleEditInput
+window.Input = Input
 
 SV.startReloader();
 
@@ -114,16 +259,15 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {
-			if(!data.menu.menuOptions) {
-				data.menu.set('menuOptions', { 
-					types: {}, 
-					options: {} 
+			if(!data.menu) {
+				data.set('menu', { 
+					categories: {}, 
+					items: {} 
 				});
 			} else { 
-				typesView.update(data.menu.menuOptions.types);
+				categoryList.update(data.menu.categories);
 			}
 		});
-
 });
 
 </script>

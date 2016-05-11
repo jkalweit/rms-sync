@@ -18,7 +18,6 @@ class Menu extends SyncView {
 		SV.el('input', { parent: this.node, type: 'file', 
 			events: { change: (e) => { 
 				var f = e.target.files[0];
-				console.log('here1', f);
 				var r = new FileReader();
 				r.onload = (e) => {
 					console.log('here2', e);
@@ -27,7 +26,7 @@ class Menu extends SyncView {
 					console.log('file', result); 
 
 
-					var menu = { categories: {}, items: {} };
+					var menu = { categories: {} };
 					
 					result.categories.forEach((cat) => {
 						var newCat = {
@@ -36,17 +35,21 @@ class Menu extends SyncView {
 							created: new Date().toISOString(),	
 							defaultTax: '',	
 							defaultIsAlcohol: false,
-							isDisabled: false 
+							isDisabled: false,
+							items: {}
 						};
 						menu.categories[newCat.key] = newCat;
 					});
 
+					var catsArr = SV.toArray(menu.categories);
 					result.items.forEach((item) => {
 						var isAlcohol = item.type === 'Alcohol';
+
 						var newItem = {
 							key: SyncNode.guidShort(),
 							name: item.name,
-							category: item.category,
+							//category: item.category,
+							note: '',
 							created: new Date().toISOString(),
 							serveType: isAlcohol ? 'Bar' : 'Kitchen',
 							description: '',
@@ -54,11 +57,20 @@ class Menu extends SyncView {
 							tags: {},
 							taxType: isAlcohol ? 'Included' : '9%',	
 							isAlcohol: isAlcohol,
-							isDisabled: item.isDisabled
+							isDisabled: item.isDisabled,
+							options: {}
 						};
-						menu.items[newItem.key] = newItem;
+						//menu.items[newItem.key] = newItem;
+
+						var category;
+						catsArr.forEach((cat) => {
+							if(cat.name == item.category) category = cat;
+						});	
+						if(!category) console.log('Category not found: ', item.category); 
+						else category.items[newItem.key] = newItem;
 					});
 					console.log('menu', menu);
+					//this.data.parent.remove('menu');
 					this.data.parent.set('menu', menu);
 
 				};
