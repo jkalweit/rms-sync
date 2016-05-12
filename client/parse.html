@@ -37,8 +37,10 @@ MenuItemCategoryList
 			items: {} };
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
 		this.list.select(result.key);
+	#init:function
 	#render:function 
 		this.list.update(this.data);
+		if(!this.list.selected) this.list.select(SV.toArray(this.data)[0].key);
 		categoryDetails.update(this.list.selected);
 
 MenuItemCategory[item]
@@ -46,6 +48,8 @@ MenuItemCategory[item]
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
+	#render:function
+		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 
 
 MenuItemCategoryDetails[col wide]
@@ -60,6 +64,7 @@ MenuItemCategoryDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#disableToggle:ToggleButton({ prop: 'isDisabled' })$(update=data)
 	#items:MenuItemList
 	#close:function
 			itemDetails.close();
@@ -96,6 +101,7 @@ MenuItem[item]
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
 	#render:function()
+		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
 
 
@@ -111,6 +117,7 @@ MenuItemDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#disableToggle:ToggleButton({ prop: 'isDisabled' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
 	//#values:MenuItemOptionValues$(update=data.values)
 	#close:function

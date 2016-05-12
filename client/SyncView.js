@@ -331,20 +331,11 @@ class SyncView2 {
 		return true;
 	}
 	bind() {
-
-		function traverse(curr, pathArr) {
-			if(pathArr.length === 0) return curr;	
-			else {
-				var next = pathArr.shift();
-				return traverse(curr[next], pathArr);  
-			}
-		}
-
 		Object.keys(this.bindings).forEach((id) => { 
 			var props = this.bindings[id];
 			Object.keys(props).forEach((prop) => { 
 				var valuePath = props[prop];
-				var value = traverse(this.ctx, valuePath.split('.'));
+				var value = SV.getProperty(this.ctx, valuePath.split('.'));
 				if(prop === 'update') {
 					this[id].update(value);
 				} else {

@@ -1,14 +1,39 @@
 <script id="components" type="text/other">
 
-	
+Select[label-set]
+	#text[label]
+	#selectInput:select
+		events:
+			change:
+				this.selected = this.selectInput.value;
+				this.emit('selected', this.selected);
+	#init:function(options)
+		this.prop = options.prop;
+		if(options.lable) this.text.innerHTML = options.label;
+	#select:function(value)
+		this.selectInput.value = value;
+		this.selected = this.selectInput.value;
+	#render:function
+		var selected = this.selectInput.value;
+		this.selectInput.innerHTML = '';
+		SV.toArray(this.data).forEach((item) => {
+			SV.el('option', { parent: this.selectInput, innerHTML: SV.getProperty(item, this.prop) }); 
+		});
+		this.selectInput.value = selected;
+		
 
-Button[btn]
-	#text:span[absolute-center]
-	events:
+ToggleButton[btn]
+	#text:span
+	:events
 		click:
-			console.log('clicked')
-	#init:function(text) 
-		this.text.innerHTML = text;
+			this.data.set(this.prop, !this.data[this.prop]);
+	#init:function(options)
+		this.prop = options.prop;
+		this.trueText = options.trueText || 'Yes';
+		this.falseText = options.falseText || 'No';
+	#render:function
+		if(this.data) this.text.innerHTML = this.data[this.prop] ? this.trueText : this.falseText;
+
 
 SimpleHeader[header]
 	#text:span

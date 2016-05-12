@@ -16,10 +16,14 @@
 #ticketList:TicketList[col]
 #ticketDetails:TicketDetails[col]
 #orderItemDetails:OrderItemDetails[col]
-#menuCategories:MenuCategories[col right]
 #menuItems:MenuItems[col right]
+#menuCategories:MenuCategories[col right]
 
 TicketList
+	#userSelect:Select({ prop: 'data.info.name' })
+		events:
+			selected(name):
+				window.recSettings.set('currentUser', name);
 	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name', addBtn: true }) 
 		events:
 			selected(item): 
@@ -68,6 +72,7 @@ TicketDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#server:Select
 	#items:OrderItemList
 	#close:function
 			orderItemDetails.close();
@@ -121,6 +126,7 @@ OrderItemDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#quantityInput:Input({ prop: 'quantity', label: 'Quantity' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
 	#close:function
 			this.update(null);
@@ -139,7 +145,6 @@ MenuCategories[col right]
 				this.add(value);
 	#init:function
 		this.list.postFilter = (data) => {
-			console.log('post filter', data);
 			return SV.filterMap(data, item => !item.isDisabled);
 		}
 	#render:function 
@@ -158,17 +163,28 @@ MenuItems[col right]
 		events:
 			selected(item): 
 				this.add(item);
-	#add:function(item)
+	#add:function(menuItem)
 		if(!ticketDetails.data) {
 			console.log('no ticket selected');
 			return;
 		}
 		var newItem = { 
-			key: new Date().toISOString(), 
-			name: item.name,
-			options: {} };
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			servedBy: window.recSettings.currentUser,
+			name: menuItem.name,
+			price: menuItem.price,
+			quantity: 1,
+			taxType: menuItem.taxType,
+			note: menuItem.note || '' 
+		};
 		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
 		ticketDetails.items.list.select(result.key);
+	#init:function
+		this.list.postFilter = (data) => {
+			return SV.filterMap(data, item => !item.isDisabled);
+		}
 	#render:function 
 		this.list.update(this.data);
 
@@ -197,7 +213,7 @@ window.Input = Input
 SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
-
+window.membersSync = new SyncNodeSocket('/members', {});
 window.recSettings = new LocalSyncNode('recSettings');	
 
 
@@ -213,6 +229,19 @@ SV.onLoad(() => {
 			ticketList.update(rec.tickets);
 			menuCategories.update(data.menu.categories);			
 		});
+		
+		window.membersSync.on('updated', (data) => {
+			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			ticketList.userSelect.update(users);
+			ticketList.userSelect.select(window.recSettings.currentUser);
+		});
+
+	
+		window.recSettings.on('updated', (data) => {
+			ticketList.userSelect.select(data.currentUser);
+		});
+
+
 });
 
 </script>

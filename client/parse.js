@@ -293,7 +293,7 @@ function buildComponent(componentName, options) {
 				var tag = getTag(trimmed) || 'div';
 				var classes = getClasses(trimmed);
 				var inner = getText(trimmed);
-				
+					
 				if(binding) { 
 					var split = binding.split('=');
 					var prop = 'innerHTML';
@@ -322,6 +322,14 @@ function buildComponent(componentName, options) {
 					}
 					el = new Function(args2, code).bind(componentInstance);
 					//if(id === 'init') console.log('code', id, args, code);
+				} else if(tag === 'events') {
+					var code = getCode(trimmed);
+					while(i+1 < lines.length && numTabs(lines[i+1]) > 1) {
+						i = i+1;
+						code += lines[i] + '\n';
+					}
+					parseEvents(code, componentInstance.node, componentInstance, 1);	
+
 				} else if(tag === 'style') {
 					var style = getCode(trimmed);
 					while(i+1 < lines.length && numTabs(lines[i+1]) > 1) {
@@ -392,7 +400,8 @@ function buildComponent(componentName, options) {
 	return componentInstance;
 }
 
-function parseEvents(code, el, context) {
+function parseEvents(code, el, context, tabsBase) {
+	if(typeof tabsBase === 'undefined') tabsBase = 2;
 	context = context || el;
 	var lines = code.split('\n');
 	for(var i = 0; i < lines.length; i++) {
@@ -400,11 +409,11 @@ function parseEvents(code, el, context) {
 		var trimmed = line.trim();
 		if(trimmed !== '') {
 			var tabs = numTabs(line);
-			if(tabs === 3) {
+			if(tabs === tabsBase+1) {
 				var name = getName(trimmed);
 				var args = getArgs(trimmed);
 				var code = getCode(trimmed);
-				while(i+1 < lines.length && numTabs(lines[i+1]) > 3) {
+				while(i+1 < lines.length && numTabs(lines[i+1]) > tabsBase+1) {
 						i = i+1;
 						code += lines[i] + '\n';
 					}

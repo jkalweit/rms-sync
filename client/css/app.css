@@ -21,7 +21,7 @@ body, input {
 body {
   margin: 0;
   padding: 0;
-  background-color: #FFF; }
+  background-color: #CCC; }
 
 .touch {
   float: right;
@@ -41,7 +41,8 @@ body {
   float: left;
   height: 100%;
   width: 280px;
-  border-right: 1px solid rgba(0, 0, 0, 0.5); }
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
+  background-color: #FFF; }
   .col.wide {
     width: 392px; }
   .col.right {
@@ -92,7 +93,7 @@ body {
     width: 125px;
     padding-left: 16px;
     display: inline-block; }
-  .label-set input {
+  .label-set input, .label-set select {
     box-sizing: border-box;
     width: calc(100% - 125px - 16px);
     display: inline-block;
@@ -120,6 +121,14 @@ body {
 
 .input-test {
   width: calc(100% - 68px);
+  height: 40px;
+  padding-left: 4px;
+  margin-left: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px; }
+
+select {
+  width: calc(100% - 24px);
   height: 40px;
   padding-left: 4px;
   margin-left: 12px;
