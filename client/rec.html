@@ -20,7 +20,7 @@
 #menuCategories:MenuCategories[col right]
 
 TicketList
-	#userSelect:Select({ prop: 'data.info.name' })
+	#userSelect:Select({ label: 'Server',  prop: 'data.info.name' })
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
@@ -70,9 +70,12 @@ TicketDetails[col wide]
 					this.data.parent.remove(this.data.key);
 					this.close();
 				});
-	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
-	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#server:Select
+	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note' })$(update=data)
+	#server:Select({ label: 'Server', prop: 'data.info.name' })
+		events:
+			selected(value):
+				this.data.set('servedBy', value); 	
 	#items:OrderItemList
 	#close:function
 			orderItemDetails.close();
@@ -81,7 +84,10 @@ TicketDetails[col wide]
 			this.render();
 	#render:function
 			this.node.style.display = this.data ? 'block' : 'none';
-			if(this.data) this.items.update(this.data.orderItems);
+			if(this.data) { 
+				this.items.update(this.data.orderItems);
+				this.server.select(this.data.servedBy);
+			}
 
 
 
@@ -232,6 +238,7 @@ SV.onLoad(() => {
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			ticketDetails.server.update(users);
 			ticketList.userSelect.update(users);
 			ticketList.userSelect.select(window.recSettings.currentUser);
 		});

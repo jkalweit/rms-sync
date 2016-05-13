@@ -9,13 +9,14 @@ Select[label-set]
 				this.emit('selected', this.selected);
 	#init:function(options)
 		this.prop = options.prop;
-		if(options.lable) this.text.innerHTML = options.label;
+		if(options.label) this.text.innerHTML = options.label;
 	#select:function(value)
 		this.selectInput.value = value;
 		this.selected = this.selectInput.value;
 	#render:function
 		var selected = this.selectInput.value;
 		this.selectInput.innerHTML = '';
+		console.log('here', this.text.innerHTML, this.prop);
 		SV.toArray(this.data).forEach((item) => {
 			SV.el('option', { parent: this.selectInput, innerHTML: SV.getProperty(item, this.prop) }); 
 		});

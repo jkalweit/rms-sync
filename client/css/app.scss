@@ -179,10 +179,8 @@ $input-height: $increment - $margin;
 }
 
 select {
-	width: calc(100% - #{(2 * $margin) - (2*$typeGrid)});
         height: $input-height;
 	padding-left: $typeGrid;
-	margin-left: $margin - $typeGrid;
 	margin-top: $margin/2;
 	margin-bottom: $margin/2;
 }

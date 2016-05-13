@@ -15,6 +15,7 @@ class SV {
 		return context.getElementById(id);
 	}
 	static getProperty(obj, path) {
+		if(!path) return obj;
 		return SV.getPropertyHelper(obj, path.split('.'));
 	}
 
