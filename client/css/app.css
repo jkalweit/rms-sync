@@ -35,48 +35,41 @@ body {
   color: rgba(0, 0, 0, 0.5); }
 
 .col {
-  overflow: hidden;
-  position: relative;
   box-sizing: border-box;
   float: left;
-  height: 100%;
+  height: calc(100% - 56px);
+  overflow-y: hidden;
   width: 280px;
   border-right: 1px solid rgba(0, 0, 0, 0.5);
   background-color: #FFF; }
   .col.wide {
     width: 392px; }
-  .col.right {
-    float: right;
-    border-right: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.5); }
-
-.scroll-x {
-  overflow-x: auto; }
-
-.scroll-y {
-  overflow-y: auto; }
 
 .header {
+  flex: 0 0 auto;
   height: 56px;
   line-height: 56px;
   padding-left: 16px;
+  padding-right: 16px;
   font-weight: bold; }
 
 .dark {
   background-color: #673AB7;
   color: rgba(255, 255, 255, 0.87); }
 
-.body {
-  top: 56px;
-  bottom: 56px; }
-
 .footer {
+  flex: 1 1 auto;
   height: 56px;
   line-height: 56px;
   bottom: 0;
   padding-left: 16px;
   background-color: #673AB7;
   color: #FFF; }
+
+.main-header {
+  height: 56px;
+  line-height: 56px;
+  box-sizing: border-box; }
 
 .light {
   background-color: #B39DDB;
@@ -87,26 +80,28 @@ body {
   line-height: 56px;
   width: 100%;
   padding: 0;
-  margin: 0; }
+  margin: 0;
+  display: flex;
+  flex-direction: horizontal; }
   .label-set .label {
     box-sizing: border-box;
     width: 125px;
+    flex: 0 0 auto;
     padding-left: 16px;
     display: inline-block; }
   .label-set input, .label-set select {
     box-sizing: border-box;
-    width: calc(100% - 125px - 16px);
+    flex: 1 1 auto;
+    margin: 4px 16px;
     display: inline-block;
-    padding: 8px; }
+    padding-left: 4px; }
 
 .shadow {
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
 
 .list {
   overflow-x: hidden;
-  overflow-y: auto;
-  height: 100%;
-  width: 100%; }
+  overflow-y: auto; }
   .list .item {
     box-sizing: border-box;
     border-bottom: 1px solid rgba(0, 0, 0, 0.5);
@@ -181,24 +176,6 @@ h6 {
   .dark > h6 {
     color: #FFF; }
 
-.has-header1 {
-  height: calc(100% - 56px); }
-
-.has-header2 {
-  height: calc(100% - 112px); }
-
-.has-header3 {
-  height: calc(100% - 168px); }
-
-.has-header4 {
-  height: calc(100% - 224px); }
-
-.has-header5 {
-  height: calc(100% - 280px); }
-
-.has-header6 {
-  height: calc(100% - 336px); }
-
 .btn {
   box-sizing: border-box;
   height: 56px;
@@ -207,8 +184,12 @@ h6 {
   font-weight: bold;
   color: #FFF;
   background-color: #2196F3;
-  margin: 4px;
-  text-align: center; }
+  margin: 4px 16px 4px 16px;
+  text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
 
 .bold {
   color: rgba(0, 0, 0, 0.67);
@@ -242,6 +223,33 @@ h6 {
 .modal .footer {
   margin-top: 1em;
   overflow: hidden; }
+
+.col-flex {
+  display: flex;
+  flex-direction: column; }
+
+.col-left {
+  float: left;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
+  background-color: #FFF; }
+
+.col-right {
+  float: right;
+  border-right: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.5); }
+
+.col-fill {
+  flex: 1 1 auto; }
+
+.col-nofill {
+  flex: 0 0 auto; }
+
+.scroll-x {
+  overflow-x: auto; }
+
+.scroll-y {
+  overflow-y: auto; }
 
 @font-face {
   font-family: 'Material Icons';

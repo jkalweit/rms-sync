@@ -13,18 +13,45 @@
 
 <script id="view" type="text/other">
 
-#ticketList:TicketList[col]
+#hub:EventHub
+#header:Header
+#ticketList:TicketList
 #ticketDetails:TicketDetails[col]
 #orderItemDetails:OrderItemDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 
-TicketList
-	#userSelect:Select({ label: 'Server',  prop: 'data.info.name' })
+
+EventHub
+
+RecTotals[header]
+	:style
+		margin-right: 16px;
+	#total:div$(data.totals.total)
+
+Header[main-header dark]
+	:style
+		height: 56px;
+		border-bottom: 1px solid #000;
+	#totals:RecTotals
+		style:
+			float: right;
+	#userSelect:Select({ prop: 'data.info.name' })[header col-nofill]
+		style:
+			width: 211px;
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
-	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name', addBtn: true }) 
+	#init:function
+		hub.on('ticketTotalsChanged', () => { 
+			var totals = RecUtils.getRecTotals(this.data);
+			this.data.merge({ totals: totals });
+		});
+	#render:function
+		this.totals.update(this.data);
+
+TicketList[col col-flex col-left]
+	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name', addBtn: true })[col-fill]
 		events:
 			selected(item): 
 				ticketDetails.update(item);
@@ -54,15 +81,30 @@ TicketList
 		ticketDetails.update(this.list.selected);
 
 Ticket[item]
-	#nameSpan$(data.name)[name]
+	#total[right]
+	#nameSpan$(data.name)
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 
+TicketTotals[header]
+	:style
+		border-top: 1px solid rgba(0,0,0,0.5);
+		font-size: 24px;
+	#total:div
+		style:
+			float: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 
-TicketDetails[col wide]
-	#header:SimpleHeader({ text: 'Ticket Details', close: true, del: true})
+TicketDetails[col col-flex wide]
+	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light]
 		events:
+			more:
+				this.showMore = !this.showMore;
+				this.render();
 			close:
 				this.close();
 			delete:
@@ -70,29 +112,58 @@ TicketDetails[col wide]
 					this.data.parent.remove(this.data.key);
 					this.close();
 				});
+	#more:TicketDetailsMore$(update=data)[col-nofill light]
+	#items:OrderItemList[col-fill]
+	#totals:TicketTotals[col-nofill]
+	#close:function
+			orderItemDetails.close();
+			this.update(null);
+	#add:function(menuItem)
+		if(!ticketDetails.data) {
+			console.log('no ticket selected');
+			return;
+		}
+		var newItem = { 
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			servedBy: window.recSettings.currentUser,
+			name: menuItem.name,
+			price: menuItem.price,
+			quantity: 1,
+			taxType: menuItem.taxType,
+			note: menuItem.note || '' 
+		};
+		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
+		ticketDetails.items.list.select(result.key);
+		hub.emit('ticketTotalsChanged', this.data);
+	#init:function
+			this.render();
+			hub.on('ticketTotalsChanged', (ticket) => {
+				ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
+			});
+	#render:function
+			this.node.style.display = this.data ? 'flex' : 'none';
+			this.more.node.style.display = this.showMore ? 'block' : 'none';
+			if(this.data) { 
+				this.header.text.innerHTML = this.data.name;
+				this.items.update(this.data.orderItems);
+				this.more.server.select(this.data.servedBy);
+				this.totals.update(this.data);
+			}
+
+TicketDetailsMore
 	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note' })$(update=data)
+	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
 	#server:Select({ label: 'Server', prop: 'data.info.name' })
 		events:
 			selected(value):
 				this.data.set('servedBy', value); 	
-	#items:OrderItemList
-	#close:function
-			orderItemDetails.close();
-			this.update(null);
-	#init:function
-			this.render();
-	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
-			if(this.data) { 
-				this.items.update(this.data.orderItems);
-				this.server.select(this.data.servedBy);
-			}
 
 
-
-OrderItemList
-	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem', addBtn: true })[has-header3]
+OrderItemList[col-flex]
+	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem', addBtn: true })[col-fill]
 		events:
 			selected(item): 
 				orderItemDetails.update(item);
@@ -127,7 +198,9 @@ OrderItemDetails[col wide]
 				this.close();
 			delete:
 				Modal.confirm('Delete?', this.data.name, () => {
-					this.data.parent.remove(this.data.key);
+					var ticket = this.data.parent.parent;
+					ticket.orderItems.remove(this.data.key);
+					hub.emit('ticketTotalsChanged', ticket);
 					this.close();
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
@@ -141,8 +214,8 @@ OrderItemDetails[col wide]
 	#render:function
 			this.node.style.display = this.data ? 'block' : 'none';
 	
-MenuCategories[col right]
-	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name', clearBtn: true }) 
+MenuCategories[col col-flex col-right]
+	#list:SearchList({ ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
 				menuItems.update(item.items);
@@ -164,29 +237,11 @@ MenuItemCategory[item]
 			() => { this.emit('selected', this.data); });
 
 
-MenuItems[col right]
-	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name', clearBtn: true })
+MenuItems[col col-flex col-right]
+	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
-				this.add(item);
-	#add:function(menuItem)
-		if(!ticketDetails.data) {
-			console.log('no ticket selected');
-			return;
-		}
-		var newItem = { 
-			key: SyncNode.guidShort(),
-			addedAt: new Date().toISOString(),
-			addedBy: window.recSettings.currentUser,
-			servedBy: window.recSettings.currentUser,
-			name: menuItem.name,
-			price: menuItem.price,
-			quantity: 1,
-			taxType: menuItem.taxType,
-			note: menuItem.note || '' 
-		};
-		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
-		ticketDetails.items.list.select(result.key);
+				ticketDetails.add(item);
 	#init:function
 		this.list.postFilter = (data) => {
 			return SV.filterMap(data, item => !item.isDisabled);
@@ -234,22 +289,65 @@ SV.onLoad(() => {
 			var rec = data.reconciliations[window.recSettings.selectedRecKey];
 			ticketList.update(rec.tickets);
 			menuCategories.update(data.menu.categories);			
+			header.update(rec);			
 		});
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			ticketDetails.server.update(users);
-			ticketList.userSelect.update(users);
-			ticketList.userSelect.select(window.recSettings.currentUser);
+			console.log('users', users);
+			ticketDetails.more.server.update(users);
+			header.userSelect.update(users);
+			header.userSelect.select(window.recSettings.currentUser);
 		});
 
 	
 		window.recSettings.on('updated', (data) => {
 			ticketList.userSelect.select(data.currentUser);
 		});
-
-
 });
+
+
+
+
+
+
+class RecUtils {
+	static getTicketTotals(ticket) {
+		var totals = {
+			food: 0,
+			tax: 0,
+			alcohol: 0,
+			total: 0
+		};
+
+		SV.toArray(ticket.orderItems).forEach((item) => {
+			var amount = item.price * item.quantity;
+			if(item.taxType === 'Included') {
+				totals.alcohol += amount;
+			} else  {
+				totals.food += amount;
+			}
+		});
+
+		totals.tax = totals.food * 0.09;
+		totals.total = totals.food + totals.tax + totals.alcohol;
+
+		return totals;
+	}
+	static getRecTotals(rec) {
+		var totals = { food: 0, tax: 0, alcohol: 0, total: 0 };
+		var tickets = SV.toArray(rec.tickets).forEach((ticket) => {
+			var ticketTotals = RecUtils.getTicketTotals(ticket);
+			totals.food += ticketTotals.food;
+			totals.tax += ticketTotals.tax;
+			totals.alcohol += ticketTotals.alcohol;
+			totals.total += ticketTotals.total;
+		});
+		return totals;
+	}
+
+}
+
 
 </script>
 </body>

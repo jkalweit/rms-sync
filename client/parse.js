@@ -366,12 +366,13 @@ function buildComponent(componentName, options) {
 					}
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
+					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;
 					console.log('style', style);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');
 						pair = pair.map((s) => s.trim());
-						el.style[pair[0]] = pair[1];
+						styleObj[pair[0]] = pair[1];
 					});
 
 				} else if(prop === 'events') {

@@ -10,15 +10,16 @@ Select[label-set]
 	#init:function(options)
 		this.prop = options.prop;
 		if(options.label) this.text.innerHTML = options.label;
+		else this.text.style.display = 'none';
 	#select:function(value)
 		this.selectInput.value = value;
 		this.selected = this.selectInput.value;
 	#render:function
 		var selected = this.selectInput.value;
 		this.selectInput.innerHTML = '';
-		console.log('here', this.text.innerHTML, this.prop);
 		SV.toArray(this.data).forEach((item) => {
-			SV.el('option', { parent: this.selectInput, innerHTML: SV.getProperty(item, this.prop) }); 
+			var value = this.prop ? SV.getProperty(item, this.prop) : item;
+			SV.el('option', { parent: this.selectInput, innerHTML: value }); 
 		});
 		this.selectInput.value = selected;
 		
@@ -36,7 +37,7 @@ ToggleButton[btn]
 		if(this.data) this.text.innerHTML = this.data[this.prop] ? this.trueText : this.falseText;
 
 
-SimpleHeader[header]
+SimpleHeader[header col-nofill]
 	#text:span
 	#add[touch material-icons] 'add'
 		events:
@@ -46,23 +47,28 @@ SimpleHeader[header]
 		events:
 			click: 
 				this.emit('close');
+	#more[touch material-icons] 'settings'
+		events:
+			click: 
+				this.emit('more');
 	#del[touch material-icons] 'delete'
 		events:
 			click: 
 				this.emit('delete');
 	#init:function(options) 
 		this.text.innerHTML = options.text;
-		if(!options.close)
-			this.close.style.display = 'none';	
-		if(!options.del)
-			this.del.style.display = 'none';	
 		if(!options.add)
 			this.add.style.display = 'none';	
+		if(!options.close)
+			this.close.style.display = 'none';	
+		if(!options.more)
+			this.more.style.display = 'none';	
+		if(!options.del)
+			this.del.style.display = 'none';	
 
 SearchHeader
 	:style 
 		border-bottom: 1px solid rgba(0,0,0,0.5);
-	#header[header] 'Search'
 	#newInput:input[input-test]
 		events:
 			keydown(e): 
@@ -83,12 +89,11 @@ SearchHeader
 			this.newInput.value = '';
 			this.emit('searchChanged', this.newInput.value);
 	#init:function(options)
-			if(options.text) this.header.innerHTML = options.text;
 			this.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
 			this.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
 
-SearchList
-	#header:SearchHeader({ text: 'Search', addBtn: true })
+SearchList[col-flex]
+	#header:SearchHeader({ addBtn: true })[col-noflex]
 		events:
 			add(value):
 				this.emit('add', value);
@@ -115,11 +120,11 @@ SearchList
 
 	#init:function(options)
 		this.searchProp = options.searchProp;
-		if(options.text) this.header.header.innerHTML = options.text;
 		this.header.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
 		this.header.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
 		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));
-		this.list.node.classList.add('has-header2');
+		this.list.node.classList.add('col-fill');
+		this.list.node.classList.add('scroll-y');
 		this.list.node.classList.add('list');
 		this.list.on('viewAdded', (view) => {
 			view.on('selected', (item) => {
