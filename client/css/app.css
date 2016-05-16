@@ -24,7 +24,6 @@ body {
   background-color: #CCC; }
 
 .touch {
-  float: right;
   width: 56px;
   height: 56px;
   line-height: 56px;
@@ -78,23 +77,25 @@ body {
 .label-set {
   height: 56px;
   line-height: 56px;
-  width: 100%;
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: horizontal; }
+  flex-direction: row; }
   .label-set .label {
     box-sizing: border-box;
     width: 125px;
     flex: 0 0 auto;
     padding-left: 16px;
     display: inline-block; }
-  .label-set input, .label-set select {
+  .label-set input, .label-set select, .label-set .value {
     box-sizing: border-box;
     flex: 1 1 auto;
     margin: 4px 16px;
-    display: inline-block;
-    padding-left: 4px; }
+    padding-left: 4px;
+    padding-right: 4px;
+    width: 100%; }
+  .label-set.number input, .label-set select, .label-set .value {
+    text-align: right; }
 
 .shadow {
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
@@ -113,20 +114,6 @@ body {
       background-color: #FFA; }
     .list .item .right {
       float: right; }
-
-.input-test {
-  width: calc(100% - 68px);
-  height: 40px;
-  padding-left: 4px;
-  margin-left: 12px;
-  margin-top: 8px;
-  margin-bottom: 8px; }
-
-select {
-  height: 40px;
-  padding-left: 4px;
-  margin-top: 8px;
-  margin-bottom: 8px; }
 
 h1 {
   font-size: 32px;
@@ -223,6 +210,30 @@ h6 {
 .modal .footer {
   margin-top: 1em;
   overflow: hidden; }
+
+.row {
+  min-height: 56px;
+  line-height: 56px;
+  box-sizing: border-box; }
+  .row input, .row select {
+    height: 40px;
+    padding-left: 4px;
+    margin-left: 8px;
+    margin-top: 8px;
+    margin-bottom: 8px; }
+
+.row-flex {
+  display: flex;
+  flex-direction: row; }
+
+.row-right {
+  float: right; }
+
+.row-fill {
+  flex: 1 1 auto; }
+
+.row-nofill {
+  flex: 0 0 auto; }
 
 .col-flex {
   display: flex;

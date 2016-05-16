@@ -37,21 +37,21 @@ ToggleButton[btn]
 		if(this.data) this.text.innerHTML = this.data[this.prop] ? this.trueText : this.falseText;
 
 
-SimpleHeader[header col-nofill]
-	#text:span
-	#add[touch material-icons] 'add'
+SimpleHeader[header col-nofill row row-flex]
+	#text:span[row-fill]
+	#add[row-nofill touch material-icons] 'add'
 		events:
 			click: 
 				this.emit('add');
-	#close[touch material-icons] 'done'
+	#close[row-nofill touch material-icons] 'done'
 		events:
 			click: 
 				this.emit('close');
-	#more[touch material-icons] 'settings'
+	#more[row-nofill touch material-icons] 'settings'
 		events:
 			click: 
 				this.emit('more');
-	#del[touch material-icons] 'delete'
+	#del[row-nofill touch material-icons] 'delete'
 		events:
 			click: 
 				this.emit('delete');
@@ -66,20 +66,20 @@ SimpleHeader[header col-nofill]
 		if(!options.del)
 			this.del.style.display = 'none';	
 
-SearchHeader
+SearchHeader[row row-flex]
 	:style 
 		border-bottom: 1px solid rgba(0,0,0,0.5);
-	#newInput:input[input-test]
+	#searchBox:input[row-fill]
 		events:
 			keydown(e): 
 				if(e.keyCode === 13) this.add();
 			keyup(e):
 				this.emit('searchChanged', this.newInput.value);
-	#addBtn:div[touch material-icons] 'add'
+	#addBtn:div[row-nofill touch material-icons] 'add'
 		events:
 			click: 
 				this.add();
-	#clearBtn:div[touch material-icons] 'clear'
+	#clearBtn:div[row-nofill touch material-icons] 'clear'
 		events:
 			click: 
 				this.clear();
@@ -89,8 +89,9 @@ SearchHeader
 			this.newInput.value = '';
 			this.emit('searchChanged', this.newInput.value);
 	#init:function(options)
-			this.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
-			this.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
+			if(!options.addBtn) this.addBtn.style.display = 'none';
+			if(!options.clearBtn) this.clearBtn.style.display = 'none';
+			if(!options.searchBox) this.searchBox.style.display = 'none';
 
 SearchList[col-flex]
 	#header:SearchHeader({ addBtn: true })[col-noflex]
@@ -120,6 +121,7 @@ SearchList[col-flex]
 
 	#init:function(options)
 		this.searchProp = options.searchProp;
+		this.header.searchBox.style.display = options.searchBox ? 'inline-block' : 'none';
 		this.header.addBtn.style.display = options.addBtn ? 'inline-block' : 'none';
 		this.header.clearBtn.style.display = options.clearBtn ? 'inline-block' : 'none';
 		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));

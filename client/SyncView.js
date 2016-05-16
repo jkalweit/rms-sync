@@ -247,7 +247,12 @@ class SV {
 		if(typeof number === 'undefined') {
 			return '';
 		}
-		return number.toFixed(precision);
+		return SV.numberWithCommas(number.toFixed(precision).toString());
+	}
+
+	static numberWithCommas(n) {
+	    var parts=n.toString().split(".");
+	    return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
 	}
 
 	static iconButton(icon, options) {
@@ -712,17 +717,26 @@ class Modal extends SyncView {
 		super();
 		this.node.className = 'modal';
 
-		this.mainView = SV.el('div', { parent: this.node, className: 'main-view' });
+		this.mainView = SV.el('div', { parent: this.node, className: 'main-view group' });
 	}
-	show() {
+	show(callback) {
+		if(callback) this.on('hide', callback);
 		this.node.style.display = 'initial';
 		document.body.style.overflowY = 'hidden';
 	}
 	hide() {
 		this.node.style.display = 'none';
 		document.body.style.overflowY = 'initial';	
+		this.emit('hide');
 	}
 	render() {
+	}
+
+	static showView(view) {
+		var modal = new Modal();
+		modal.mainView.appendChild(view.node);
+		document.body.appendChild(modal.node);
+		modal.show(() => { document.body.removeChild(modal.node); });
 	}
 
 	static showNotification(title, message) {

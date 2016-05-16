@@ -5,7 +5,9 @@ class Input extends SyncView {
 		super();
 
 		this.node.className = 'label-set';
-		this.options = options || {};
+		options = options || {};
+		this.options = options;
+
 
 		this.doFlash = true;
 		
@@ -13,17 +15,30 @@ class Input extends SyncView {
 			SV.el('span', { parent: this.node, innerHTML: this.options.label, className: 'label' });
 		}
 
+		if(options.number) {
+			this.options.validator = Input.NumberValidator;
+			this.options.parser = Input.NumberParser;
+			this.options.formatter = SV.formatCurrency;
+		}
+
 		var elem = this.options.isTextArea ? 'textarea' : 'input';
 		this.input = SV.el(elem, { parent: this.node,
 			events: { 
 				blur: () => {
 					var value = this.input.value;			
-					if(this.options.validator && !this.options.validator(value)) {
-						alert('Invalid value: "' + value + '"');
-						return;
+					if(this.options.validator) {
+							if(!this.options.validator(value)) {
+								alert('Invalid value: "' + value + '"');
+								return;
+							}
 					}				
 
-					if(this.options.parser) value = this.options.parser(value);
+					if(this.options.parser) { 
+							value = this.options.parser(value);
+							if(this.input.value !== value) {
+								this.input.value = this.options.formatter ? this.options.formatter(value) : value; 
+							}
+					}
 					if(this.data[this.options.prop] !== value) {
 						var oldValue = this.data[this.options.prop];
 						this.data.set(this.options.prop, value);
@@ -45,11 +60,14 @@ class Input extends SyncView {
 	static NumberValidator(val) {
 		if(typeof val === 'number') return true;
 		if(val.trim() == '') return true;
+		val = val.replace('$', '');
 		return !isNaN(parseFloat(val));
 	}
 	static NumberParser(val) {
 		if(typeof val === 'number') return val;
 		if(val.trim() == '') return 0;
+		val = val.replace(',', '');
+		val = val.replace('$', '');
 		return parseFloat(val);
 	}
 }
@@ -367,7 +385,6 @@ function buildComponent(componentName, options) {
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
 					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;
-					console.log('style', style);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');

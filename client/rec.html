@@ -24,34 +24,79 @@
 
 EventHub
 
+LabeledValue[label-set]
+	#label[label]
+	#value[value]
+	#init:function(options)
+		this.label.innerHTML = options.label;
+
+RecTotalsEdit
+	#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
+	#sales:LabeledValue({ label: 'Sales' })[number]
+	#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
+	#credit:Input({ label: 'Credit, no tips', prop: 'Credit', number: true })$(update=data)[number]
+	#creditTips:Input({ label: 'Credit Tips', prop: 'Credit Tips', number: true })$(update=data)[number]
+	#giftCards:Input({ label: 'Gift Cards', prop: 'giftCards', number: true })$(update=data)[number]
+	#payouts:Input({ label: 'Payouts', prop: 'Payouts', number: true })$(update=data)[number]
+	#total:LabeledValue({ label: 'Total' })[number]
+		style:
+			font-weight: bold;
+			font-size: 24px;
+	#render:function
+		this.total.value.innerHTML = SV.formatCurrency(this.data.beginning);
+		this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
+
+
+
+RecSettings
+	:h1 'Rec Settings'
+	#totals:RecTotalsEdit
+		style:
+			width: 50%;
+			float: left;
+	#render:function
+		this.totals.update(this.data)
+
 RecTotals[header]
 	:style
 		margin-right: 16px;
-	#total:div$(data.totals.total)
+	#total:div
+		style:
+			float: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.total);
 
-Header[main-header dark]
+Header[row dark]
 	:style
 		height: 56px;
 		border-bottom: 1px solid #000;
-	#totals:RecTotals
+	:div[row-nofill touch material-icons row-right] 'settings'
+		events:
+			click:
+				Modal.showView(recSettings);
+	#totals:RecTotals[row-right]
+	#userSelect:Select({ prop: 'data.info.name' })[row-nofill]
 		style:
-			float: right;
-	#userSelect:Select({ prop: 'data.info.name' })[header col-nofill]
-		style:
-			width: 211px;
+			width: 239px;
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
 	#init:function
+		this.recSettings = buildComponent('RecSettings');
 		hub.on('ticketTotalsChanged', () => { 
 			var totals = RecUtils.getRecTotals(this.data);
 			this.data.merge({ totals: totals });
 		});
 	#render:function
-		this.totals.update(this.data);
+		this.totals.update(this.data.totals);
+		this.recSettings.update(this.data.drawer);
+		if(this.test) return;
+		this.test = true;
+		Modal.showView(this.recSettings);
+		
 
 TicketList[col col-flex col-left]
-	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', sort: 'name', searchProp: 'name', addBtn: true })[col-fill]
+	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', searchBox: true, sort: 'name', searchProp: 'name', addBtn: true })[col-fill]
 		events:
 			selected(item): 
 				ticketDetails.update(item);
@@ -163,7 +208,7 @@ TicketDetailsMore
 
 
 OrderItemList[col-flex]
-	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem', addBtn: true })[col-fill]
+	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem' })[col-fill]
 		events:
 			selected(item): 
 				orderItemDetails.update(item);
@@ -215,7 +260,7 @@ OrderItemDetails[col wide]
 			this.node.style.display = this.data ? 'block' : 'none';
 	
 MenuCategories[col col-flex col-right]
-	#list:SearchList({ ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
+	#list:SearchList({ ctor: 'MenuItemCategory', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
 				menuItems.update(item.items);
@@ -238,7 +283,7 @@ MenuItemCategory[item]
 
 
 MenuItems[col col-flex col-right]
-	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
+	#list:SearchList({ text: 'Items', ctor: 'MenuItem', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
 				ticketDetails.add(item);
@@ -294,7 +339,6 @@ SV.onLoad(() => {
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			console.log('users', users);
 			ticketDetails.more.server.update(users);
 			header.userSelect.update(users);
 			header.userSelect.select(window.recSettings.currentUser);

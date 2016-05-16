@@ -41,7 +41,6 @@ body {
 }
 
 .touch {
-	float: right;
 	width: $increment;
 	height: $increment;
 	line-height: $increment;
@@ -110,11 +109,11 @@ $footer-height: $increment;
 .label-set {
 	height: $increment;
 	line-height: $increment;
-	width: 100%;
+	//width: 100%;
 	padding: 0;
 	margin: 0;
 	display: flex;
-	flex-direction: horizontal;
+	flex-direction: row;
 
 	.label {
 		box-sizing: border-box;
@@ -122,13 +121,21 @@ $footer-height: $increment;
 		flex: 0 0 auto;
 		padding-left: $margin;
 		display: inline-block;
+
 	}
-	input, select {
+	input, select, .value {
 		box-sizing: border-box;
 		flex: 1 1 auto;
 		margin: $typeGrid $margin;
-		display: inline-block;
+		//display: inline-block;
 		padding-left: $typeGrid;
+		padding-right: $typeGrid;
+		width: 100%;
+	}
+	
+
+	&.number input, select, .value {
+		text-align: right;
 	}
 }
 
@@ -166,24 +173,6 @@ $footer-height: $increment;
 		//margin: 0;
 	}
 
-}
-
-$button-width: $increment;
-$input-height: $increment - $margin;
-.input-test {
-	width: calc(100% - #{$increment + $margin - $typeGrid});
-    height: $input-height;
-	padding-left: $typeGrid;
-	margin-left: $margin - $typeGrid;
-	margin-top: $margin/2;
-	margin-bottom: $margin/2;
-}
-
-select {
-        height: $input-height;
-	padding-left: $typeGrid;
-	margin-top: $margin/2;
-	margin-bottom: $margin/2;
 }
 
 @mixin h-base {
@@ -268,6 +257,38 @@ select {
 	margin-top: 1em;
 	overflow: hidden;
 }
+
+$input-height: $increment - $margin;
+
+
+.row {
+	min-height: $increment;
+	line-height: $increment; 
+	box-sizing: border-box;
+
+	input, select {
+    		height: $input-height;
+		padding-left: $typeGrid;
+		margin-left: $margin - $typeGrid*2;
+		margin-top: $margin/2;
+		margin-bottom: $margin/2;
+	}
+}
+
+.row-flex {
+	display: flex;	
+	flex-direction: row;
+}
+.row-right {
+	float: right;
+}
+.row-fill {
+	flex: 1 1 auto;
+}
+.row-nofill {
+	flex: 0 0 auto;
+}
+
 
 .col-flex {
 	display: flex;	
