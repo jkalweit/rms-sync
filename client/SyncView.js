@@ -719,8 +719,7 @@ class Modal extends SyncView {
 
 		this.mainView = SV.el('div', { parent: this.node, className: 'main-view group' });
 	}
-	show(callback) {
-		if(callback) this.on('hide', callback);
+	show() {
 		this.node.style.display = 'initial';
 		document.body.style.overflowY = 'hidden';
 	}
@@ -732,11 +731,12 @@ class Modal extends SyncView {
 	render() {
 	}
 
-	static showView(view) {
+	static createModal(view) {
 		var modal = new Modal();
 		modal.mainView.appendChild(view.node);
+		view.on('close', () => { modal.hide(); });
 		document.body.appendChild(modal.node);
-		modal.show(() => { document.body.removeChild(modal.node); });
+		return modal;
 	}
 
 	static showNotification(title, message) {

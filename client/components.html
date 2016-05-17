@@ -74,7 +74,7 @@ SearchHeader[row row-flex]
 			keydown(e): 
 				if(e.keyCode === 13) this.add();
 			keyup(e):
-				this.emit('searchChanged', this.newInput.value);
+				this.emit('searchChanged', this.searchBox.value);
 	#addBtn:div[row-nofill touch material-icons] 'add'
 		events:
 			click: 
@@ -84,14 +84,15 @@ SearchHeader[row row-flex]
 			click: 
 				this.clear();
 	#add:function 
-			this.emit('add', this.newInput.value);
+			this.emit('add', this.searchBox.value);
 	#clear:function
-			this.newInput.value = '';
-			this.emit('searchChanged', this.newInput.value);
+			this.searchBox.value = '';
+			this.emit('searchChanged', this.searchBox.value);
 	#init:function(options)
 			if(!options.addBtn) this.addBtn.style.display = 'none';
 			if(!options.clearBtn) this.clearBtn.style.display = 'none';
 			if(!options.searchBox) this.searchBox.style.display = 'none';
+
 
 SearchList[col-flex]
 	#header:SearchHeader({ addBtn: true })[col-noflex]

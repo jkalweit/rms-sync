@@ -54,6 +54,10 @@ RecSettings
 		style:
 			width: 50%;
 			float: left;
+	#close[btn] 'Close'
+		events:
+			click:
+				this.emit('close');
 	#render:function
 		this.totals.update(this.data)
 
@@ -73,7 +77,7 @@ Header[row dark]
 	:div[row-nofill touch material-icons row-right] 'settings'
 		events:
 			click:
-				Modal.showView(recSettings);
+				this.recSettingsModal.show();
 	#totals:RecTotals[row-right]
 	#userSelect:Select({ prop: 'data.info.name' })[row-nofill]
 		style:
@@ -83,6 +87,7 @@ Header[row dark]
 				window.recSettings.set('currentUser', name);
 	#init:function
 		this.recSettings = buildComponent('RecSettings');
+		this.recSettingsModal = Modal.createModal(this.recSettings);
 		hub.on('ticketTotalsChanged', () => { 
 			var totals = RecUtils.getRecTotals(this.data);
 			this.data.merge({ totals: totals });
@@ -90,9 +95,6 @@ Header[row dark]
 	#render:function
 		this.totals.update(this.data.totals);
 		this.recSettings.update(this.data.drawer);
-		if(this.test) return;
-		this.test = true;
-		Modal.showView(this.recSettings);
 		
 
 TicketList[col col-flex col-left]
@@ -124,6 +126,9 @@ TicketList[col col-flex col-left]
 	#render:function 
 		this.list.update(this.data);
 		ticketDetails.update(this.list.selected);
+		if(this.test) return;
+		this.test = true;
+		this.list.select(SV.toArray(this.data)[0].key);
 
 Ticket[item]
 	#total[right]
@@ -157,7 +162,8 @@ TicketDetails[col col-flex wide]
 					this.data.parent.remove(this.data.key);
 					this.close();
 				});
-	#more:TicketDetailsMore$(update=data)[col-nofill light]
+	#details:TicketDetailsMore$(update=data)[col-nofill]
+	#moreEdit:TicketDetailsMoreEdit$(update=data)[col-nofill light]
 	#items:OrderItemList[col-fill]
 	#totals:TicketTotals[col-nofill]
 	#close:function
@@ -189,15 +195,23 @@ TicketDetails[col col-flex wide]
 			});
 	#render:function
 			this.node.style.display = this.data ? 'flex' : 'none';
-			this.more.node.style.display = this.showMore ? 'block' : 'none';
+			//this.more.node.style.display = this.showMore ? 'none' : 'block';
+			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
 			if(this.data) { 
 				this.header.text.innerHTML = this.data.name;
 				this.items.update(this.data.orderItems);
-				this.more.server.select(this.data.servedBy);
+				this.moreEdit.server.select(this.data.servedBy);
 				this.totals.update(this.data);
 			}
 
-TicketDetailsMore
+
+TicketDetailsMore[row]
+	#server
+	#note$(data.note)
+	#render:function
+		this.server.innerHTML = 'Served by ' + this.data.servedBy;
+
+TicketDetailsMoreEdit
 	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note' })$(update=data)
 	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
@@ -222,6 +236,8 @@ OrderItemList[col-flex]
 			options: {} };
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
 		this.list.select(result.key);
+	#init:function
+		this.list.header.node.style.display = 'none';
 	#render:function 
 		this.list.update(this.data);
 		orderItemDetails.update(this.list.selected);
@@ -268,6 +284,7 @@ MenuCategories[col col-flex col-right]
 				this.list.clearSearch();
 				this.add(value);
 	#init:function
+		this.list.header.node.style.display = 'none';
 		this.list.postFilter = (data) => {
 			return SV.filterMap(data, item => !item.isDisabled);
 		}
@@ -339,7 +356,7 @@ SV.onLoad(() => {
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
-			ticketDetails.more.server.update(users);
+			ticketDetails.moreEdit.server.update(users);
 			header.userSelect.update(users);
 			header.userSelect.select(window.recSettings.currentUser);
 		});

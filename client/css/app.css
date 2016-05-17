@@ -230,7 +230,8 @@ h6 {
   float: right; }
 
 .row-fill {
-  flex: 1 1 auto; }
+  flex: 1 1 auto;
+  width: 100%; }
 
 .row-nofill {
   flex: 0 0 auto; }
