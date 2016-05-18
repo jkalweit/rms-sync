@@ -2,6 +2,7 @@
 <head>
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/bower_components/moment/moment.js"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
 <script type="text/javascript" src="/SyncNodeSocket.js"></script>
 <script type="text/javascript" src="/SyncView.js"></script>
@@ -29,6 +30,22 @@ LabeledValue[label-set]
 	#value[value]
 	#init:function(options)
 		this.label.innerHTML = options.label;
+
+
+
+TableSelect[col col-flex]
+	#list[col-fill list]
+	#init:function
+		var tables = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '2-1', '2-2', '2-3', '2-4', 'Bar', 'Deck', 'Other'];
+		tables.forEach((table) => {
+			var item = buildComponent('Table');
+			item.update({ name: table });
+			this.list.appendChild(item.node);
+		});
+
+Table[item]
+	#nameSpan$(data.name)
+
 
 RecTotalsEdit
 	#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
@@ -121,23 +138,44 @@ TicketList[col col-flex col-left]
 			paymentStatus: 'Unpaid',
 			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
 		};
+		console.log('date', new Date(), new Date().toISOString());
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
 		this.list.select(result.key);
+	#init:function
+		this.tableSelect = buildComponent('TableSelect');
+		this.tableSelectModal = Modal.createModal(this.tableSelect);
 	#render:function 
 		this.list.update(this.data);
 		ticketDetails.update(this.list.selected);
 		if(this.test) return;
 		this.test = true;
 		this.list.select(SV.toArray(this.data)[0].key);
+		this.tableSelectModal.show();
 
-Ticket[item]
+Ticket[item tight]
 	#total[right]
 	#nameSpan$(data.name)
+	#lastOrderTime[italic margin1]
+		style:
+			color: rgba(0,0,0,0.5);
+	#updateLastOrderTime:function
+		var lastOrderItem;
+		SV.toArray(this.data.orderItems).forEach((orderItem) => {
+			if(!lastOrderItem || orderItem.addedAt > lastOrderItem.addedAt) {
+				lastOrderItem = orderItem;
+			}
+		});
+		this.lastOrderTime.innerHTML = lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+		if(!this.lastOrderTimeTimer) {
+			this.updateLastOrderTime();
+			this.lastOrderTimeTimer = setInterval(() => { this.updateLastOrderTime(); }, 30000);
+		}
+
 
 TicketTotals[header]
 	:style
@@ -150,7 +188,7 @@ TicketTotals[header]
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 
 TicketDetails[col col-flex wide]
-	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light]
+	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light border-bottom]
 		events:
 			more:
 				this.showMore = !this.showMore;
@@ -162,8 +200,8 @@ TicketDetails[col col-flex wide]
 					this.data.parent.remove(this.data.key);
 					this.close();
 				});
-	#details:TicketDetailsMore$(update=data)[col-nofill]
-	#moreEdit:TicketDetailsMoreEdit$(update=data)[col-nofill light]
+	#details:TicketDetailsMore[col-nofill]
+	#moreEdit:TicketDetailsMoreEdit[col-nofill light]
 	#items:OrderItemList[col-fill]
 	#totals:TicketTotals[col-nofill]
 	#close:function
@@ -195,25 +233,44 @@ TicketDetails[col col-flex wide]
 			});
 	#render:function
 			this.node.style.display = this.data ? 'flex' : 'none';
-			//this.more.node.style.display = this.showMore ? 'none' : 'block';
+			this.details.node.style.display = this.showMore ? 'none' : 'block';
 			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
 			if(this.data) { 
+				console.log('hereeeee');
 				this.header.text.innerHTML = this.data.name;
 				this.items.update(this.data.orderItems);
+				this.details.update(this.data);
+				this.moreEdit.update(this.data);
 				this.moreEdit.server.select(this.data.servedBy);
 				this.totals.update(this.data);
 			}
 
 
-TicketDetailsMore[row]
-	#server
-	#note$(data.note)
+TicketDetailsMore
+	:style
+		color: rgba(0,0,0,0.7);
+		border-bottom: 1px solid rgba(0,0,0,0.5);
+	#addedAt[row tight right margin1]
+	#addedBy[row tight margin1]
+	#server[row tight margin1]
+	#note$(data.note)[row tight margin2 italic whitespace-pre]
+	#updateTime:function
+		console.log('addedAt', this.data.addedAt);
+		this.addedBy.innerHTML = 'Added by ' + this.data.servedBy + ' ' + moment(this.data.addedAt).from(moment());
+	#init:function
 	#render:function
+		console.log('data', this.data);
 		this.server.innerHTML = 'Served by ' + this.data.servedBy;
+		this.addedAt.innerHTML = moment(this.data.addedAt).format('h:mma');
+		this.note.style.display = this.data.note ? 'flex' : 'none';
+		this.updateTime();
+		if(!this.timer) {
+			this.timer = setInterval(() => { this.updateTime(); }, 30000);
+		}
 
 TicketDetailsMoreEdit
 	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
-	#noteInput:Input({ label: 'Note', prop: 'note' })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
 	#server:Select({ label: 'Server', prop: 'data.info.name' })
 		events:
@@ -242,14 +299,18 @@ OrderItemList[col-flex]
 		this.list.update(this.data);
 		orderItemDetails.update(this.list.selected);
 
-OrderItem[item]
+OrderItem[item tight]
 	#price[right]
-	#nameSpan$(data.name)[name]
+	#nameSpan[name]
+	#note$(data.note)[italic whitespace-pre margin2]
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
 	#render:function()
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
+		this.nameSpan.innerHTML = this.data.name;
+		this.note.style.display	= this.data.note ? 'flex' : 'none';
+
 
 
 OrderItemDetails[col wide]
@@ -265,9 +326,9 @@ OrderItemDetails[col wide]
 					this.close();
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
-	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#quantityInput:Input({ prop: 'quantity', label: 'Quantity' })$(update=data)
-	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note', isTextArea: true })$(update=data)
+	#quantityInput:Input({ prop: 'quantity', label: 'Quantity', number: true  })$(update=data)[number]
+	#priceInput:Input({ prop: 'price', label: 'Price', number: true  })$(update=data)[number]
 	#close:function
 			this.update(null);
 	#init:function

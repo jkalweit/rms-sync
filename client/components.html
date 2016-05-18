@@ -43,18 +43,18 @@ SimpleHeader[header col-nofill row row-flex]
 		events:
 			click: 
 				this.emit('add');
-	#close[row-nofill touch material-icons] 'done'
-		events:
-			click: 
-				this.emit('close');
-	#more[row-nofill touch material-icons] 'settings'
-		events:
-			click: 
-				this.emit('more');
 	#del[row-nofill touch material-icons] 'delete'
 		events:
 			click: 
 				this.emit('delete');
+	#more[row-nofill touch material-icons] 'settings'
+		events:
+			click: 
+				this.emit('more');
+	#close[row-nofill touch material-icons] 'done'
+		events:
+			click: 
+				this.emit('close');
 	#init:function(options) 
 		this.text.innerHTML = options.text;
 		if(!options.add)

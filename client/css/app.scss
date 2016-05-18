@@ -9,7 +9,15 @@ $color-secondary: palette(Deep Purple, 700);
 $color-light: palette(Deep Purple, 200);
 $color-dark: palette(Deep Purple, 900);
 
-
+/*
+*,
+*::before,
+*::after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+*/
 
 .test {
 	background-color: #FFD;
@@ -123,7 +131,7 @@ $footer-height: $increment;
 		display: inline-block;
 
 	}
-	input, select, .value {
+	input, textarea, select, .value {
 		box-sizing: border-box;
 		flex: 1 1 auto;
 		margin: $typeGrid $margin;
@@ -143,36 +151,47 @@ $footer-height: $increment;
 	box-shadow: 0px 2px 3px rgba(0,0,0,.5);
 }
 
-.list {
+.italic {
+	font-style: italic;
+}
 
+.whitespace-pre {
+	white-space: pre;
+}
+
+.right {
+	float: right;
+}
+
+.border-bottom {
+	border-bottom: 1px solid rgba(0,0,0,0.35);
+}
+
+.list {
 	overflow-x: hidden;
 	overflow-y: auto;
-	//height: 100%;
-	//width: 100%;
-
 
 	.item {
-		box-sizing: border-box;
+		box-sizing: padding-box;
 		border-bottom: 1px solid rgba(0,0,0,0.5);
-		height: $increment;
+		min-height: $increment;
 		line-height: $increment;
 		padding-left: $margin;
 		padding-right: $margin;
 
 		&.selected {
 			background-color: #FFA;
-			//box-shadow: 0px 2px 3px rgba(0,0,0,.5);
+		}
+
+		&.tight {
+			min-height: $increment/2;
+			line-height: $increment/2;
 		}
 
 		.right {
 			float: right;
 		}
 	}
-
-	.btn {
-		//margin: 0;
-	}
-
 }
 
 @mixin h-base {
@@ -192,11 +211,17 @@ $footer-height: $increment;
 	}
 }
 
-//@for $i from 1 through 6 {
-//	.has-header#{$i} {
-//		height: calc(100% - #{$i*$header-height});
-//	}
-//}
+
+
+@for $i from 1 through 6 {
+	.margin#{$i} {
+		margin-left: #{$margin*$i};
+	}
+	.margin#{$i}.right {
+		margin-left: 0;
+		margin-right: #{$margin*$i};
+	}
+}
 
 @mixin no-select {
 	-webkit-user-select: none;
@@ -264,7 +289,7 @@ $input-height: $increment - $margin;
 .row {
 	min-height: $increment;
 	line-height: $increment; 
-	box-sizing: border-box;
+	box-sizing: padding-box;
 
 	input, select {
     		height: $input-height;
@@ -272,6 +297,11 @@ $input-height: $increment - $margin;
 		margin-left: $margin - $typeGrid*2;
 		margin-top: $margin/2;
 		margin-bottom: $margin/2;
+	}
+	
+	&.tight {
+		min-height: $increment/2;
+		line-height: $header-height/2;
 	}
 }
 

@@ -2,6 +2,15 @@
  * google-material-color v1.2.6
  * https://github.com/danlevan/google-material-color
  */
+/*
+*,
+*::before,
+*::after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+*/
 .test {
   background-color: #FFD;
   border: 1px solid #000; }
@@ -87,7 +96,7 @@ body {
     flex: 0 0 auto;
     padding-left: 16px;
     display: inline-block; }
-  .label-set input, .label-set select, .label-set .value {
+  .label-set input, .label-set textarea, .label-set select, .label-set .value {
     box-sizing: border-box;
     flex: 1 1 auto;
     margin: 4px 16px;
@@ -100,18 +109,33 @@ body {
 .shadow {
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
 
+.italic {
+  font-style: italic; }
+
+.whitespace-pre {
+  white-space: pre; }
+
+.right {
+  float: right; }
+
+.border-bottom {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35); }
+
 .list {
   overflow-x: hidden;
   overflow-y: auto; }
   .list .item {
-    box-sizing: border-box;
+    box-sizing: padding-box;
     border-bottom: 1px solid rgba(0, 0, 0, 0.5);
-    height: 56px;
+    min-height: 56px;
     line-height: 56px;
     padding-left: 16px;
     padding-right: 16px; }
     .list .item.selected {
       background-color: #FFA; }
+    .list .item.tight {
+      min-height: 28px;
+      line-height: 28px; }
     .list .item .right {
       float: right; }
 
@@ -162,6 +186,48 @@ h6 {
   margin-top: 8px; }
   .dark > h6 {
     color: #FFF; }
+
+.margin1 {
+  margin-left: 16px; }
+
+.margin1.right {
+  margin-left: 0;
+  margin-right: 16px; }
+
+.margin2 {
+  margin-left: 32px; }
+
+.margin2.right {
+  margin-left: 0;
+  margin-right: 32px; }
+
+.margin3 {
+  margin-left: 48px; }
+
+.margin3.right {
+  margin-left: 0;
+  margin-right: 48px; }
+
+.margin4 {
+  margin-left: 64px; }
+
+.margin4.right {
+  margin-left: 0;
+  margin-right: 64px; }
+
+.margin5 {
+  margin-left: 80px; }
+
+.margin5.right {
+  margin-left: 0;
+  margin-right: 80px; }
+
+.margin6 {
+  margin-left: 96px; }
+
+.margin6.right {
+  margin-left: 0;
+  margin-right: 96px; }
 
 .btn {
   box-sizing: border-box;
@@ -214,13 +280,16 @@ h6 {
 .row {
   min-height: 56px;
   line-height: 56px;
-  box-sizing: border-box; }
+  box-sizing: padding-box; }
   .row input, .row select {
     height: 40px;
     padding-left: 4px;
     margin-left: 8px;
     margin-top: 8px;
     margin-bottom: 8px; }
+  .row.tight {
+    min-height: 28px;
+    line-height: 28px; }
 
 .row-flex {
   display: flex;
