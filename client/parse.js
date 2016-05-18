@@ -378,10 +378,12 @@ function buildComponent(componentName, options) {
 				var prop = getProp(trimmed);
 				if(prop === 'style') {
 					var style = getCode(trimmed);
-					while(i+1 < lines.length && numTabs(lines[i+1]) > 1) {
+					while(i+1 < lines.length && numTabs(lines[i+1]) > 2) {
 						i = i+1;
 						style += lines[i] + '\n';
 					}
+
+					if(id === 'closeBtn') console.log('style', id, style);
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
 					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;

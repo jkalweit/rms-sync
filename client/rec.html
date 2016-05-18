@@ -33,17 +33,42 @@ LabeledValue[label-set]
 
 
 
-TableSelect[col col-flex]
-	#list[col-fill list]
+TableSelect
+	#header[header] 'Select a Table'
+	#lists[group]
+		style:
+			border: 1px solid rgba(0,0,0,0.5);
+	#closeBtn[btn group] 'Cancel'
+		style:
+			clear: both;
+			margin-top: 2em;
+		events:
+			click:
+				this.emit('close');
 	#init:function
-		var tables = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '2-1', '2-2', '2-3', '2-4', 'Bar', 'Deck', 'Other'];
-		tables.forEach((table) => {
+		var tables1 = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', 'Bar'];
+		var tables2 = ['2-1', '2-2', '2-3', '2-4', '2-5', 'Deck', 'Other'];
+		this.list1 = SV.el('div', { parent: this.lists, className: 'col-left list',
+			style: { width: '50%' }});
+		tables1.forEach((table) => {
 			var item = buildComponent('Table');
+			item.on('selected', (name) => { this.emit('selected', name); });
 			item.update({ name: table });
-			this.list.appendChild(item.node);
+			this.list1.appendChild(item.node);
+		});
+		this.list2 = SV.el('div', { parent: this.lists, className: 'col-left list',
+			style: { width: '50%' }});
+		tables2.forEach((table) => {
+			var item = buildComponent('Table');
+			item.on('selected', (name) => { this.emit('selected', name); });
+			item.update({ name: table });
+			this.list2.appendChild(item.node);
 		});
 
 Table[item]
+	:events
+		click:
+			this.emit('selected', this.data.name);
 	#nameSpan$(data.name)
 
 
@@ -134,15 +159,22 @@ TicketList[col col-flex col-left]
 			servedBy: window.recSettings.currentUser,
 			name: name,
 			table: '',
+			isTogo: false,
 			orderItems: {},
 			paymentStatus: 'Unpaid',
 			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
 		};
-		console.log('date', new Date(), new Date().toISOString());
-		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		this.list.select(result.key);
+		this.itemToAdd = newItem;
+		this.tableSelectModal.show();
 	#init:function
 		this.tableSelect = buildComponent('TableSelect');
+		this.tableSelect.on('selected', (table) => {
+			this.tableSelectModal.hide();
+			var newItem = this.itemToAdd;
+			newItem.table = table;		
+			var result = this.data.set(newItem.key, newItem)[newItem.key];
+			this.list.select(result.key);
+		});
 		this.tableSelectModal = Modal.createModal(this.tableSelect);
 	#render:function 
 		this.list.update(this.data);
@@ -150,29 +182,23 @@ TicketList[col col-flex col-left]
 		if(this.test) return;
 		this.test = true;
 		this.list.select(SV.toArray(this.data)[0].key);
-		this.tableSelectModal.show();
 
 Ticket[item tight]
 	#total[right]
-	#nameSpan$(data.name)
+	#nameSpan
 	#lastOrderTime[italic margin1]
 		style:
 			color: rgba(0,0,0,0.5);
 	#updateLastOrderTime:function
-		var lastOrderItem;
-		SV.toArray(this.data.orderItems).forEach((orderItem) => {
-			if(!lastOrderItem || orderItem.addedAt > lastOrderItem.addedAt) {
-				lastOrderItem = orderItem;
-			}
-		});
-		this.lastOrderTime.innerHTML = lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
+		this.lastOrderTime.innerHTML = RecUtils.getLastOrderTime(this.data.orderItems);
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
+		this.updateLastOrderTime();
 		if(!this.lastOrderTimeTimer) {
-			this.updateLastOrderTime();
 			this.lastOrderTimeTimer = setInterval(() => { this.updateLastOrderTime(); }, 30000);
 		}
 
@@ -236,8 +262,7 @@ TicketDetails[col col-flex wide]
 			this.details.node.style.display = this.showMore ? 'none' : 'block';
 			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
 			if(this.data) { 
-				console.log('hereeeee');
-				this.header.text.innerHTML = this.data.name;
+				this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">${this.data.table}</span> ${this.data.name}`;
 				this.items.update(this.data.orderItems);
 				this.details.update(this.data);
 				this.moreEdit.update(this.data);
@@ -246,21 +271,19 @@ TicketDetails[col col-flex wide]
 			}
 
 
-TicketDetailsMore
+TicketDetailsMore[small-text]
 	:style
 		color: rgba(0,0,0,0.7);
 		border-bottom: 1px solid rgba(0,0,0,0.5);
 	#addedAt[row tight right margin1]
 	#addedBy[row tight margin1]
-	#server[row tight margin1]
+	#lastServed[row tight margin1]
 	#note$(data.note)[row tight margin2 italic whitespace-pre]
 	#updateTime:function
-		console.log('addedAt', this.data.addedAt);
 		this.addedBy.innerHTML = 'Added by ' + this.data.servedBy + ' ' + moment(this.data.addedAt).from(moment());
-	#init:function
+		this.lastServed.innerHTML = 'Last served: ' + RecUtils.getLastOrderTime(this.data.orderItems); 
 	#render:function
 		console.log('data', this.data);
-		this.server.innerHTML = 'Served by ' + this.data.servedBy;
 		this.addedAt.innerHTML = moment(this.data.addedAt).format('h:mma');
 		this.note.style.display = this.data.note ? 'flex' : 'none';
 		this.updateTime();
@@ -269,6 +292,10 @@ TicketDetailsMore
 		}
 
 TicketDetailsMoreEdit
+	#table[btn]$(data.table)
+		events:
+			click:
+				this.tableSelectModal.show();
 	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
@@ -276,6 +303,16 @@ TicketDetailsMoreEdit
 		events:
 			selected(value):
 				this.data.set('servedBy', value); 	
+	#init:function
+		this.tableSelect = buildComponent('TableSelect');
+		this.tableSelect.on('selected', (table) => {
+			console.log('hererrererere', table);
+			this.tableSelectModal.hide();
+			this.data.set('table', table);
+		});
+		this.tableSelectModal = Modal.createModal(this.tableSelect);
+	#render:function
+		this.togo.node.classList.toggle('warning', this.data.isTogo);
 
 
 OrderItemList[col-flex]
@@ -434,6 +471,21 @@ SV.onLoad(() => {
 
 
 class RecUtils {
+	static getLastOrderItem(orderItems) {
+		var lastOrderItem;
+		SV.toArray(orderItems).forEach((orderItem) => {
+			if(!lastOrderItem || orderItem.addedAt > lastOrderItem.addedAt) {
+				lastOrderItem = orderItem;
+			}
+		});
+		return lastOrderItem;
+	}
+
+	static getLastOrderTime(orderItems) {
+		var lastOrderItem = RecUtils.getLastOrderItem(orderItems);
+		return lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
+	}
+
 	static getTicketTotals(ticket) {
 		var totals = {
 			food: 0,

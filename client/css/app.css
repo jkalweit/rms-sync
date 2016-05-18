@@ -61,10 +61,6 @@ body {
   padding-right: 16px;
   font-weight: bold; }
 
-.dark {
-  background-color: #673AB7;
-  color: rgba(255, 255, 255, 0.87); }
-
 .footer {
   flex: 1 1 auto;
   height: 56px;
@@ -105,21 +101,6 @@ body {
     width: 100%; }
   .label-set.number input, .label-set select, .label-set .value {
     text-align: right; }
-
-.shadow {
-  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
-
-.italic {
-  font-style: italic; }
-
-.whitespace-pre {
-  white-space: pre; }
-
-.right {
-  float: right; }
-
-.border-bottom {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.35); }
 
 .list {
   overflow-x: hidden;
@@ -331,6 +312,40 @@ h6 {
 
 .scroll-y {
   overflow-y: auto; }
+
+.shadow {
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
+
+.italic {
+  font-style: italic; }
+
+.whitespace-pre {
+  white-space: pre; }
+
+.small-text {
+  font-size: 12px; }
+
+.right {
+  float: right; }
+
+.dark {
+  background-color: #673AB7;
+  color: rgba(255, 255, 255, 0.87); }
+
+.error {
+  background-color: #E53935;
+  color: white; }
+
+.warning {
+  background-color: #FDD835;
+  color: black; }
+
+.ok {
+  background-color: #43A047;
+  color: white; }
+
+.border-bottom {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35); }
 
 @font-face {
   font-family: 'Material Icons';
