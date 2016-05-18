@@ -18,8 +18,8 @@
 #itemDetails:MenuItemDetails[col]
 
 
-MenuItemCategoryList
-	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', sort: 'name', searchProp: 'name' }) 
+MenuItemCategoryList[col col-left col-flex]
+	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
 		events:
 			selected(item): 
 				categoryDetails.update(item);
@@ -43,7 +43,7 @@ MenuItemCategoryList
 		if(!this.list.selected) this.list.select(SV.toArray(this.data)[0].key);
 		categoryDetails.update(this.list.selected);
 
-MenuItemCategory[item]
+MenuItemCategory[item tight]
 	#nameSpan$(data.name)[name]
 	#init:function
 		this.node.addEventListener('click', 
@@ -52,7 +52,7 @@ MenuItemCategory[item]
 		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 
 
-MenuItemCategoryDetails[col wide]
+MenuItemCategoryDetails[col col-left col-flex wide]
 	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
 		events:
 			close:
@@ -64,7 +64,7 @@ MenuItemCategoryDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#disableToggle:ToggleButton({ prop: 'isDisabled' })$(update=data)
+	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
 	#items:MenuItemList
 	#close:function
 			itemDetails.close();
@@ -72,11 +72,11 @@ MenuItemCategoryDetails[col wide]
 	#init:function
 			this.render();
 	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
+			this.node.style.display = this.data ? 'flex' : 'none';
 			if(this.data) this.items.update(this.data.items);
 
-MenuItemList
-	#list:SearchList({ text: 'Items', ctor: 'MenuItem', sort: 'name', searchProp: 'name' })[has-header3]
+MenuItemList[col-fill col-flex]
+	#list:SearchList({ text: 'Items', ctor: 'MenuItem', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
 		events:
 			selected(item): 
 				itemDetails.update(item);

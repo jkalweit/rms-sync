@@ -4,7 +4,7 @@ class Input extends SyncView {
 	constructor(options) {
 		super();
 
-		this.node.className = 'label-set';
+		this.node.className = 'label-set col-nofill';
 		options = options || {};
 		this.options = options;
 
@@ -31,7 +31,7 @@ class Input extends SyncView {
 								alert('Invalid value: "' + value + '"');
 								return;
 							}
-					}				
+					}
 
 					if(this.options.parser) { 
 							value = this.options.parser(value);

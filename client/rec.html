@@ -190,7 +190,7 @@ Ticket[item tight]
 		style:
 			color: rgba(0,0,0,0.5);
 	#updateLastOrderTime:function
-		this.lastOrderTime.innerHTML = RecUtils.getLastOrderTime(this.data.orderItems);
+		this.lastOrderTime.innerHTML = RecUtils.getLastOrderTimeFriendly(this.data.orderItems);
 	#init:function
 		this.node.addEventListener('click', 
 			() => { this.emit('selected', this.data); });
@@ -198,6 +198,7 @@ Ticket[item tight]
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
 		this.updateLastOrderTime();
+		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		if(!this.lastOrderTimeTimer) {
 			this.lastOrderTimeTimer = setInterval(() => { this.updateLastOrderTime(); }, 30000);
 		}
@@ -206,15 +207,42 @@ Ticket[item tight]
 TicketTotals[header]
 	:style
 		border-top: 1px solid rgba(0,0,0,0.5);
+		padding-left: 0;
 		font-size: 24px;
 	#total:div
 		style:
 			float: right;
+	#payment[touch material-icons]
+		events:
+			click:
+				this.cyclePaymentStatus();
+	#cyclePaymentStatus:function
+		var newStatus;
+		switch(this.data.paymentStatus) {
+			case 'Unpaid':
+				newStatus = 'Credit Card';
+				break;
+			//case 'Credit Card':
+			//	newStatus = 'Cash';
+			//	break;
+			default:
+				newStatus = 'Unpaid';
+		}
+		this.data.set('paymentStatus', newStatus);
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
-
+		this.payment.style.color = RecUtils.isTicketPaid(this.data) ? '#00F' : 'rgba(0,0,0,0.5)';
+		var icon;
+		switch(this.data.paymentStatus) {
+			case 'Cash':
+				icon = 'local_atm';
+				break;
+			default:
+				icon = 'credit_card';
+		}
+		this.payment.innerHTML = icon;
 TicketDetails[col col-flex wide]
-	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light border-bottom]
+	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light border-bottom tight]
 		events:
 			more:
 				this.showMore = !this.showMore;
@@ -262,7 +290,9 @@ TicketDetails[col col-flex wide]
 			this.details.node.style.display = this.showMore ? 'none' : 'block';
 			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
 			if(this.data) { 
-				this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">${this.data.table}</span> ${this.data.name}`;
+				this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">
+												${this.data.table}</span> ${this.data.name}
+												<br/><span style="font-weight: normal;" class="small-text">${ moment(this.data.addedAt).format('h:mma')} ${this.data.servedBy}</span>`;
 				this.items.update(this.data.orderItems);
 				this.details.update(this.data);
 				this.moreEdit.update(this.data);
@@ -275,16 +305,14 @@ TicketDetailsMore[small-text]
 	:style
 		color: rgba(0,0,0,0.7);
 		border-bottom: 1px solid rgba(0,0,0,0.5);
-	#addedAt[row tight right margin1]
-	#addedBy[row tight margin1]
+	#lastServedTime[row tight right margin1]
 	#lastServed[row tight margin1]
 	#note$(data.note)[row tight margin2 italic whitespace-pre]
 	#updateTime:function
-		this.addedBy.innerHTML = 'Added by ' + this.data.servedBy + ' ' + moment(this.data.addedAt).from(moment());
-		this.lastServed.innerHTML = 'Last served: ' + RecUtils.getLastOrderTime(this.data.orderItems); 
+		this.lastServed.innerHTML = 'Last order: ' + RecUtils.getLastOrderTimeFriendly(this.data.orderItems); 
 	#render:function
 		console.log('data', this.data);
-		this.addedAt.innerHTML = moment(this.data.addedAt).format('h:mma');
+		this.lastServedTime.innerHTML = RecUtils.getLastOrderTime(this.data.orderItems); 
 		this.note.style.display = this.data.note ? 'flex' : 'none';
 		this.updateTime();
 		if(!this.timer) {
@@ -292,17 +320,20 @@ TicketDetailsMore[small-text]
 		}
 
 TicketDetailsMoreEdit
+	#addedBy[row tight small-text margin1]
 	#table[btn]$(data.table)
 		events:
 			click:
 				this.tableSelectModal.show();
+	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
 	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
-	#togo:ToggleButton({ prop: 'isTogo', trueText: '**** TOGO ****', falseText: 'Eat In' })$(update=data)
 	#server:Select({ label: 'Server', prop: 'data.info.name' })
 		events:
 			selected(value):
 				this.data.set('servedBy', value); 	
+	#updateTime:function
+		this.addedBy.innerHTML = 'Added by ' + this.data.servedBy + ' ' + moment(this.data.addedAt).from(moment());
 	#init:function
 		this.tableSelect = buildComponent('TableSelect');
 		this.tableSelect.on('selected', (table) => {
@@ -313,7 +344,10 @@ TicketDetailsMoreEdit
 		this.tableSelectModal = Modal.createModal(this.tableSelect);
 	#render:function
 		this.togo.node.classList.toggle('warning', this.data.isTogo);
-
+		this.updateTime();
+		if(!this.timer) {
+			this.timer = setInterval(() => { this.updateTime(); }, 30000);
+		}
 
 OrderItemList[col-flex]
 	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem' })[col-fill]
@@ -390,7 +424,7 @@ MenuCategories[col col-flex col-right]
 		this.list.update(this.data);
 		menuItems.update((this.list.selected || {}).items);
 
-MenuItemCategory[item]
+MenuItemCategory[item tight]
 	#nameSpan$(data.name)[name]
 	#init:function
 		this.node.addEventListener('click', 
@@ -409,7 +443,7 @@ MenuItems[col col-flex col-right]
 	#render:function 
 		this.list.update(this.data);
 
-MenuItem[item]
+MenuItem[item tight]
 	#price[right]
 	#nameSpan$(data.name)[name]
 	#init:function
@@ -483,9 +517,14 @@ class RecUtils {
 
 	static getLastOrderTime(orderItems) {
 		var lastOrderItem = RecUtils.getLastOrderItem(orderItems);
+		return lastOrderItem ? moment(lastOrderItem.addedAt).format('h:mma') : '';
+	}
+	static getLastOrderTimeFriendly(orderItems) {
+		var lastOrderItem = RecUtils.getLastOrderItem(orderItems);
 		return lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
 	}
 
+	static isTicketPaid(ticket) { return ticket.paymentStatus !== 'Unpaid'; };
 	static getTicketTotals(ticket) {
 		var totals = {
 			food: 0,

@@ -155,10 +155,6 @@ $footer-height: $increment;
 		padding-left: $margin;
 		padding-right: $margin;
 
-		&.selected {
-			background-color: #FFA;
-		}
-
 		&.tight {
 			min-height: $increment/2;
 			line-height: $increment/2;
@@ -169,6 +165,7 @@ $footer-height: $increment;
 		}
 	}
 }
+
 
 @mixin h-base {
 	color: rgba(0,0,0,0.54);
@@ -359,11 +356,16 @@ $input-height: $increment - $margin;
 	background-color: palette(Green, 600);
 	color: rgba(255, 255, 255, 1);
 }
-
+.selected {
+	background-color: rgba(255, 255, 155, 0.7);
+}
 .border-bottom {
 	border-bottom: 1px solid rgba(0,0,0,0.35);
 }
-
+.disabled {
+	background-color: palette(Grey, 300);
+	color: rgba(0, 0, 0, 0.5);
+}
 
 
 @font-face {

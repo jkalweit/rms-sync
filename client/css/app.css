@@ -112,8 +112,6 @@ body {
     line-height: 56px;
     padding-left: 16px;
     padding-right: 16px; }
-    .list .item.selected {
-      background-color: #FFA; }
     .list .item.tight {
       min-height: 28px;
       line-height: 28px; }
@@ -344,8 +342,15 @@ h6 {
   background-color: #43A047;
   color: white; }
 
+.selected {
+  background-color: rgba(255, 255, 155, 0.7); }
+
 .border-bottom {
   border-bottom: 1px solid rgba(0, 0, 0, 0.35); }
+
+.disabled {
+  background-color: #E0E0E0;
+  color: rgba(0, 0, 0, 0.5); }
 
 @font-face {
   font-family: 'Material Icons';
