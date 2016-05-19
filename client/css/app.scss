@@ -19,6 +19,13 @@ $color-dark: palette(Deep Purple, 900);
 }
 */
 
+@mixin no-select {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 .test {
 	background-color: #FFD;
 	border: 1px solid #000;
@@ -54,9 +61,20 @@ body {
 	line-height: $increment;
 	text-align: center;
 	transition: all 0.2s;
+
+	&.tight {
+		width: $increment/2;
+		height: $increment/2;
+		line-height: $increment/2;
+		font-size: 16px;
+	}
 }	
 .touch:hover {
 	color: rgba(0,0,0,0.5);
+
+	&.highlight {
+		color: rgba(0,0,255,0.7);
+	}
 }
 
 
@@ -73,6 +91,7 @@ $footer-height: $increment;
 	width: $col-width; 
 	border-right: 1px solid rgba(0,0,0,0.5); 
 	background-color: #FFF;
+	position: relative;
 
 	&.wide {
 		width: $increment * 7;
@@ -85,8 +104,8 @@ $footer-height: $increment;
 	height: $header-height; 
 	line-height: $header-height; 
 	padding-left: $margin;
-	padding-right: $margin;
 	font-weight: bold;
+	@include no-select;
 }	
 
 .footer { 
@@ -105,10 +124,6 @@ $footer-height: $increment;
 	box-sizing: border-box;
 }
 
-.light {
-	background-color: $color-light;
-	color: #FFF;
-}
 
 .label-set {
 	height: $increment;
@@ -146,6 +161,7 @@ $footer-height: $increment;
 .list {
 	overflow-x: hidden;
 	overflow-y: auto;
+	@include no-select;
 
 	.item {
 		box-sizing: padding-box;
@@ -153,15 +169,10 @@ $footer-height: $increment;
 		min-height: $increment;
 		line-height: $increment;
 		padding-left: $margin;
-		padding-right: $margin;
 
 		&.tight {
 			min-height: $increment/2;
 			line-height: $increment/2;
-		}
-
-		.right {
-			float: right;
 		}
 	}
 }
@@ -196,13 +207,6 @@ $footer-height: $increment;
 	}
 }
 
-@mixin no-select {
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-}
-
 .btn {
 	box-sizing: border-box;
 	height: $increment;
@@ -214,16 +218,6 @@ $footer-height: $increment;
 	margin: $typeGrid $margin $typeGrid $margin;
 	text-align: center;
 	@include no-select;
-}
-
-
-.bold {
-	color: rgba(0,0,0,0.67);
-	font-weight: bold;
-}
-
-.italic {
-	font-style: italic;
 }
 
 
@@ -323,10 +317,13 @@ $input-height: $increment - $margin;
 	box-shadow: 0px 2px 3px rgba(0,0,0,.5);
 }
 
+.bold {
+	color: rgba(0,0,0,0.87);
+	font-weight: bold;
+}
 .italic {
 	font-style: italic;
 }
-
 .whitespace-pre {
 	white-space: pre;
 }
@@ -334,16 +331,26 @@ $input-height: $increment - $margin;
 .small-text {
 	font-size: 12px;
 }
+.light-text {
+	color: rgba(0,0,0,0.5);
+}
 
 .right {
 	float: right;
 }
 
 .dark {
+	background-color: $color-dark;
+	color: rgba(255,255,255,0.87);
+}
+.medium {
 	background-color: $color-primary;
 	color: rgba(255,255,255,0.87);
 }
-
+.light {
+	background-color: $color-light;
+	color: #FFF;
+}
 .error {
 	background-color: palette(Red, 600);
 	color: rgba(255, 255, 255, 1);
@@ -362,11 +369,28 @@ $input-height: $increment - $margin;
 .border-bottom {
 	border-bottom: 1px solid rgba(0,0,0,0.35);
 }
+.highlight {
+	color: #00F;
+}
 .disabled {
 	background-color: palette(Grey, 300);
 	color: rgba(0, 0, 0, 0.5);
+
+	&.selected {
+		background-color: rgba(200, 200, 100, 0.7);
+	}
+}
+.hide {
+	display: none;
 }
 
+.blink {
+	animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {  
+    50% { opacity: 0.0; }
+}
 
 @font-face {
   font-family: 'Material Icons';

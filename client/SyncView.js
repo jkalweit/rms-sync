@@ -39,7 +39,9 @@ class SV {
 		});
 	}
 
-
+	static normalize(str) {
+		return (str || '').trim().toLowerCase();
+	}
 
 
 	static createElement(name) {
@@ -84,6 +86,13 @@ class SV {
 			});
 		}
 		return result;
+	}
+
+	static forEach(obj, func) {
+		if(typeof obj !== 'array') {
+			obj = SV.toArray(obj);
+		}
+		obj.forEach(val => func(val));
 	}
 
 	static getByKey(obj, key) {
@@ -244,7 +253,7 @@ class SV {
 		if(value === '') value = 0;
 		precision = precision || 2;
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
-		if(typeof number === 'undefined') {
+		if(value == null) {
 			return '';
 		}
 		return SV.numberWithCommas(number.toFixed(precision).toString());
@@ -275,105 +284,6 @@ class SV {
 		return re.test(email);
 	}
 }
-
-
-
-class SyncView2 {
-	constructor(content, ctx) {
-		if(content instanceof HTMLElement) {
-			this.node = content;
-		} else {
-			this.node = SV.el('div', { innerHTML: content || ''});
-		}
-		this.eventHandlers = {};
-		this.bindings = {};
-
-		this.ctx = new SyncNode(ctx || {});
-		this.ctx.on('updated', (updated) => {
-			this.update(updated);
-		});
-		
-		if(this.init) this.init();
-	}
-	appendView(syncview, parent) {
-		(parent || this.node).appendChild(syncview.node);
-		return syncview;
-	}
-	appendChild(child) {
-		if(child instanceof HTMLElement) {
-			this.node.appendChild(child);
-		} else {
-			this.node.appendChild(child.node);
-		}
-	}
-	static updateViews(views, data) {
-		views.forEach(view => { view.update(data); });
-	}
-	update(ctx) {
-		if(this.hasChanged(ctx)) {
-			this.currentVersion = ctx ? ctx.version : null;
-			this.ctx = ctx;
-			this.emit('updating', ctx);
-			this.bind();
-			if(this.render) this.render();
-			if(this.doFlash) this.flash(); // For debugging
-		}
-		else {
-			if(this.name) console.log(this.name + ' DATA NO CHANGED', this, this.data, data);
-		}
-	}
-	hasChanged(newCtx) {
-		if(!this.ctx && !newCtx) {
-		 	return false;
-		}
-		if((this.ctx && !newCtx) || (!this.ctx && newCtx)) { 
-		 	return true;
-		}
-
-		if(this.currentVersion && newCtx.version) {
-			return this.currentVersion !== newCtx.version;
-		}
-
-		return true;
-	}
-	bind() {
-		Object.keys(this.bindings).forEach((id) => { 
-			var props = this.bindings[id];
-			Object.keys(props).forEach((prop) => { 
-				var valuePath = props[prop];
-				var value = SV.getProperty(this.ctx, valuePath.split('.'));
-				if(prop === 'update') {
-					this[id].update(value);
-				} else {
-					this[id][prop] = value;
-				}
-			});
-		});	
-	}
-	on(eventName, handler) {
-		if(!this.eventHandlers[eventName]) this.eventHandlers[eventName] = [];
-		this.eventHandlers[eventName].push(handler);
-	}
-	emit(eventName) {
-		var handlers = this.eventHandlers[eventName] || [];
-		var args = new Array(arguments.length-1);
-		for(var i = 1; i < arguments.length; ++i) {
-			args[i-1] = arguments[i];
-		}
-		handlers.forEach(handler => { handler.apply(null, args); });
-	}
-	flash() {
-		// to visualize changes for debugging
-		SV.flash(this.node);
-	}
-	static isSyncView(val) {
-		if(!SyncNode.isObject(val)) return false;
-		var className = val.constructor.toString().match(/\w+/g)[1];
- 		return className === 'SyncView';
-	}
-}
-
-
 
 
 

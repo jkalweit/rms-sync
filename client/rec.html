@@ -18,12 +18,13 @@
 #header:Header
 #ticketList:TicketList
 #ticketDetails:TicketDetails[col]
-#orderItemDetails:OrderItemDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 
 
 EventHub
+	#init:function
+		this.ticketFilter = { showPaid: false };
 
 LabeledValue[label-set]
 	#label[label]
@@ -115,7 +116,7 @@ RecTotals[header]
 Header[row dark]
 	:style
 		height: 56px;
-		border-bottom: 1px solid #000;
+		//border-bottom: 1px solid #000;
 	:div[row-nofill touch material-icons row-right] 'settings'
 		events:
 			click:
@@ -140,14 +141,19 @@ Header[row dark]
 		
 
 TicketList[col col-flex col-left]
-	#list:SearchList({ text: 'Tickets', ctor: 'Ticket', searchBox: true, sort: 'name', searchProp: 'name', addBtn: true })[col-fill]
+	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
 		events:
-			selected(item): 
-				ticketDetails.update(item);
 			add(value):
-				this.list.clearSearch();
+				this.clearSearch();
 				this.add(value);
-				
+			searchChanged(value):
+				this.search(value);
+	#list:SimpleList({ ctor: 'TicketGroup' })[col-fill]
+	#clearSearch:function
+		this.header.clear();
+	#search:function(value)
+		hub.ticketFilter.name = value;
+		hub.emit('ticketFilterChanged', hub.ticketFilter);	
 	#add:function(name)
 		var name = name || '';
 		name = name.trim();
@@ -167,36 +173,82 @@ TicketList[col col-flex col-left]
 		this.itemToAdd = newItem;
 		this.tableSelectModal.show();
 	#init:function
+		this.showPaidBtn = SV.el('div', { className: 'touch material-icons col-nofill', innerHTML: 'payment',
+			events: { click: () => { 
+				hub.ticketFilter.showPaid = !hub.ticketFilter.showPaid;
+				hub.emit('ticketFilterChanged', hub.ticketFilter); 
+			}}});
+		this.header.node.appendChild(this.showPaidBtn);
 		this.tableSelect = buildComponent('TableSelect');
 		this.tableSelect.on('selected', (table) => {
 			this.tableSelectModal.hide();
 			var newItem = this.itemToAdd;
 			newItem.table = table;		
 			var result = this.data.set(newItem.key, newItem)[newItem.key];
-			this.list.select(result.key);
+			hub.ticketFilter.selectedTicket = result;
+			hub.emit('ticketFilterChanged', hub.ticketFilter);
 		});
 		this.tableSelectModal = Modal.createModal(this.tableSelect);
+		hub.on('ticketFilterChanged', () => {
+			this.showPaidBtn.classList.toggle('highlight', hub.ticketFilter.showPaid);
+		});
+	#sortGroups:function()
+		// put the current server's tickets at the top
+		var groups = SV.group(this.data, (item) => { return item.servedBy; });  
+		var sorted = {};
+		var server = window.recSettings.currentUser;
+		if(groups[server]) {
+			sorted[server] = groups[server];
+		}
+
+		Object.keys(groups).forEach((key) => {
+			sorted[key] = groups[key];
+		});
+		this.list.update(sorted);
 	#render:function 
-		this.list.update(this.data);
-		ticketDetails.update(this.list.selected);
+		this.sortGroups();
 		if(this.test) return;
 		this.test = true;
-		this.list.select(SV.toArray(this.data)[0].key);
+		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
+		hub.emit('ticketFilterChanged', hub.ticketFilter);
 
+TicketGroup
+	#server[bold light]
+		style:
+			padding: 8px 8px;
+			color: rgba(0,0,0,0.5);
+	#list:SimpleList({ ctor: 'Ticket', sort: 'name', searchProp: 'name' })[col-fill]
+	#render:function
+		this.server.innerHTML = this.data.key;
+		this.list.update(this.data);
+		
 Ticket[item tight]
-	#total[right]
+	:events
+		click:
+			hub.ticketFilter.selectedTicket = this.data;
+			hub.emit('ticketFilterChanged', hub.ticketFilter);
+	#total[right margin1]
 	#nameSpan
 	#lastOrderTime[italic margin1]
 		style:
 			color: rgba(0,0,0,0.5);
+			display: none;
 	#updateLastOrderTime:function
 		this.lastOrderTime.innerHTML = RecUtils.getLastOrderTimeFriendly(this.data.orderItems);
 	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
+		hub.on('ticketFilterChanged', () => { this.doFilter(); });
+	#doFilter:function
+		var hide = false;
+		if(hub.ticketFilter.name) {
+			hide = SV.normalize(this.data.name).indexOf(SV.normalize(hub.ticketFilter.name)) === -1;	
+		}
+		hide = hide || (!hub.ticketFilter.showPaid && RecUtils.isTicketPaid(this.data));
+		this.node.classList.toggle('hide', hide);	
+		this.node.classList.toggle('selected', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
+		this.doFilter();
 		this.updateLastOrderTime();
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		if(!this.lastOrderTimeTimer) {
@@ -209,13 +261,22 @@ TicketTotals[header]
 		border-top: 1px solid rgba(0,0,0,0.5);
 		padding-left: 0;
 		font-size: 24px;
-	#total:div
-		style:
-			float: right;
-	#payment[touch material-icons]
+	#payment[right touch material-icons]
 		events:
 			click:
 				this.cyclePaymentStatus();
+	#total:div[right]
+	#sendKitchen[touch material-icons] 'local_dining'
+		events:
+			click:
+				this.sendToKitchen();
+	#sendToKitchen:function
+		var merge = {};
+		var submittedAt = new Date().toISOString();
+		SV.forEach(this.data.orderItems, (item) => {
+			merge[item.key] = { submittedAt: submittedAt };	
+		});
+		this.data.orderItems.merge(merge);
 	#cyclePaymentStatus:function
 		var newStatus;
 		switch(this.data.paymentStatus) {
@@ -241,36 +302,61 @@ TicketTotals[header]
 				icon = 'credit_card';
 		}
 		this.payment.innerHTML = icon;
-TicketDetails[col col-flex wide]
-	#header:SimpleHeader({ text: 'Ticket Details', more: true, close: true, del: true})[light border-bottom tight]
+		var hasUnsubmitted = false;
+		SV.toArray(this.data.orderItems).forEach((item) => { if(!item.submittedAt) hasUnsubmitted = true; });
+		this.sendKitchen.classList.toggle('highlight', hasUnsubmitted);
+		this.sendKitchen.classList.toggle('blink', hasUnsubmitted);
+
+
+
+TicketDetails[col col-flex wide shadow]
+	:style
+		display: none;
+		margin: 1em;
+		height: auto;
+		min-height: 50%;
+		max-height: calc(100% - 56px - 2em);
+		border: 1px solid rgba(0,0,0,0.5);
+	#disableScreen
+		style:
+			background-color: rgba(0,0,0,0.3);
+			position: absolute;
+			top: 0; bottom: 56px; left: 0; right: 0;
+			z-index: 1;
+	#header:SimpleHeader({ text: 'Ticket Details', more: true, del: true})[medium border-bottom tight]
 		events:
 			more:
 				this.showMore = !this.showMore;
 				this.render();
-			close:
-				this.close();
 			delete:
 				Modal.confirm('Delete?', this.data.name, () => {
 					this.data.parent.remove(this.data.key);
+					hub.emit('ticketTotalsChanged');
 					this.close();
 				});
 	#details:TicketDetailsMore[col-nofill]
 	#moreEdit:TicketDetailsMoreEdit[col-nofill light]
 	#items:OrderItemList[col-fill]
+		events:
+			edit(orderItem):
+				this.orderItemDetails.update(orderItem);
+				this.orderItemDetailsModal.show();	
 	#totals:TicketTotals[col-nofill]
 	#close:function
-			orderItemDetails.close();
 			this.update(null);
 	#add:function(menuItem)
-		if(!ticketDetails.data) {
+		if(!this.data) {
 			console.log('no ticket selected');
+			return;
+		}
+		if(RecUtils.isTicketPaid(this.data)) {
+			console.log('Ticket is already paid.');
 			return;
 		}
 		var newItem = { 
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
 			addedBy: window.recSettings.currentUser,
-			servedBy: window.recSettings.currentUser,
 			name: menuItem.name,
 			price: menuItem.price,
 			quantity: 1,
@@ -281,12 +367,18 @@ TicketDetails[col col-flex wide]
 		ticketDetails.items.list.select(result.key);
 		hub.emit('ticketTotalsChanged', this.data);
 	#init:function
-			this.render();
-			hub.on('ticketTotalsChanged', (ticket) => {
-				ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
-			});
+		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
+		hub.on('ticketTotalsChanged', (ticket) => {
+			if(ticket) ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
+		});
+		this.orderItemDetails = buildComponent('OrderItemDetails');
+		this.orderItemDetailsModal = Modal.createModal(this.orderItemDetails);
 	#render:function
 			this.node.style.display = this.data ? 'flex' : 'none';
+			if(!this.data) {
+				return;
+			}
+			this.disableScreen.style.display = RecUtils.isTicketPaid(this.data) ? 'block' : 'none';
 			this.details.node.style.display = this.showMore ? 'none' : 'block';
 			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
 			if(this.data) { 
@@ -311,7 +403,6 @@ TicketDetailsMore[small-text]
 	#updateTime:function
 		this.lastServed.innerHTML = 'Last order: ' + RecUtils.getLastOrderTimeFriendly(this.data.orderItems); 
 	#render:function
-		console.log('data', this.data);
 		this.lastServedTime.innerHTML = RecUtils.getLastOrderTime(this.data.orderItems); 
 		this.note.style.display = this.data.note ? 'flex' : 'none';
 		this.updateTime();
@@ -333,11 +424,10 @@ TicketDetailsMoreEdit
 			selected(value):
 				this.data.set('servedBy', value); 	
 	#updateTime:function
-		this.addedBy.innerHTML = 'Added by ' + this.data.servedBy + ' ' + moment(this.data.addedAt).from(moment());
+		this.addedBy.innerHTML = 'Added by ' + this.data.addedBy + ' ' + moment(this.data.addedAt).from(moment());
 	#init:function
 		this.tableSelect = buildComponent('TableSelect');
 		this.tableSelect.on('selected', (table) => {
-			console.log('hererrererere', table);
 			this.tableSelectModal.hide();
 			this.data.set('table', table);
 		});
@@ -350,58 +440,112 @@ TicketDetailsMoreEdit
 		}
 
 OrderItemList[col-flex]
-	#list:SearchList({ text: 'Order Items', ctor: 'OrderItem' })[col-fill]
+	#list:SearchList({ ctor: 'OrderItemGroup' })[col-fill]
 		events:
 			selected(item): 
-				orderItemDetails.update(item);
-			add(value):
-				this.list.clearSearch();
-				this.add(value);
-	#add:function(name)
-		var newItem = { 
-			key: new Date().toISOString(), 
-			name: name,
-			options: {} };
-		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		this.list.select(result.key);
+				this.emit('selected', item);
 	#init:function
 		this.list.header.node.style.display = 'none';
+		this.list.list.on('viewAdded', (view) => { view.on('edit', (orderItem) => { this.emit('edit', orderItem); }); });
 	#render:function 
-		this.list.update(this.data);
-		orderItemDetails.update(this.list.selected);
+		var groups = SV.group(this.data, (item) => { return item.name + ' ' + item.note + ' ' + item.price; });  
+		this.list.update(groups);
 
-OrderItem[item tight]
+
+
+OrderItemGroup[item tight]
+	#more[right tight touch material-icons] 'keyboard_arrow_down'
+		events:
+			click(e):
+				e.stopPropagation();
+				this.showMore = !this.showMore;
+				this.list.node.style.display = this.showMore ? 'flex' : 'none';
+				this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+	#repeat[right tight touch material-icons] 'replay'
+		events:
+			click(e):
+				e.stopPropagation();
+				this.repeatItem();
 	#price[right]
-	#nameSpan[name]
-	#note$(data.note)[italic whitespace-pre margin2]
+	#nameSpan
+	#note[margin1 italic small-text]
+	#list:SearchList({ ctor: 'OrderItem' })
+		style:
+			display: none;
+	#repeatItem:function
+		var orderItem = this.model;
+		var newItem = { 
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			name: orderItem.name,
+			price: orderItem.price,
+			quantity: 1,
+			taxType: orderItem.taxType,
+			note: orderItem.note || '' 
+		};
+		var ticket = this.model.parent.parent;
+		var result = ticket.orderItems.set(newItem.key, newItem)[newItem.key];
+		ticketDetails.items.list.select(result.key);
+		hub.emit('ticketTotalsChanged', ticket);
 	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
-	#render:function()
-		this.price.innerHTML = SV.formatCurrency(this.data.price);
-		this.nameSpan.innerHTML = this.data.name;
-		this.note.style.display	= this.data.note ? 'flex' : 'none';
+		this.list.header.node.style.display = 'none';
+		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
+	#render:function
+		var items = SV.toArray(this.data);
+		var quantity = 0;
+		var hasUnsubmitted = false;
+		items.forEach((item) => {
+			quantity += item.quantity
+			if(!item.submittedAt) hasUnsubmitted = true;
+		});
+		this.node.classList.toggle('highlight', hasUnsubmitted);
+		this.model = items[0];
+		this.nameSpan.innerHTML = this.model.name;
+		var quantityText = quantity !== 1 ? quantity + ' x ' : '';	
+		this.price.innerHTML = quantityText + SV.formatCurrency(this.model.price);
+		this.note.innerHTML = (this.model.note || '').replace('\n', ' - ');
+		this.list.update(this.data);
+
+
+OrderItem
+	#settings[right tight touch material-icons] 'settings'
+		events:
+			click:
+				this.emit('edit', this.data);
+	#time[margin1 italic]
+	#updateTime:function
+		var quantity = `${this.data.quantity} @ `;
+		this.time.innerHTML = quantity + moment(this.data.addedAt).from(moment());
+	#render:function
+		this.updateTime();
+		if(!this.timer) { this.timer = setInterval(() => { this.updateTime(); }, 30000); }	
+		this.node.classList.toggle('light-text', this.data.submittedAt || false);
 
 
 
-OrderItemDetails[col wide]
+OrderItemDetails[col-flex]
 	#header:SimpleHeader({ text: 'Order Item Details', close: true, del: true})
 		events:
 			close:
-				this.close();
+				this.emit('close');
 			delete:
 				Modal.confirm('Delete?', this.data.name, () => {
 					var ticket = this.data.parent.parent;
 					ticket.orderItems.remove(this.data.key);
 					hub.emit('ticketTotalsChanged', ticket);
-					this.close();
+					this.emit('close');
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note', isTextArea: true })$(update=data)
 	#quantityInput:Input({ prop: 'quantity', label: 'Quantity', number: true  })$(update=data)[number]
+		events:
+			changed:
+				hub.emit('ticketTotalsChanged', this.data.parent.parent);
 	#priceInput:Input({ prop: 'price', label: 'Price', number: true  })$(update=data)[number]
-	#close:function
-			this.update(null);
+		events:
+			changed:
+				hub.emit('ticketTotalsChanged', this.data.parent.parent);
 	#init:function
 			this.render();
 	#render:function
@@ -444,7 +588,7 @@ MenuItems[col col-flex col-right]
 		this.list.update(this.data);
 
 MenuItem[item tight]
-	#price[right]
+	#price[right margin1]
 	#nameSpan$(data.name)[name]
 	#init:function
 		this.node.addEventListener('click', 
@@ -484,6 +628,10 @@ SV.onLoad(() => {
 			ticketList.update(rec.tickets);
 			menuCategories.update(data.menu.categories);			
 			header.update(rec);			
+
+			if(ticketDetails.data) {
+				ticketDetails.update(rec.tickets[ticketDetails.data.key]);
+			}
 		});
 		
 		window.membersSync.on('updated', (data) => {
@@ -495,7 +643,9 @@ SV.onLoad(() => {
 
 	
 		window.recSettings.on('updated', (data) => {
-			ticketList.userSelect.select(data.currentUser);
+			header.userSelect.select(data.currentUser);
+			console.log('call sort', data.currentUser);
+			ticketList.sortGroups();	
 		});
 });
 

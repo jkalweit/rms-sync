@@ -38,9 +38,16 @@ body {
   line-height: 56px;
   text-align: center;
   transition: all 0.2s; }
+  .touch.tight {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 16px; }
 
 .touch:hover {
   color: rgba(0, 0, 0, 0.5); }
+  .touch:hover.highlight {
+    color: rgba(0, 0, 255, 0.7); }
 
 .col {
   box-sizing: border-box;
@@ -49,7 +56,8 @@ body {
   overflow-y: hidden;
   width: 280px;
   border-right: 1px solid rgba(0, 0, 0, 0.5);
-  background-color: #FFF; }
+  background-color: #FFF;
+  position: relative; }
   .col.wide {
     width: 392px; }
 
@@ -58,8 +66,11 @@ body {
   height: 56px;
   line-height: 56px;
   padding-left: 16px;
-  padding-right: 16px;
-  font-weight: bold; }
+  font-weight: bold;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
 
 .footer {
   flex: 1 1 auto;
@@ -74,10 +85,6 @@ body {
   height: 56px;
   line-height: 56px;
   box-sizing: border-box; }
-
-.light {
-  background-color: #B39DDB;
-  color: #FFF; }
 
 .label-set {
   height: 56px;
@@ -104,19 +111,20 @@ body {
 
 .list {
   overflow-x: hidden;
-  overflow-y: auto; }
+  overflow-y: auto;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
   .list .item {
     box-sizing: padding-box;
     border-bottom: 1px solid rgba(0, 0, 0, 0.5);
     min-height: 56px;
     line-height: 56px;
-    padding-left: 16px;
-    padding-right: 16px; }
+    padding-left: 16px; }
     .list .item.tight {
       min-height: 28px;
       line-height: 28px; }
-    .list .item .right {
-      float: right; }
 
 h1 {
   font-size: 32px;
@@ -223,13 +231,6 @@ h6 {
   -ms-user-select: none;
   user-select: none; }
 
-.bold {
-  color: rgba(0, 0, 0, 0.67);
-  font-weight: bold; }
-
-.italic {
-  font-style: italic; }
-
 .modal {
   display: none;
   z-index: 2;
@@ -314,6 +315,10 @@ h6 {
 .shadow {
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
 
+.bold {
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: bold; }
+
 .italic {
   font-style: italic; }
 
@@ -323,12 +328,23 @@ h6 {
 .small-text {
   font-size: 12px; }
 
+.light-text {
+  color: rgba(0, 0, 0, 0.5); }
+
 .right {
   float: right; }
 
 .dark {
+  background-color: #311B92;
+  color: rgba(255, 255, 255, 0.87); }
+
+.medium {
   background-color: #673AB7;
   color: rgba(255, 255, 255, 0.87); }
+
+.light {
+  background-color: #B39DDB;
+  color: #FFF; }
 
 .error {
   background-color: #E53935;
@@ -348,9 +364,24 @@ h6 {
 .border-bottom {
   border-bottom: 1px solid rgba(0, 0, 0, 0.35); }
 
+.highlight {
+  color: #00F; }
+
 .disabled {
   background-color: #E0E0E0;
   color: rgba(0, 0, 0, 0.5); }
+  .disabled.selected {
+    background-color: rgba(200, 200, 100, 0.7); }
+
+.hide {
+  display: none; }
+
+.blink {
+  animation: blinker 1s linear infinite; }
+
+@keyframes blinker {
+  50% {
+    opacity: 0.0; } }
 
 @font-face {
   font-family: 'Material Icons';

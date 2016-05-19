@@ -89,13 +89,13 @@ class List extends SyncView {
 			if(!view) {
 				view = buildComponent(this.ctor);
 				this.views[item.key] = view;
-				// Attempt to preserve order
-				this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
 				view.update(item);
 				this.emit('viewAdded', view);
 			} else {
 				view.update(item);
 			}
+			// Attempt to preserve order
+			this.node.insertBefore(view.node, previous ? previous.node.nextSibling : this.node.firstChild);
 			previous = view;
 		});
 		Object.keys(this.views).forEach((key) => {
@@ -383,10 +383,10 @@ function buildComponent(componentName, options) {
 						style += lines[i] + '\n';
 					}
 
-					if(id === 'closeBtn') console.log('style', id, style);
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
 					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;
+					if(id === 'list') console.log('style', style, styleObj);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');

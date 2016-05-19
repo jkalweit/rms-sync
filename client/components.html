@@ -151,5 +151,21 @@ SearchList[col-flex]
 		this.doFilter();
 		if(this.selected) this.selected = this.data[this.selected.key];
 		this.updateSelected();
+	
+SimpleList[col-flex]
+	#init:function(options)
+		this.list = this.appendView(new List({ ctor: options.ctor, sort: options.sort, direction: options.direction }));
+		this.list.node.classList.add('col-fill');
+		this.list.node.classList.add('scroll-y');
+		this.list.node.classList.add('list');
+		this.list.on('viewAdded', (view) => {
+			view.on('selected', (item) => {
+					this.select(item);
+				});
+		});
+	#select:function(item)
+		this.emit('selected', item);
+	#render:function()
+		this.list.update(this.data);
 		
 </script>
