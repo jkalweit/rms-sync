@@ -22,6 +22,70 @@
 #menuCategories:MenuCategories[col right]
 
 
+KitchenOrder
+	:style
+		width: 50%;
+		min-height: 200px;
+		border: 1px solid rgba(0,0,0,0.5);
+		position: relative;
+	#progress
+		style:
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 50%;
+			height: 28px;
+			background-color: #0F0;
+	#orderTime[row tight right padding1]
+		style:
+			position: relative;
+	#header[row tight padding1 border-bottom]
+		style:
+			position: relative;
+	#list:List({ ctor: 'KitchenOrderItem' })
+	#updateOrderTime:function
+		var now = moment();
+		var submitted = moment(this.data.submittedAt);
+		var d = moment.duration(now.diff(submitted));
+		this.orderTime.innerHTML = moment(d.asMilliseconds()).format('m:ss');
+	#render:function
+		this.header.innerHTML = this.data.table + ' ' + this.data.name;
+		this.list.update(this.data.orderItems);
+		this.updateOrderTime();
+		if(!this.orderTimer) {
+			this.orderTimer = setInterval(() => { this.updateOrderTime(); }, 1000);
+		}
+
+KitchenOrderItem[row tight]
+	#nameSpan
+		style:
+			margin-left: 8px;
+	#noteSpan$(data.note)[italic margin3 whitespace-pre]
+		style:
+			line-height: 20px;
+	#render:function
+		var quantity = this.data.quantity != 1 ? this.data.quantity + 'x' : '';
+		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; width: 1.5em; display: inline-block;">${quantity}</span> ${this.data.name}`
+
+KitchenOrderPreview
+	:h1 'Order Preview'
+	#submittedAt:LabeledValue({ label: 'Submitted' });
+	#order:KitchenOrder[margin1]
+		style:
+			margin-bottom: 1em;
+	#updateSubmittedTime:function
+		this.data.submittedAt = new Date().toISOString();
+		this.render();
+	#render:function
+		this.submittedAt.value.innerHTML = moment(this.data.submittedAt).format('h:mma') + ' by ' + this.data.submittedBy;
+		this.order.update(this.data);
+		if(!this.submittedTimer) {
+			this.submittedTimer = setInterval(() => { this.updateSubmittedTime(); }, 30000);
+		}
+		
+
+
+
 EventHub
 	#init:function
 		this.ticketFilter = { showPaid: false };
@@ -211,6 +275,7 @@ TicketList[col col-flex col-left]
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
+		ticketDetails.totals.sendToKitchen();
 
 TicketGroup
 	#server[bold light]
@@ -248,6 +313,7 @@ Ticket[item tight]
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
+		if(this.data.isTogo) this.nameSpan.innerHTML += ' <span class="highlight">[TOGO]</span>';
 		this.doFilter();
 		this.updateLastOrderTime();
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
@@ -256,27 +322,83 @@ Ticket[item tight]
 		}
 
 
-TicketTotals[header]
+TicketTotals[header row-flex]
 	:style
-		border-top: 1px solid rgba(0,0,0,0.5);
+		//border-top: 1px solid rgba(0,0,0,0.5);
 		padding-left: 0;
 		font-size: 24px;
-	#payment[right touch material-icons]
-		events:
-			click:
-				this.cyclePaymentStatus();
-	#total:div[right]
-	#sendKitchen[touch material-icons] 'local_dining'
+	#sendKitchen[touch material-icons row-nofill] 'local_dining'
 		events:
 			click:
 				this.sendToKitchen();
+	#sendBar[touch material-icons row-nofill] 'local_bar'
+		events:
+			click:
+				this.sendToBar();
+	#total:div[row-fill]
+		style:
+			text-align: right;
+	#payment[right touch material-icons row-nofill]
+		events:
+			click:
+				this.cyclePaymentStatus();
 	#sendToKitchen:function
 		var merge = {};
 		var submittedAt = new Date().toISOString();
+		var submittedBy = window.recSettings.currentUser;
+		var ko = { 
+					key: SyncNode.guidShort(),
+					ticketKey: this.data.key,
+					table: this.data.table,
+					name: this.data.name,
+					submittedAt: submittedAt, 
+					submittedBy: submittedBy,
+					orderItems: {}
+		};
 		SV.forEach(this.data.orderItems, (item) => {
-			merge[item.key] = { submittedAt: submittedAt };	
+			console.log('item', item);
+			if(!item.submittedAt && !item.isAlcohol) {
+				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
+				var orderItem = {
+					key: item.key,
+					name: item.name,
+					quantity: item.quantity,
+					note: item.note
+				};
+				ko.orderItems[orderItem.key] = orderItem;
+			}
+			this.kitchenOrderPreview.update(ko);
+			this.kitchenOrderPreviewModal.show();
 		});
-		this.data.orderItems.merge(merge);
+		//this.data.orderItems.merge(merge);
+	#sendToBar:function
+		var merge = {};
+		var submittedAt = new Date().toISOString();
+		var submittedBy = window.recSettings.currentUser;
+		var ko = { 
+					key: SyncNode.guidShort(),
+					ticketKey: this.data.key,
+					table: this.data.table,
+					name: this.data.name,
+					submittedAt: submittedAt, 
+					submittedBy: submittedBy,
+					orderItems: {}
+		};
+		SV.forEach(this.data.orderItems, (item) => {
+			if(!item.submittedAt && item.isAlcohol) {
+				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
+				var orderItem = {
+					key: item.key,
+					name: item.name,
+					quantity: item.quantity,
+					note: item.note
+				};
+				ko.orderItems[orderItem.key] = orderItem;
+			}
+			this.kitchenOrderPreview.update(ko);
+			this.kitchenOrderPreviewModal.show();
+		});
+		//this.data.orderItems.merge(merge);
 	#cyclePaymentStatus:function
 		var newStatus;
 		switch(this.data.paymentStatus) {
@@ -290,9 +412,16 @@ TicketTotals[header]
 				newStatus = 'Unpaid';
 		}
 		this.data.set('paymentStatus', newStatus);
+	#init:function
+		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
+		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
+		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Order',
+			events: { click: () => { this.kitchenOrderPreviewModal.hide(); }}});
+		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Cancel',
+			events: { click: () => { this.kitchenOrderPreviewModal.hide(); }}});
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
-		this.payment.style.color = RecUtils.isTicketPaid(this.data) ? '#00F' : 'rgba(0,0,0,0.5)';
+		this.payment.classList.toggle('highlight', RecUtils.isTicketPaid(this.data));
 		var icon;
 		switch(this.data.paymentStatus) {
 			case 'Cash':
@@ -302,10 +431,18 @@ TicketTotals[header]
 				icon = 'credit_card';
 		}
 		this.payment.innerHTML = icon;
-		var hasUnsubmitted = false;
-		SV.toArray(this.data.orderItems).forEach((item) => { if(!item.submittedAt) hasUnsubmitted = true; });
-		this.sendKitchen.classList.toggle('highlight', hasUnsubmitted);
-		this.sendKitchen.classList.toggle('blink', hasUnsubmitted);
+		var hasUnsubmittedKitchen = false;
+		var hasUnsubmittedBar = false;
+		SV.toArray(this.data.orderItems).forEach((item) => { 
+			if(!item.submittedAt) {
+				if(item.isAlcohol) hasUnsubmittedBar = true; 
+				else hasUnsubmittedKitchen = true;
+			}
+		});
+		this.sendKitchen.classList.toggle('highlight', hasUnsubmittedKitchen);
+		this.sendKitchen.classList.toggle('blink', hasUnsubmittedKitchen);
+		this.sendBar.classList.toggle('highlight', hasUnsubmittedBar);
+		this.sendBar.classList.toggle('blink', hasUnsubmittedBar);
 
 
 
@@ -360,6 +497,8 @@ TicketDetails[col col-flex wide shadow]
 			name: menuItem.name,
 			price: menuItem.price,
 			quantity: 1,
+			isAlcohol: menuItem.isAlcohol,
+			serveType: menuItem.serveType,
 			taxType: menuItem.taxType,
 			note: menuItem.note || '' 
 		};
@@ -384,7 +523,7 @@ TicketDetails[col col-flex wide shadow]
 			if(this.data) { 
 				this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">
 												${this.data.table}</span> ${this.data.name}
-												<br/><span style="font-weight: normal;" class="small-text">${ moment(this.data.addedAt).format('h:mma')} ${this.data.servedBy}</span>`;
+												<br/><span class="small-text" style="font-weight: normal;"><span style="display: inline-block; width: 4.4em;">${ moment(this.data.addedAt).format('h:mma')}</span>${this.data.servedBy}</span>`;
 				this.items.update(this.data.orderItems);
 				this.details.update(this.data);
 				this.moreEdit.update(this.data);
@@ -396,14 +535,12 @@ TicketDetails[col col-flex wide shadow]
 TicketDetailsMore[small-text]
 	:style
 		color: rgba(0,0,0,0.7);
-		border-bottom: 1px solid rgba(0,0,0,0.5);
-	#lastServedTime[row tight right margin1]
+		//border-bottom: 1px solid rgba(0,0,0,0.5);
 	#lastServed[row tight margin1]
 	#note$(data.note)[row tight margin2 italic whitespace-pre]
 	#updateTime:function
-		this.lastServed.innerHTML = 'Last order: ' + RecUtils.getLastOrderTimeFriendly(this.data.orderItems); 
+		this.lastServed.innerHTML = 'Last order: ' + RecUtils.getLastOrderTimeFriendly(this.data.orderItems) + ' at ' + RecUtils.getLastOrderTime(this.data.orderItems); 
 	#render:function
-		this.lastServedTime.innerHTML = RecUtils.getLastOrderTime(this.data.orderItems); 
 		this.note.style.display = this.data.note ? 'flex' : 'none';
 		this.updateTime();
 		if(!this.timer) {
@@ -454,6 +591,8 @@ OrderItemList[col-flex]
 
 
 OrderItemGroup[item tight]
+	:style
+		border: none;
 	#more[right tight touch material-icons] 'keyboard_arrow_down'
 		events:
 			click(e):

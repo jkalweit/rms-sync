@@ -97,7 +97,7 @@ body {
     box-sizing: border-box;
     width: 125px;
     flex: 0 0 auto;
-    padding-left: 16px;
+    padding: 4px 16px 4px 16px;
     display: inline-block; }
   .label-set input, .label-set textarea, .label-set select, .label-set .value {
     box-sizing: border-box;
@@ -106,7 +106,9 @@ body {
     padding-left: 4px;
     padding-right: 4px;
     width: 100%; }
-  .label-set.number input, .label-set select, .label-set .value {
+  .label-set.number input,
+  .label-set.number select,
+  .label-set.number .value {
     text-align: right; }
 
 .list {
@@ -181,12 +183,26 @@ h6 {
   margin-left: 0;
   margin-right: 16px; }
 
+.padding1 {
+  padding-left: 16px; }
+
+.padding1.right {
+  padding-left: 0;
+  padding-right: 16px; }
+
 .margin2 {
   margin-left: 32px; }
 
 .margin2.right {
   margin-left: 0;
   margin-right: 32px; }
+
+.padding2 {
+  padding-left: 32px; }
+
+.padding2.right {
+  padding-left: 0;
+  padding-right: 32px; }
 
 .margin3 {
   margin-left: 48px; }
@@ -195,12 +211,26 @@ h6 {
   margin-left: 0;
   margin-right: 48px; }
 
+.padding3 {
+  padding-left: 48px; }
+
+.padding3.right {
+  padding-left: 0;
+  padding-right: 48px; }
+
 .margin4 {
   margin-left: 64px; }
 
 .margin4.right {
   margin-left: 0;
   margin-right: 64px; }
+
+.padding4 {
+  padding-left: 64px; }
+
+.padding4.right {
+  padding-left: 0;
+  padding-right: 64px; }
 
 .margin5 {
   margin-left: 80px; }
@@ -209,12 +239,26 @@ h6 {
   margin-left: 0;
   margin-right: 80px; }
 
+.padding5 {
+  padding-left: 80px; }
+
+.padding5.right {
+  padding-left: 0;
+  padding-right: 80px; }
+
 .margin6 {
   margin-left: 96px; }
 
 .margin6.right {
   margin-left: 0;
   margin-right: 96px; }
+
+.padding6 {
+  padding-left: 96px; }
+
+.padding6.right {
+  padding-left: 0;
+  padding-right: 96px; }
 
 .btn {
   box-sizing: border-box;

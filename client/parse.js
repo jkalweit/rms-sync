@@ -386,7 +386,6 @@ function buildComponent(componentName, options) {
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
 					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;
-					if(id === 'list') console.log('style', style, styleObj);
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');

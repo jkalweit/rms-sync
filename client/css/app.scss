@@ -138,22 +138,22 @@ $footer-height: $increment;
 		box-sizing: border-box;
 		width: 125px;
 		flex: 0 0 auto;
-		padding-left: $margin;
+		padding: $typeGrid $margin $typeGrid $margin;
 		display: inline-block;
-
 	}
 	input, textarea, select, .value {
 		box-sizing: border-box;
 		flex: 1 1 auto;
 		margin: $typeGrid $margin;
-		//display: inline-block;
 		padding-left: $typeGrid;
 		padding-right: $typeGrid;
 		width: 100%;
 	}
 	
 
-	&.number input, select, .value {
+	&.number input, 
+	&.number select, 
+	&.number .value {
 		text-align: right;
 	}
 }
@@ -205,7 +205,14 @@ $footer-height: $increment;
 		margin-left: 0;
 		margin-right: #{$margin*$i};
 	}
-}
+
+	.padding#{$i} {
+		padding-left: #{$margin*$i};
+	}
+	.padding#{$i}.right {
+		padding-left: 0;
+		padding-right: #{$margin*$i};
+	}}
 
 .btn {
 	box-sizing: border-box;
