@@ -290,6 +290,9 @@ function buildComponent(componentName, options) {
 	if(!component) {
 		var ctor = window[componentName];
 		//args.unshift(null);
+		if(!ctor) {
+				console.error('Cannot find component:', componentName);
+		}
 		var instance = new (Function.prototype.bind.call(ctor, this, options));
 		if(instance.init) instance.init();
 		return instance;

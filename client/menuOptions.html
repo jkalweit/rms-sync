@@ -12,44 +12,67 @@
 
 
 <script id="view" type="text/other">
-MenuItemOptionTypeList[list]
-	#header[header] 'Option Types'
-	#newOption:input[input-test]
+
+#hub:MenuOptionHub
+#header:Header
+#categories:MenuOptionCategories[col]
+//#typeDetails:MenuItemOptionTypeDetails[col]
+//#valueDetails:MenuItemOptionValueDetails[col]
+
+
+Header[row dark]
+	:style
+		height: 56px;
+	#title[margin1] 'Menu Options'
+	#init:function
+	#render:function
+		
+
+
+
+MenuOptionHub
+	#init:function
+		this.categoryFilter = {};
+	#selectCategory:function(category)
+		this.categoryFilter.selected = category;
+		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
+
+	
+
+MenuOptionCategories[col col-flex list]
+	#header:SearchHeader({ searchBox: true, addBtn: true })[header col-nofill]
 		events:
-			keydown(e): 
-				if(e.keyCode === 13) this.add();
-	:button[input-test-btn touch material-icons] 'add'
-		events:
-			click: 
-				this.add();
-	#add:function
+			add(value):
+				this.header.clear();
+				this.add(value);
+	#add:function(value)
 		var newItem = { 
 			key: new Date().toISOString(), 
-			name: this.newOption.value,
+			name: value,
 			values: {} };
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		this.newOption.value = '';
-		this.selected = result;
+		hub.selectCategory(result);	
 		this.render();
-	#list:List({ ctor:'MenuItemOptionType', sort: 'name'})
-		events:
-			viewAdded(view): 
-				view.on('selected', (type) => {
-					this.selected = type;
-					typeDetails.update(type);
-				});
+	#list:SimpleList({ ctor:'MenuOptionCategory', sort: 'name'})
 	#render:function 
-			if(this.selected) this.selected = this.data[this.selected.key];	
-			else this.selected = SV.toArray(this.data)[0];
-			typeDetails.update(this.selected);
+			console.log('this.data', this.data);
 			this.list.update(this.data);
+			if(this.test) return;
+			this.test = true;
+			hub.selectCategory(SV.toArray(this.data)[0]);
 
-MenuItemOptionType[item]
+MenuOptionCategory[item]
+	:events
+		click:
+			hub.selectCategory(this.data);
 	#name$(data.name)[name bold]
+	#updateFilter:function
+		this.node.classList.toggle('selected', (hub.categoryFilter.selected || {}).key === this.data.key);
 	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
-
+		hub.on('menuCategoryFilterChanged', () => this.updateFilter());
+	#render:function
+		this.updateFilter();
+		
 
 MenuItemOptionTypeDetails[col wide]
 	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
@@ -119,9 +142,6 @@ MenuItemOptionValueDetails[col wide]
 	
 
 
-#typesView:MenuItemOptionTypeList[col]
-#typeDetails:MenuItemOptionTypeDetails[col]
-#valueDetails:MenuItemOptionValueDetails[col]
 
 </script>
 
@@ -143,13 +163,13 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {
+			console.log('update', data);
 			if(!data.menu.menuOptions) {
 				data.menu.set('menuOptions', { 
-					types: {}, 
-					options: {} 
+					categories: {} 
 				});
 			} else { 
-				typesView.update(data.menu.menuOptions.types);
+				categories.update(data.menu.menuOptions.categories);
 			}
 		});
 
