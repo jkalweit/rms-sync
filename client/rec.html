@@ -90,13 +90,6 @@ EventHub
 	#init:function
 		this.ticketFilter = { showPaid: false };
 
-LabeledValue[label-set]
-	#label[label]
-	#value[value]
-	#init:function(options)
-		this.label.innerHTML = options.label;
-
-
 
 TableSelect
 	#header[header] 'Select a Table'
@@ -275,7 +268,7 @@ TicketList[col col-flex col-left]
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
-		ticketDetails.totals.sendToKitchen();
+		//ticketDetails.totals.sendToKitchen();
 
 TicketGroup
 	#server[bold light]
@@ -500,11 +493,42 @@ TicketDetails[col col-flex wide shadow]
 			isAlcohol: menuItem.isAlcohol,
 			serveType: menuItem.serveType,
 			taxType: menuItem.taxType,
-			note: menuItem.note || '' 
+			note: menuItem.note || '',
+			options: {}
 		};
-		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
-		ticketDetails.items.list.select(result.key);
-		hub.emit('ticketTotalsChanged', this.data);
+		SV.forEach(menuItem.options, (option) => {
+			var o = {
+				key: SyncNode.guidShort(),
+				name: option.name,
+				categoryKey: option.categoryKey,
+				value: '',
+				price: 0,
+				priceWithEntree: 0
+			};
+			newItem.options[o.key] = o;
+		});
+		this.orderItemToAdd = newItem;
+		this.selectOptions();	
+	#selectOptions:function
+		if(!this.orderItemToAdd) return;
+		var options = SV.toArray(this.orderItemToAdd.options);
+		var optionToSelect;
+		for(var i = 0; i < options.length; i++) {
+			if(!options[i].value) {
+				optionToSelect = options[i];
+				break;
+			}
+		}	
+		if(optionToSelect) {
+			this.selectOptionsView.update(optionToSelect);
+			this.selectOptionsViewModal.show();
+		} else {
+			//all options selected, add order item
+			var newItem = this.orderItemToAdd;
+			var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
+			ticketDetails.items.list.select(result.key);
+			hub.emit('ticketTotalsChanged', this.data);
+		}
 	#init:function
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
 		hub.on('ticketTotalsChanged', (ticket) => {
@@ -512,6 +536,22 @@ TicketDetails[col col-flex wide shadow]
 		});
 		this.orderItemDetails = buildComponent('OrderItemDetails');
 		this.orderItemDetailsModal = Modal.createModal(this.orderItemDetails);
+		this.selectOptionsView = buildComponent('SelectOptionsView');
+		this.selectOptionsView.on('selected', (value) => { 
+			console.log('selected111', value);
+			var option = this.orderItemToAdd.options[this.selectOptionsView.data.key];
+			if(option) {
+				option.value = value.name;
+				option.price = value.price;
+				option.priceWithEntree = value.priceWithEntree;
+			}
+			this.selectOptionsViewModal.hide();
+			this.selectOptions();
+		});
+		this.selectOptionsViewModal = Modal.createModal(this.selectOptionsView);
+		SV.el('div', { parent: this.selectOptionsViewModal.mainView, innerHTML: 'Cancel', className: 'btn',
+			style: { marginTop: '1em' },
+			events: { click: () => { this.selectOptionsViewModal.hide(); }}});
 	#render:function
 			this.node.style.display = this.data ? 'flex' : 'none';
 			if(!this.data) {
@@ -531,6 +571,23 @@ TicketDetails[col col-flex wide shadow]
 				this.totals.update(this.data);
 			}
 
+SelectOptionsView[col-flex]
+	#header:SimpleHeader({ text: 'Select Option' })
+	#list:SimpleList({ ctor: 'MenuOption' })
+		events:
+			selected(value):
+				this.emit('selected', value);
+	#render:function
+		var category = sync.data.menu.menuOptions.categories[this.data.categoryKey];
+		if(!category) { console.log('Cannot find Category'); return; }
+		this.list.update(category.values);
+
+MenuOption[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan$(data.name)
+	
 
 TicketDetailsMore[small-text]
 	:style
@@ -585,7 +642,12 @@ OrderItemList[col-flex]
 		this.list.header.node.style.display = 'none';
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (orderItem) => { this.emit('edit', orderItem); }); });
 	#render:function 
-		var groups = SV.group(this.data, (item) => { return item.name + ' ' + item.note + ' ' + item.price; });  
+		var groups = SV.group(this.data, (item) => { 
+			var diff = item.name + ' ' + item.note + ' ' + item.price;
+			SV.forEach(item.options, (option) => { diff += ' ' + option.name + ' ' + option.value });
+			console.log('diff', diff);
+			return diff;
+		});  
 		this.list.update(groups);
 
 
@@ -607,6 +669,7 @@ OrderItemGroup[item tight]
 				this.repeatItem();
 	#price[right]
 	#nameSpan
+	#options[margin1 small-text]
 	#note[margin1 italic small-text]
 	#list:SearchList({ ctor: 'OrderItem' })
 		style:
@@ -643,6 +706,9 @@ OrderItemGroup[item tight]
 		this.nameSpan.innerHTML = this.model.name;
 		var quantityText = quantity !== 1 ? quantity + ' x ' : '';	
 		this.price.innerHTML = quantityText + SV.formatCurrency(this.model.price);
+		var optionsText = '';
+		SV.forEach(this.model.options, (option) => { optionsText += ' ' + option.value });
+		this.options.innerHTML = optionsText;
 		this.note.innerHTML = (this.model.note || '').replace('\n', ' - ');
 		this.list.update(this.data);
 

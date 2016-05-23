@@ -13,10 +13,32 @@
 
 <script id="view" type="text/other">
 
+#hub:MenuHub
 #header:Header
 #categoryList:MenuItemCategoryList[col]
 #categoryDetails:MenuItemCategoryDetails[col]
 #itemDetails:MenuItemDetails[col]
+
+
+
+MenuHub
+	#init:function
+		this.categoryFilter = {};
+	#selectCategory:function(category)
+		this.categoryFilter.selected = category;
+		this.categoryFilter.selectedValue = null;
+		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
+	#selectValue:function(value)
+		this.categoryFilter.selectedValue = value;
+		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
+	#render:function	
+		if(this.categoryFilter.selected) {
+			var selectedValue = this.categoryFilter.selectedValue;
+			this.selectCategory(this.data.menu.categories[this.categoryFilter.selected.key]);
+			if(selectedValue) {
+				this.selectValue(this.categoryFilter.selected.items[selectedValue.key]);
+			}
+		}
 
 
 Header[row dark]
@@ -28,9 +50,6 @@ Header[row dark]
 
 MenuItemCategoryList[col col-left col-flex]
 	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
-		events:
-			selected(item): 
-				categoryDetails.update(item);
 			add(value):
 				this.list.clearSearch();
 				this.add(value);
@@ -44,19 +63,27 @@ MenuItemCategoryList[col col-left col-flex]
 			name: name,
 			items: {} };
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		this.list.select(result.key);
+		hub.selectCategory(result.key);
 	#init:function
 	#render:function 
 		this.list.update(this.data);
-		if(!this.list.selected) this.list.select(SV.toArray(this.data)[0].key);
-		categoryDetails.update(this.list.selected);
+		if(!this.test) {
+			this.test = true;
+			hub.selectCategory(SV.toArray(this.data)[0]);
+		}
+		
 
 MenuItemCategory[item tight]
+	:events
+		click:
+			hub.selectCategory(this.data);
 	#nameSpan$(data.name)[name]
+	#updateFilter:function
+		this.node.classList.toggle('selected', (hub.categoryFilter.selected || {}).key === this.data.key);
 	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
+		hub.on('menuCategoryFilterChanged', () => this.updateFilter());
 	#render:function
+		this.updateFilter();
 		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 
 
@@ -77,17 +104,22 @@ MenuItemCategoryDetails[col col-left col-flex wide]
 	#close:function
 			itemDetails.close();
 			this.update(null);
+	#updateFilter:function	
+		this.node.classList.toggle('hide', !this.data);	
 	#init:function
-			this.render();
+		this.updateFilter();
+		hub.on('menuCategoryFilterChanged', () => { this.update(hub.categoryFilter.selected); });
 	#render:function
-			this.node.style.display = this.data ? 'flex' : 'none';
-			if(this.data) this.items.update(this.data.items);
+		this.updateFilter();
+		if(this.data) this.items.update(this.data.items);
+		if(this.data && !this.test) {
+			this.test = true;
+			hub.selectValue(SV.toArray(this.data.items)[0]);	
+		}
 
 MenuItemList[col-fill col-flex]
 	#list:SearchList({ text: 'Items', ctor: 'MenuItem', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
 		events:
-			selected(item): 
-				itemDetails.update(item);
 			add(value):
 				this.list.clearSearch();
 				this.add(value);
@@ -100,21 +132,27 @@ MenuItemList[col-fill col-flex]
 		this.list.select(result.key);
 	#render:function 
 		this.list.update(this.data);
-		itemDetails.update(this.list.selected);
 
 MenuItem[item tight]
-	#price[right]
+	#price[right margin1]
 	#nameSpan$(data.name)[name]
+	#updateFilter:function	
+		var wasSelected = this.isSelected;
+		this.isSelected = (hub.categoryFilter.selectedValue || {}).key === this.data.key;
+		this.node.classList.toggle('selected', this.isSelected);
+		if(this.isSelected && !wasSelected) this.node.scrollIntoViewIfNeeded();
 	#init:function
 		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
+			() => { hub.selectValue(this.data); });
+		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
 	#render:function()
+		this.updateFilter();
 		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
 
 
-MenuItemDetails[col wide]
-	#header:SimpleHeader({ text: 'Item Details', close: true, del: true})
+MenuItemDetails[col col-flex wide]
+	#header:SimpleHeader({ text: 'Menu Item', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -125,15 +163,102 @@ MenuItemDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#disableToggle:ToggleButton({ prop: 'isDisabled' })$(update=data)
+	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
-	//#values:MenuItemOptionValues$(update=data.values)
+	#optionsHeader:SimpleHeader({ text: 'Options', add: true })
+		events:
+			add:
+				this.optionCategoriesModal.show();
+	#options:SimpleList({ ctor: 'MenuOption' })[col-fill]
+		events:
+			selected(option):
+				this.editOption(option);
+	#editOption:function(option)
+		this.editingOption = option;
+		this.optionEdit.update(option);
+		this.optionEditModal.show();	
+	#addOption:function(category)
+		var option = {
+			key: new Date().toISOString(),
+			categoryKey: category.key,
+			name: category.name,
+			isRequired: true 
+		};
+		console.log('adding', option, this.data);
+		var result = this.data.options.set(option.key, option)[option.key];
+		//this.editOption(result);
 	#close:function
-			this.update(null);
+		this.update(null);
+	#updateFilter:function	
+		this.node.classList.toggle('hide', !this.data);	
 	#init:function
-			this.render();
+		this.optionCategories = buildComponent('MenuOptionCategories');
+		this.optionCategories.on('selected', (category) => { 
+			this.optionCategoriesModal.hide();
+			this.addOption(category); });
+		this.optionCategoriesModal = Modal.createModal(this.optionCategories);
+		SV.el('div', { parent: this.optionCategoriesModal.mainView, innerHTML: 'Cancel', className: 'btn',
+			style: { marginTop: '2em' },
+			events: { click: () => { this.optionCategoriesModal.hide(); }}});
+		this.optionEdit = buildComponent('MenuOptionEdit');
+		this.optionEdit.on('close', () => { this.editingOption = null; this.optionEditModal.hide(); });
+		this.optionEditModal = Modal.createModal(this.optionEdit);
+		this.updateFilter();
+		hub.on('menuCategoryFilterChanged', () => { this.update(hub.categoryFilter.selectedValue); });
 	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
+		this.updateFilter();
+		if(this.data) { 
+			this.options.update(this.data.options);
+			this.optionCategories.update(this.data.parent.parent.parent.parent.menuOptions.categories);
+			if(this.editingOption) {
+				this.editingOption = this.data.options[this.editingOption.key];
+			}
+			if(this.editingOption) this.optionEdit.update(this.editingOption);
+			else this.optionEditModal.hide();
+		}
+		
+	
+MenuOption[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan$(data.name)
+
+
+
+
+
+
+MenuOptionCategories[col-flex list]
+	#header:SimpleHeader({ text: 'Select an Option' })[header col-nofill]
+	#list:SimpleList({ ctor:'MenuOptionCategory', sort: 'name'})
+		events:
+			selected(category):
+				this.emit('selected', category);
+	#render:function 
+			this.list.update(this.data);
+
+MenuOptionCategory[item]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#name$(data.name)[name bold]
+	
+
+MenuOptionEdit[col-flex]
+	#header:SimpleHeader({ text: 'Edit Option', del: true, close: true })
+		events:
+			delete:
+				this.data.parent.remove(this.data.key);
+				this.emit('close');
+			close:
+				this.emit('close');	
+	#nameInput:Input({ label: 'Option', prop: 'name' })$(update=data)
+	#category:LabeledValue({ label: 'Category', prop: 'name' })
+	#required:ToggleButton({ trueText: 'Required', falseText: 'Not Required', prop: 'isRequired' })$(update=data)
+	#render:function
+		var category = sync.data.menu.menuOptions.categories[this.data.categoryKey];
+		if(category) this.category.update(category);
 	
 
 
@@ -164,6 +289,7 @@ SV.onLoad(() => {
 					items: {} 
 				});
 			} else { 
+				hub.update(data);
 				categoryList.update(data.menu.categories);
 			}
 		});

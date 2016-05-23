@@ -24,10 +24,21 @@ Select[label-set]
 		this.selectInput.value = selected;
 		
 
+LabeledValue[label-set]
+	#label[label]
+	#value[value]
+	#init:function(options)
+		this.label.innerHTML = options.label;
+		this.prop = options.prop;
+	#render:function
+		if(this.prop && this.data) this.value.innerHTML = SV.getProperty(this.data, this.prop);
+
+
 ToggleButton[btn]
 	#text:span
 	:events
 		click:
+			console.log('here', this.prop, this.data);
 			this.data.set(this.prop, !this.data[this.prop]);
 	#init:function(options)
 		this.prop = options.prop;

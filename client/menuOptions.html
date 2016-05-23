@@ -35,9 +35,10 @@ MenuOptionHub
 		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
 	#render:function	
 		if(this.categoryFilter.selected) {
+			var selectedValue = this.categoryFilter.selectedValue;
 			this.selectCategory(this.data.menu.menuOptions.categories[this.categoryFilter.selected.key]);
-			if(this.categoryFilter.selectedValue) {
-				this.selectValue(this.categoryFilter.selected.values[this.categoryFilter.selectedValue.key]);
+			if(selectedValue) {
+				this.selectValue(this.categoryFilter.selected.values[selectedValue.key]);
 			}
 		}
 
@@ -87,7 +88,7 @@ MenuOptionCategory[item]
 		
 
 MenuOptionCategoryDetails[col col-flex wide]
-	#header:SimpleHeader({ text: 'Details', close: true, del: true})
+	#header:SimpleHeader({ text: 'Category', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -101,44 +102,42 @@ MenuOptionCategoryDetails[col col-flex wide]
 	#valuesHeader:SimpleHeader({ text: 'Values', add: 'true'})[light]
 		events:
 			add:
-				var value = { key: new Date().toISOString(), name: 'New Value' };
+				var value = { key: new Date().toISOString(), name: 'New Value', price: 0, priceWithEntree: 0 };
 				var result = this.data.values.set(value.key, value)[value.key]; 
 				hub.selectValue(result);
 	#values:List({ ctor: 'MenuOptionValue'})[list]
 	#close:function
 		hub.selectCategory(null);
-	#updateFilter:function
-		this.update(hub.categoryFilter.selected);
+	#updateFilter:function	
 		this.node.classList.toggle('hide', !this.data);	
 	#init:function
-		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
+		this.updateFilter();
+		hub.on('menuCategoryFilterChanged', () => { this.update(hub.categoryFilter.selected); });
 	#render:function
 		this.updateFilter();
-		this.values.update((this.data || {}).values);
+		if(this.data) this.values.update(this.data.values);
 	
 
-
-MenuOptionValues
-	#render:function
-		this.list.update(this.data);
-	
 
 MenuOptionValue[item]
+	#price[right margin1]
 	#nameSpan$(data.name)
 	#updateFilter:function
-		var isSelected = (hub.categoryFilter.selectedValue || {}).key === this.data.key;
-		this.node.classList.toggle('selected', isSelected);
-		if(isSelected) this.node.scrollIntoViewIfNeeded();
+		var wasSelected = this.isSelected;
+		this.isSelected = (hub.categoryFilter.selectedValue || {}).key === this.data.key;
+		this.node.classList.toggle('selected', this.isSelected);
+		if(this.isSelected && !wasSelected) this.node.scrollIntoViewIfNeeded();
 	#init:function
 		this.node.addEventListener('click', 
 			() => { hub.selectValue(this.data); });
 		hub.on('menuCategoryFilterChanged', () => this.updateFilter());
 	#render:function
 		this.updateFilter();
+		this.price.innerHTML = SV.formatCurrency(this.data.priceWithEntree) + ' / ' + SV.formatCurrency(this.data.price);
 			
 	
 MenuOptionValueDetails[col wide]
-	#header:SimpleHeader({ text: 'Details', close: true, del: true})
+	#header:SimpleHeader({ text: 'Value', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -147,15 +146,17 @@ MenuOptionValueDetails[col wide]
 				hub.selectValue(null);
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
-	#updateFilter:function
-		this.update(hub.categoryFilter.selectedValue);
+	#priceWithEntreeInput:Input({ prop: 'priceWithEntree', label: 'Price/Entree', number: true })$(update=data)
+	#priceInput:Input({ prop: 'price', label: 'Price', number: true })$(update=data)
+	#updateFilter:function	
 		this.node.classList.toggle('hide', !this.data);	
 	#close:function
 		hub.selectValue(null);
 	#init:function
-		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
-	
+		this.updateFilter();
+		hub.on('menuCategoryFilterChanged', () => { console.log('datatatat', hub.categoryFilter.selectedValue); this.update(hub.categoryFilter.selectedValue); });
+	#render:function
+		this.updateFilter();
 
 
 

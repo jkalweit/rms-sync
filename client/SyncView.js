@@ -563,7 +563,6 @@ class SimpleEditCheckBox extends SyncView {
 			}}});
 	}
 	render() {
-		console.log('thisasdfasdf', this.input.checked, '1', this.data[this.prop], '2', this.prop, this.data);
 		if(this.data[this.prop]) {
 			this.input.setAttribute('checked', true);
 		} else {
