@@ -345,7 +345,9 @@ h6 {
   border-left: 1px solid rgba(0, 0, 0, 0.5); }
 
 .col-fill {
-  flex: 1 1 auto; }
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: hidden; }
 
 .col-nofill {
   flex: 0 0 auto; }

@@ -13,10 +13,18 @@
 
 <script id="view" type="text/other">
 
+#header:Header
 #categoryList:MenuItemCategoryList[col]
 #categoryDetails:MenuItemCategoryDetails[col]
 #itemDetails:MenuItemDetails[col]
 
+
+Header[row dark]
+	:style
+		height: 56px;
+	#title[margin1] 'Menu'
+	#init:function
+	#render:function
 
 MenuItemCategoryList[col col-left col-flex]
 	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
@@ -94,7 +102,7 @@ MenuItemList[col-fill col-flex]
 		this.list.update(this.data);
 		itemDetails.update(this.list.selected);
 
-MenuItem[item]
+MenuItem[item tight]
 	#price[right]
 	#nameSpan$(data.name)[name]
 	#init:function

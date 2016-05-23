@@ -16,8 +16,31 @@
 #hub:MenuOptionHub
 #header:Header
 #categories:MenuOptionCategories[col]
-//#typeDetails:MenuItemOptionTypeDetails[col]
-//#valueDetails:MenuItemOptionValueDetails[col]
+#categoryDetails:MenuOptionCategoryDetails[col]
+#valueDetails:MenuOptionValueDetails[col]
+
+
+
+
+
+MenuOptionHub
+	#init:function
+		this.categoryFilter = {};
+	#selectCategory:function(category)
+		this.categoryFilter.selected = category;
+		this.categoryFilter.selectedValue = null;
+		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
+	#selectValue:function(value)
+		this.categoryFilter.selectedValue = value;
+		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
+	#render:function	
+		if(this.categoryFilter.selected) {
+			this.selectCategory(this.data.menu.menuOptions.categories[this.categoryFilter.selected.key]);
+			if(this.categoryFilter.selectedValue) {
+				this.selectValue(this.categoryFilter.selected.values[this.categoryFilter.selectedValue.key]);
+			}
+		}
+
 
 
 Header[row dark]
@@ -27,16 +50,6 @@ Header[row dark]
 	#init:function
 	#render:function
 		
-
-
-
-MenuOptionHub
-	#init:function
-		this.categoryFilter = {};
-	#selectCategory:function(category)
-		this.categoryFilter.selected = category;
-		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
-
 	
 
 MenuOptionCategories[col col-flex list]
@@ -55,7 +68,6 @@ MenuOptionCategories[col col-flex list]
 		this.render();
 	#list:SimpleList({ ctor:'MenuOptionCategory', sort: 'name'})
 	#render:function 
-			console.log('this.data', this.data);
 			this.list.update(this.data);
 			if(this.test) return;
 			this.test = true;
@@ -74,8 +86,8 @@ MenuOptionCategory[item]
 		this.updateFilter();
 		
 
-MenuItemOptionTypeDetails[col wide]
-	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
+MenuOptionCategoryDetails[col col-flex wide]
+	#header:SimpleHeader({ text: 'Details', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -86,59 +98,63 @@ MenuItemOptionTypeDetails[col wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#values:MenuItemOptionValues$(update=data.values)
-	#close:function
-			this.update(null);
-			valueDetails.close();
-	#init:function
-			this.render();
-	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
-	
-
-
-MenuItemOptionValues
-	#header:SimpleHeader({ text: 'Values', add: 'true'})[light]
+	#valuesHeader:SimpleHeader({ text: 'Values', add: 'true'})[light]
 		events:
 			add:
 				var value = { key: new Date().toISOString(), name: 'New Value' };
-				var result = this.data.set(value.key, value)[value.key]; 
-				valueDetails.update(result);
-	#list:List({ ctor: 'MenuItemOptionValue'})[list]
-		events:
-			viewAdded(view): 
-				view.on('selected', (item) => {
-					this.selected = item;
-					valueDetails.update(item);
-				});
+				var result = this.data.values.set(value.key, value)[value.key]; 
+				hub.selectValue(result);
+	#values:List({ ctor: 'MenuOptionValue'})[list]
+	#close:function
+		hub.selectCategory(null);
+	#updateFilter:function
+		this.update(hub.categoryFilter.selected);
+		this.node.classList.toggle('hide', !this.data);	
+	#init:function
+		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
+	#render:function
+		this.updateFilter();
+		this.values.update((this.data || {}).values);
+	
+
+
+MenuOptionValues
 	#render:function
 		this.list.update(this.data);
 	
 
-MenuItemOptionValue[item]
+MenuOptionValue[item]
 	#nameSpan$(data.name)
+	#updateFilter:function
+		var isSelected = (hub.categoryFilter.selectedValue || {}).key === this.data.key;
+		this.node.classList.toggle('selected', isSelected);
+		if(isSelected) this.node.scrollIntoViewIfNeeded();
 	#init:function
 		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
+			() => { hub.selectValue(this.data); });
+		hub.on('menuCategoryFilterChanged', () => this.updateFilter());
+	#render:function
+		this.updateFilter();
+			
 	
-	
-MenuItemOptionValueDetails[col wide]
+MenuOptionValueDetails[col wide]
 	#header:SimpleHeader({ text: 'Details', close: true, del: true})
 		events:
 			close:
 				this.close();
 			delete:
 				this.data.parent.remove(this.data.key);
-				this.update(null);
+				hub.selectValue(null);
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price' })$(update=data)
-	#init:function 
-			this.render();
+	#updateFilter:function
+		this.update(hub.categoryFilter.selectedValue);
+		this.node.classList.toggle('hide', !this.data);	
 	#close:function
-			this.update(null);
-	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
+		hub.selectValue(null);
+	#init:function
+		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
 	
 
 
@@ -169,6 +185,7 @@ SV.onLoad(() => {
 					categories: {} 
 				});
 			} else { 
+				hub.update(data);
 				categories.update(data.menu.menuOptions.categories);
 			}
 		});
