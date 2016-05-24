@@ -83,15 +83,29 @@ KitchenOrder
 		}
 
 KitchenOrderItem[row tight]
+	:style
+		line-height: 20px;
+	#temp[margin1]
+		style:
+			display: inline-block;
+			width: 1.5em;
 	#nameSpan
 		style:
-			margin-left: 8px;
-	#noteSpan$(data.note)[italic margin3 whitespace-pre]
-		style:
-			line-height: 20px;
+			display: inline-block;
+	#side[right margin1]
+	#options[margin4 whitespace-pre]
+	#noteSpan$(data.note)[italic margin4 whitespace-pre]
 	#render:function
 		var quantity = this.data.quantity != 1 ? this.data.quantity + 'x' : '';
-		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; width: 1.5em; display: inline-block;">${quantity}</span> ${this.data.name}`
+		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; display: inline-block;">${quantity}</span><span class="bold">${this.data.name}</span>`
+		var optionsText = '';
+		SV.forEach(this.data.options, (option) => { 
+			if(option.name === 'Temp' ) { this.temp.innerHTML = option.value; }
+			else if(option.name === 'Side') { this.side.innerHTML = option.value; }
+			else if(option.name === 'Dressing') {  }
+			else { optionsText += option.value + '\n'; }
+		});
+		this.options.innerHTML = optionsText;
 
 KitchenOrderPreview
 	:h1 'Order Preview'
@@ -235,7 +249,7 @@ TicketList[col col-flex col-left]
 	#add:function(name)
 		var name = name || '';
 		name = name.trim();
-		if(!name) return;
+		//if(!name) return;
 		var newItem = { 
 			key: SyncNode.guidShort(), 
 			addedAt: new Date().toISOString(),
@@ -289,7 +303,7 @@ TicketList[col col-flex col-left]
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
-		//ticketDetails.totals.sendToKitchen();
+		ticketDetails.totals.sendToKitchen();
 
 TicketGroup
 	#server[bold light]
@@ -319,7 +333,7 @@ Ticket[item tight]
 	#doFilter:function
 		var hide = false;
 		if(hub.ticketFilter.name) {
-			hide = SV.normalize(this.data.name).indexOf(SV.normalize(hub.ticketFilter.name)) === -1;	
+			hide = SV.normalize(this.data.table + ' ' + this.data.name).indexOf(SV.normalize(hub.ticketFilter.name)) === -1;	
 		}
 		hide = hide || (!hub.ticketFilter.showPaid && RecUtils.isTicketPaid(this.data));
 		this.node.classList.toggle('hide', hide);	
@@ -370,14 +384,14 @@ TicketTotals[header row-flex]
 					orderItems: {}
 		};
 		SV.forEach(this.data.orderItems, (item) => {
-			console.log('item', item);
 			if(!item.submittedAt && !item.isAlcohol) {
 				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
 				var orderItem = {
 					key: item.key,
 					name: item.name,
 					quantity: item.quantity,
-					note: item.note
+					note: item.note,
+					options: JSON.parse(JSON.stringify(item.options))
 				};
 				ko.orderItems[orderItem.key] = orderItem;
 			}
@@ -669,7 +683,6 @@ OrderItemList[col-flex]
 		var groups = SV.group(this.data, (item) => { 
 			var diff = item.name + ' ' + item.note + ' ' + item.price;
 			SV.forEach(item.options, (option) => { diff += ' ' + option.name + ' ' + option.value });
-			console.log('diff', diff);
 			return diff;
 		});  
 		this.list.update(groups);
@@ -679,13 +692,13 @@ OrderItemList[col-flex]
 OrderItemGroup[item tight]
 	:style
 		border: none;
+	:events
+		click(e):
+			e.stopPropagation();
+			this.showMore = !this.showMore;
+			this.list.node.style.display = this.showMore ? 'flex' : 'none';
+			this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
 	#more[right tight touch material-icons] 'keyboard_arrow_down'
-		events:
-			click(e):
-				e.stopPropagation();
-				this.showMore = !this.showMore;
-				this.list.node.style.display = this.showMore ? 'flex' : 'none';
-				this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
 	#repeat[right tight touch material-icons] 'replay'
 		events:
 			click(e):
@@ -739,10 +752,15 @@ OrderItemGroup[item tight]
 
 
 OrderItem
+	:events
+		click(e):
+			e.stopPropagation();
+			this.emit('edit', this.data);
 	#settings[right tight touch material-icons] 'settings'
-		events:
-			click:
-				this.emit('edit', this.data);
+	//	events:
+	//		click(e):
+	//			e.stopPropagation();
+	//			this.emit('edit', this.data);
 	#time[margin1 italic]
 	#updateTime:function
 		var quantity = `${this.data.quantity} @ `;

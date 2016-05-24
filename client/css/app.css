@@ -380,6 +380,9 @@ h6 {
 .right {
   float: right; }
 
+.left {
+  float: left; }
+
 .dark {
   background-color: #311B92;
   color: rgba(255, 255, 255, 0.87); }
