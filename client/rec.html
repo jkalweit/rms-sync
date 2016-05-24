@@ -461,6 +461,8 @@ TicketDetails[col col-flex wide shadow]
 			delete:
 				Modal.confirm('Delete?', this.data.name, () => {
 					this.data.parent.remove(this.data.key);
+					hub.ticketFilter.selectedTicket = null;
+					hub.emit('ticketFilterChanged');
 					hub.emit('ticketTotalsChanged');
 					this.close();
 				});
@@ -684,7 +686,8 @@ OrderItemGroup[item tight]
 			price: orderItem.price,
 			quantity: 1,
 			taxType: orderItem.taxType,
-			note: orderItem.note || '' 
+			note: orderItem.note || '',
+			options: JSON.parse(JSON.stringify(orderItem.options))
 		};
 		var ticket = this.model.parent.parent;
 		var result = ticket.orderItems.set(newItem.key, newItem)[newItem.key];
