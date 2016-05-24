@@ -14,13 +14,39 @@
 
 <script id="view" type="text/other">
 
-#hub:EventHub
+#hub:RecHub
 #header:Header
 #ticketList:TicketList
 #ticketDetails:TicketDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 
+RecHub
+	#init:function
+		this.ticketFilter = { showPaid: false, selectedTicket: null };
+	#selectTicket:function(ticket)
+		this.ticketFilter.selectedTicket = ticket;
+		this.ticketFilter.selectedOrderItem = null;
+		hub.emit('ticketFilterChanged', this.ticketFilter);
+	#selectOrderItem:function(orderItem)
+		this.ticketFilter.selectedOrderItem = orderItem;
+		hub.emit('ticketFilterChanged', this.ticketFilter);
+	#render:function	
+		if(this.ticketFilter.selectedTicket) {
+			var selectedOrderItem = this.ticketFilter.selectedOrderItem;
+			this.selectTicket(this.data.tickets[this.ticketFilter.selectedTicket.key]);
+			console.log('selectedOrderItem', this.ticketFilter.selectedOrderItem);
+			if(selectedOrderItem) {
+				if(this.ticketFilter.selectedTicket) {
+
+					console.log('1selectedOrderItem', this.ticketFilter.selectedOrderItem);
+					this.selectOrderItem(this.ticketFilter.selectedTicket.orderItems[selectedOrderItem.key]);
+				} else {
+					console.log('2selectedOrderItem', this.ticketFilter.selectedOrderItem);
+					this.selectOrderItem(null);
+				}
+			}
+		}
 
 KitchenOrder
 	:style
@@ -84,11 +110,6 @@ KitchenOrderPreview
 		}
 		
 
-
-
-EventHub
-	#init:function
-		this.ticketFilter = { showPaid: false };
 
 
 TableSelect
@@ -471,7 +492,8 @@ TicketDetails[col col-flex wide shadow]
 	#items:OrderItemList[col-fill]
 		events:
 			edit(orderItem):
-				this.orderItemDetails.update(orderItem);
+				//this.orderItemDetails.update(orderItem);
+				hub.selectOrderItem(orderItem);
 				this.orderItemDetailsModal.show();	
 	#totals:TicketTotals[col-nofill]
 	#close:function
@@ -540,7 +562,6 @@ TicketDetails[col col-flex wide shadow]
 		this.orderItemDetailsModal = Modal.createModal(this.orderItemDetails);
 		this.selectOptionsView = buildComponent('SelectOptionsView');
 		this.selectOptionsView.on('selected', (value) => { 
-			console.log('selected111', value);
 			var option = this.orderItemToAdd.options[this.selectOptionsView.data.key];
 			if(option) {
 				option.value = value.name;
@@ -555,23 +576,23 @@ TicketDetails[col col-flex wide shadow]
 			style: { marginTop: '1em' },
 			events: { click: () => { this.selectOptionsViewModal.hide(); }}});
 	#render:function
-			this.node.style.display = this.data ? 'flex' : 'none';
-			if(!this.data) {
-				return;
-			}
-			this.disableScreen.style.display = RecUtils.isTicketPaid(this.data) ? 'block' : 'none';
-			this.details.node.style.display = this.showMore ? 'none' : 'block';
-			this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
-			if(this.data) { 
-				this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">
-												${this.data.table}</span> ${this.data.name}
-												<br/><span class="small-text" style="font-weight: normal;"><span style="display: inline-block; width: 4.4em;">${ moment(this.data.addedAt).format('h:mma')}</span>${this.data.servedBy}</span>`;
-				this.items.update(this.data.orderItems);
-				this.details.update(this.data);
-				this.moreEdit.update(this.data);
-				this.moreEdit.server.select(this.data.servedBy);
-				this.totals.update(this.data);
-			}
+		this.node.style.display = this.data ? 'flex' : 'none';
+		if(!this.data) {
+			return;
+		}
+		this.disableScreen.style.display = RecUtils.isTicketPaid(this.data) ? 'block' : 'none';
+		this.details.node.style.display = this.showMore ? 'none' : 'block';
+		this.moreEdit.node.style.display = this.showMore ? 'block' : 'none';
+		if(this.data) { 
+			this.header.text.innerHTML = `<span style="font-weight: normal; width: 3em; display: inline-block;">
+											${this.data.table}</span> ${this.data.name}
+											<br/><span class="small-text" style="font-weight: normal;"><span style="display: inline-block; width: 4.4em;">${ moment(this.data.addedAt).format('h:mma')}</span>${this.data.servedBy}</span>`;
+			this.items.update(this.data.orderItems);
+			this.details.update(this.data);
+			this.moreEdit.update(this.data);
+			this.moreEdit.server.select(this.data.servedBy);
+			this.totals.update(this.data);
+		}
 
 SelectOptionsView[col-flex]
 	#header:SimpleHeader({ text: 'Select Option' })
@@ -582,6 +603,7 @@ SelectOptionsView[col-flex]
 	#render:function
 		var category = sync.data.menu.menuOptions.categories[this.data.categoryKey];
 		if(!category) { console.log('Cannot find Category'); return; }
+		this.header.setTitle(category.name);
 		this.list.update(category.values);
 
 MenuOption[item tight]
@@ -754,19 +776,44 @@ OrderItemDetails[col-flex]
 		events:
 			changed:
 				hub.emit('ticketTotalsChanged', this.data.parent.parent);
+	#options:SimpleList({ ctor: 'OrderItemDetailsOption' })
+		style:
+			margin-top: 2em;
+		events:
+			selected(option):
+				console.log('edit', option);
+				this.selectOptionsView.update(option);
+				this.selectOptionsViewModal.show();
 	#init:function
-			this.render();
+		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedOrderItem));
+		this.selectOptionsView = buildComponent('SelectOptionsView');
+		this.selectOptionsView.on('selected', (value) => { 
+			var option = this.selectOptionsView.data;
+			if(option) {
+				option.merge({ value: value.name, price: value.price, priceWithEntree: value.priceWithEntree });
+			}
+			this.selectOptionsViewModal.hide();
+		});
+		this.selectOptionsViewModal = Modal.createModal(this.selectOptionsView);
+		this.selectOptionsViewModal.node.style.zIndex = 3;
+		this.render();
 	#render:function
-			this.node.style.display = this.data ? 'block' : 'none';
+		this.node.classList.toggle('hide', !this.data);
+		if(this.data) this.options.update(this.data.options);
+
+OrderItemDetailsOption[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan
+	#render:function
+		this.nameSpan.innerHTML = this.data.name + ': ' + this.data.value;
 	
 MenuCategories[col col-flex col-right]
 	#list:SearchList({ ctor: 'MenuItemCategory', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
 				menuItems.update(item.items);
-			add(value):
-				this.list.clearSearch();
-				this.add(value);
 	#init:function
 		this.list.header.node.style.display = 'none';
 		this.list.postFilter = (data) => {
@@ -833,6 +880,7 @@ SV.onLoad(() => {
 		sync.on('updated', (data) => {
 			console.log('data', data);
 			var rec = data.reconciliations[window.recSettings.selectedRecKey];
+			hub.update(rec);
 			ticketList.update(rec.tickets);
 			menuCategories.update(data.menu.categories);			
 			header.update(rec);			

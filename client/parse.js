@@ -24,6 +24,9 @@ class Input extends SyncView {
 		var elem = this.options.isTextArea ? 'textarea' : 'input';
 		this.input = SV.el(elem, { parent: this.node,
 			events: { 
+				focus: () => {
+					this.input.select();
+				},
 				blur: () => {
 					var value = this.input.value;			
 					if(this.options.validator) {
@@ -314,7 +317,7 @@ function buildComponent(componentName, options) {
 				var tag = getTag(trimmed) || 'div';
 				var classes = getClasses(trimmed);
 				var inner = getText(trimmed);
-					
+				var displayName = `#{componentName}:#{id}:#{tag}`; // for debugger	
 				if(binding) { 
 					var split = binding.split('=');
 					var prop = 'innerHTML';
@@ -342,6 +345,7 @@ function buildComponent(componentName, options) {
 						code += lines[i] + '\n';
 					}
 					el = new Function(args2, code).bind(componentInstance);
+					el.displayName = displayName;
 					//if(id === 'init') console.log('code', id, args, code);
 				} else if(tag === 'events') {
 					var code = getCode(trimmed);
@@ -349,7 +353,7 @@ function buildComponent(componentName, options) {
 						i = i+1;
 						code += lines[i] + '\n';
 					}
-					parseEvents(code, componentInstance.node, componentInstance, 1);	
+					parseEvents(code, componentInstance.node, componentInstance, 1, displayName);
 
 				} else if(tag === 'style') {
 					var style = getCode(trimmed);
@@ -395,23 +399,13 @@ function buildComponent(componentName, options) {
 						pair = pair.map((s) => s.trim());
 						styleObj[pair[0]] = pair[1];
 					});
-
 				} else if(prop === 'events') {
 					var code = getCode(trimmed);
 					while(i+1 < lines.length && numTabs(lines[i+1]) > 2) {
 						i = i+1;
 						code += lines[i] + '\n';
 					}
-					parseEvents(code, el, componentInstance);	
-
-				} else if(prop === 'click') {
-					var code = getCode(trimmed);
-					while(i+1 < lines.length && numTabs(lines[i+1]) > 2) {
-						i = i+1;
-						code += lines[i] + '\n';
-					}
-					var fn = new Function(code).bind(componentInstance);
-					el.addEventListener(prop, fn);
+					parseEvents(code, el, componentInstance, 2, displayName);	
 				}
 			}			
 		}
@@ -422,8 +416,7 @@ function buildComponent(componentName, options) {
 	return componentInstance;
 }
 
-function parseEvents(code, el, context, tabsBase) {
-	if(typeof tabsBase === 'undefined') tabsBase = 2;
+function parseEvents(code, el, context, tabsBase, displayName) {
 	context = context || el;
 	var lines = code.split('\n');
 	for(var i = 0; i < lines.length; i++) {
@@ -440,6 +433,7 @@ function parseEvents(code, el, context, tabsBase) {
 						code += lines[i] + '\n';
 					}
 				var fn = new Function(args, code).bind(context);
+				fn.displayName = displayName;
 				if(el.on) {
 					el.on(name, fn);
 				} else {

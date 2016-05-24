@@ -62,12 +62,14 @@ SimpleHeader[header col-nofill row row-flex]
 		events:
 			click: 
 				this.emit('more');
+	#setTitle:function(text)
+		this.text.innerHTML = text;
 	#close[row-nofill touch material-icons] 'done'
 		events:
 			click: 
 				this.emit('close');
 	#init:function(options) 
-		this.text.innerHTML = options.text;
+		this.setTitle(options.text);
 		if(!options.add)
 			this.add.style.display = 'none';	
 		if(!options.close)
