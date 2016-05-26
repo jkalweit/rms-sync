@@ -304,7 +304,7 @@ h6 {
 .row {
   min-height: 56px;
   line-height: 56px;
-  box-sizing: padding-box; }
+  box-sizing: border-box; }
   .row input, .row select {
     height: 40px;
     padding-left: 4px;
@@ -362,7 +362,6 @@ h6 {
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.5); }
 
 .bold {
-  color: rgba(0, 0, 0, 0.87);
   font-weight: bold; }
 
 .italic {

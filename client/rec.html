@@ -8,6 +8,7 @@
 <script type="text/javascript" src="/SyncView.js"></script>
 <script type="text/javascript" src="/parse.js"></script>
 <link rel="import" id="components.html" href="/components.html">
+<link rel="import" id="kitchenComponents.html" href="/kitchenComponents.html">
 </head>
 <body>
 
@@ -16,7 +17,7 @@
 
 #hub:RecHub
 #header:Header
-#ticketList:TicketList
+#ticketList:TicketListMain
 #ticketDetails:TicketDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
@@ -24,90 +25,38 @@
 RecHub
 	#init:function
 		this.ticketFilter = { showPaid: false, selectedTicket: null };
+		this.on('ticketTotalsChanged', (ticketKey) => {
+			var ticket = this.data.tickets[ticketKey];
+			if(ticket) ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
+			this.data.merge({ totals: RecUtils.getRecTotals(this.data) });
+		});
+	#clearTicketSearch:function
+		this.ticketFilter.name = '';
+		this.fireTicketFilterChanged();
 	#selectTicket:function(ticket)
 		this.ticketFilter.selectedTicket = ticket;
 		this.ticketFilter.selectedOrderItem = null;
-		hub.emit('ticketFilterChanged', this.ticketFilter);
+		this.fireTicketFilterChanged();
 	#selectOrderItem:function(orderItem)
 		this.ticketFilter.selectedOrderItem = orderItem;
+		this.fireTicketFilterChanged();
+	#fireTicketFilterChanged:function
 		hub.emit('ticketFilterChanged', this.ticketFilter);
 	#render:function	
 		if(this.ticketFilter.selectedTicket) {
 			var selectedOrderItem = this.ticketFilter.selectedOrderItem;
 			this.selectTicket(this.data.tickets[this.ticketFilter.selectedTicket.key]);
-			console.log('selectedOrderItem', this.ticketFilter.selectedOrderItem);
 			if(selectedOrderItem) {
 				if(this.ticketFilter.selectedTicket) {
-
-					console.log('1selectedOrderItem', this.ticketFilter.selectedOrderItem);
 					this.selectOrderItem(this.ticketFilter.selectedTicket.orderItems[selectedOrderItem.key]);
 				} else {
-					console.log('2selectedOrderItem', this.ticketFilter.selectedOrderItem);
 					this.selectOrderItem(null);
 				}
 			}
 		}
 
-KitchenOrder
-	:style
-		width: 50%;
-		min-height: 200px;
-		border: 1px solid rgba(0,0,0,0.5);
-		position: relative;
-	#progress
-		style:
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 50%;
-			height: 28px;
-			background-color: #0F0;
-	#orderTime[row tight right padding1]
-		style:
-			position: relative;
-	#header[row tight padding1 border-bottom]
-		style:
-			position: relative;
-	#list:List({ ctor: 'KitchenOrderItem' })
-	#updateOrderTime:function
-		var now = moment();
-		var submitted = moment(this.data.submittedAt);
-		var d = moment.duration(now.diff(submitted));
-		this.orderTime.innerHTML = moment(d.asMilliseconds()).format('m:ss');
-	#render:function
-		this.header.innerHTML = this.data.table + ' ' + this.data.name;
-		this.list.update(this.data.orderItems);
-		this.updateOrderTime();
-		if(!this.orderTimer) {
-			this.orderTimer = setInterval(() => { this.updateOrderTime(); }, 1000);
-		}
 
-KitchenOrderItem[row tight]
-	:style
-		line-height: 20px;
-	#temp[margin1]
-		style:
-			display: inline-block;
-			width: 1.5em;
-	#nameSpan
-		style:
-			display: inline-block;
-	#side[right margin1]
-	#options[margin4 whitespace-pre]
-	#noteSpan$(data.note)[italic margin4 whitespace-pre]
-	#render:function
-		var quantity = this.data.quantity != 1 ? this.data.quantity + 'x' : '';
-		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; display: inline-block;">${quantity}</span><span class="bold">${this.data.name}</span>`
-		var optionsText = '';
-		SV.forEach(this.data.options, (option) => { 
-			if(option.name === 'Temp' ) { this.temp.innerHTML = option.value; }
-			else if(option.name === 'Side') { this.side.innerHTML = option.value; }
-			else if(option.name === 'Dressing') {  }
-			else { optionsText += option.value + '\n'; }
-		});
-		this.options.innerHTML = optionsText;
-
-KitchenOrderPreview
+KitchenOrderPreview[group]
 	:h1 'Order Preview'
 	#submittedAt:LabeledValue({ label: 'Submitted' });
 	#order:KitchenOrder[margin1]
@@ -123,8 +72,6 @@ KitchenOrderPreview
 			this.submittedTimer = setInterval(() => { this.updateSubmittedTime(); }, 30000);
 		}
 		
-
-
 
 TableSelect
 	#header[header] 'Select a Table'
@@ -182,7 +129,6 @@ RecTotalsEdit
 		this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
 
 
-
 RecSettings
 	:h1 'Rec Settings'
 	#totals:RecTotalsEdit
@@ -205,34 +151,48 @@ RecTotals[header]
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.total);
 
-Header[row dark]
+Header[row row-flex dark]
 	:style
 		height: 56px;
-		//border-bottom: 1px solid #000;
-	:div[row-nofill touch material-icons row-right] 'settings'
-		events:
-			click:
-				this.recSettingsModal.show();
-	#totals:RecTotals[row-right]
 	#userSelect:Select({ prop: 'data.info.name' })[row-nofill]
 		style:
 			width: 239px;
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
+	#status[row-fill bold]
+	#totals:RecTotals[row-nofill]
+	:div[row-nofill touch material-icons] 'settings'
+		events:
+			click:
+				this.recSettingsModal.show();
 	#init:function
 		this.recSettings = buildComponent('RecSettings');
 		this.recSettingsModal = Modal.createModal(this.recSettings);
-		hub.on('ticketTotalsChanged', () => { 
-			var totals = RecUtils.getRecTotals(this.data);
-			this.data.merge({ totals: totals });
+		sync.on('statusChanged', (path, status) => {
+			if(status !== 'Connected') {
+				this.node.classList.add('error');
+				this.status.innerHTML = 'Warning: ' + status;
+			} else {
+				this.node.classList.remove('error');
+				this.status.innerHTML = '';
+			}
 		});
+
 	#render:function
 		this.totals.update(this.data.totals);
 		this.recSettings.update(this.data.drawer);
 		
 
-TicketList[col col-flex col-left]
+TicketListMain[col col-flex col-left]
+	#ticketList:TicketList
+		events: 
+			selected(ticket):
+				hub.selectTicket(ticket);
+	#render:function
+		this.ticketList.update(this.data);
+
+TicketList[]
 	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
 		events:
 			add(value):
@@ -241,6 +201,9 @@ TicketList[col col-flex col-left]
 			searchChanged(value):
 				this.search(value);
 	#list:SimpleList({ ctor: 'TicketGroup' })[col-fill]
+		events:
+			selected(ticket):
+				this.emit('selected', ticket);
 	#clearSearch:function
 		this.header.clear();
 	#search:function(value)
@@ -311,6 +274,9 @@ TicketGroup
 			padding: 8px 8px;
 			color: rgba(0,0,0,0.5);
 	#list:SimpleList({ ctor: 'Ticket', sort: 'name', searchProp: 'name' })[col-fill]
+		events:
+			selected(ticket):
+				this.emit('selected', ticket);
 	#render:function
 		this.server.innerHTML = this.data.key;
 		this.list.update(this.data);
@@ -318,8 +284,7 @@ TicketGroup
 Ticket[item tight]
 	:events
 		click:
-			hub.ticketFilter.selectedTicket = this.data;
-			hub.emit('ticketFilterChanged', hub.ticketFilter);
+			this.emit('selected', this.data);
 	#total[right margin1]
 	#nameSpan
 	#lastOrderTime[italic margin1]
@@ -395,10 +360,11 @@ TicketTotals[header row-flex]
 				};
 				ko.orderItems[orderItem.key] = orderItem;
 			}
-			this.kitchenOrderPreview.update(ko);
-			this.kitchenOrderPreviewModal.show();
 		});
-		//this.data.orderItems.merge(merge);
+		if(SV.toArray(ko.orderItems).length === 0) return;
+		this.kitchenOrderToSubmit = { order: ko, merge: merge };
+		this.kitchenOrderPreview.update(ko);
+		this.kitchenOrderPreviewModal.show();
 	#sendToBar:function
 		var merge = {};
 		var submittedAt = new Date().toISOString();
@@ -423,10 +389,11 @@ TicketTotals[header row-flex]
 				};
 				ko.orderItems[orderItem.key] = orderItem;
 			}
-			this.kitchenOrderPreview.update(ko);
-			this.kitchenOrderPreviewModal.show();
 		});
-		//this.data.orderItems.merge(merge);
+		if(SV.toArray(ko.orderItems).length === 0) return;
+		this.barOrderToSubmit = { order: ko, merge: merge };
+		this.barOrderPreview.update(ko);
+		this.barOrderPreviewModal.show();
 	#cyclePaymentStatus:function
 		var newStatus;
 		switch(this.data.paymentStatus) {
@@ -444,9 +411,34 @@ TicketTotals[header row-flex]
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
 		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Order',
-			events: { click: () => { this.kitchenOrderPreviewModal.hide(); }}});
+			events: { click: () => { 
+				this.kitchenOrderPreviewModal.hide(); 
+				if(!hub.data.kitchen) hub.data.set('kitchen', { orders: {} });
+				var order = this.kitchenOrderToSubmit.order;
+				hub.data.kitchen.orders.set(order.key, order);	
+				this.data.orderItems.merge(this.kitchenOrderToSubmit.merge);
+				this.kitchenOrderToSubmit = null;
+			}}});
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Cancel',
-			events: { click: () => { this.kitchenOrderPreviewModal.hide(); }}});
+			events: { click: () => { 
+				this.kitchenOrderToSubmit = null;
+				this.kitchenOrderPreviewModal.hide(); }}});
+		
+		this.barOrderPreview = buildComponent('KitchenOrderPreview');
+		this.barOrderPreviewModal = Modal.createModal(this.barOrderPreview);
+		SV.el('div', { parent: this.barOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Bar Order',
+			events: { click: () => { 
+				this.barOrderPreviewModal.hide(); 
+				if(!hub.data.bar) hub.data.set('bar', { orders: {} });
+				var order = this.barOrderToSubmit.order;
+				hub.data.bar.orders.set(order.key, order);	
+				this.data.orderItems.merge(this.barOrderToSubmit.merge);
+				this.barOrderToSubmit = null;
+			}}});
+		SV.el('div', { parent: this.barOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Cancel',
+			events: { click: () => { 
+				this.barOrderToSubmit = null;
+				this.barOrderPreviewModal.hide(); }}});
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.payment.classList.toggle('highlight', RecUtils.isTicketPaid(this.data));
@@ -498,7 +490,7 @@ TicketDetails[col col-flex wide shadow]
 					this.data.parent.remove(this.data.key);
 					hub.ticketFilter.selectedTicket = null;
 					hub.emit('ticketFilterChanged');
-					hub.emit('ticketTotalsChanged');
+					hub.emit('ticketTotalsChanged', this.data.key);
 					this.close();
 				});
 	#details:TicketDetailsMore[col-nofill]
@@ -506,9 +498,9 @@ TicketDetails[col col-flex wide shadow]
 	#items:OrderItemList[col-fill]
 		events:
 			edit(orderItem):
-				//this.orderItemDetails.update(orderItem);
 				hub.selectOrderItem(orderItem);
 				this.orderItemDetailsModal.show();	
+				this.orderItemDetails.noteInput.focus();
 	#totals:TicketTotals[col-nofill]
 	#close:function
 			this.update(null);
@@ -565,13 +557,10 @@ TicketDetails[col col-flex wide shadow]
 			var newItem = this.orderItemToAdd;
 			var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
 			ticketDetails.items.list.select(result.key);
-			hub.emit('ticketTotalsChanged', this.data);
+			hub.emit('ticketTotalsChanged', this.data.key);
 		}
 	#init:function
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
-		hub.on('ticketTotalsChanged', (ticket) => {
-			if(ticket) ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
-		});
 		this.orderItemDetails = buildComponent('OrderItemDetails');
 		this.orderItemDetailsModal = Modal.createModal(this.orderItemDetails);
 		this.selectOptionsView = buildComponent('SelectOptionsView');
@@ -727,7 +716,7 @@ OrderItemGroup[item tight]
 		var ticket = this.model.parent.parent;
 		var result = ticket.orderItems.set(newItem.key, newItem)[newItem.key];
 		ticketDetails.items.list.select(result.key);
-		hub.emit('ticketTotalsChanged', ticket);
+		hub.emit('ticketTotalsChanged', ticket.key);
 	#init:function
 		this.list.header.node.style.display = 'none';
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
@@ -756,7 +745,7 @@ OrderItem
 		click(e):
 			e.stopPropagation();
 			this.emit('edit', this.data);
-	#settings[right tight touch material-icons] 'settings'
+	#settings[right margin1 tight touch material-icons] 'settings'
 	//	events:
 	//		click(e):
 	//			e.stopPropagation();
@@ -781,7 +770,7 @@ OrderItemDetails[col-flex]
 				Modal.confirm('Delete?', this.data.name, () => {
 					var ticket = this.data.parent.parent;
 					ticket.orderItems.remove(this.data.key);
-					hub.emit('ticketTotalsChanged', ticket);
+					hub.emit('ticketTotalsChanged', ticket.key);
 					this.emit('close');
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
@@ -789,17 +778,16 @@ OrderItemDetails[col-flex]
 	#quantityInput:Input({ prop: 'quantity', label: 'Quantity', number: true  })$(update=data)[number]
 		events:
 			changed:
-				hub.emit('ticketTotalsChanged', this.data.parent.parent);
+				hub.emit('ticketTotalsChanged', this.data.parent.parent.key);
 	#priceInput:Input({ prop: 'price', label: 'Price', number: true  })$(update=data)[number]
 		events:
 			changed:
-				hub.emit('ticketTotalsChanged', this.data.parent.parent);
+				hub.emit('ticketTotalsChanged', this.data.parent.parent.key);
 	#options:SimpleList({ ctor: 'OrderItemDetailsOption' })
 		style:
 			margin-top: 2em;
 		events:
 			selected(option):
-				console.log('edit', option);
 				this.selectOptionsView.update(option);
 				this.selectOptionsViewModal.show();
 	#init:function
@@ -814,6 +802,39 @@ OrderItemDetails[col-flex]
 		});
 		this.selectOptionsViewModal = Modal.createModal(this.selectOptionsView);
 		this.selectOptionsViewModal.node.style.zIndex = 3;
+
+		this.selectTicketList = buildComponent('TicketList');
+		this.selectTicketList.header.addBtn.style.display = 'none';
+		this.selectTicketList.showPaidBtn.style.display = 'none';
+		this.selectTicketList.on('selected', (newTicket) => {
+			var oldTicket = this.data.parent.parent;
+			if(RecUtils.isTicketPaid(newTicket) || oldTicket.key === newTicket.key) return;
+			var orderItem = this.data;
+			var mergeOldTicket = { orderItems: { __remove: orderItem.key } };
+			var mergeNewTicket = { orderItems: {} };
+			mergeNewTicket.orderItems[orderItem.key] = orderItem;
+			var merge = {};
+			merge[oldTicket.key] = mergeOldTicket;
+			merge[newTicket.key] = mergeNewTicket;
+			hub.data.tickets.merge(merge);
+			oldTicket = hub.data.tickets[oldTicket.key];
+			newTicket = hub.data.tickets[newTicket.key];
+			hub.emit('ticketTotalsChanged', oldTicket.key);
+			hub.emit('ticketTotalsChanged', newTicket.key);
+			hub.clearTicketSearch();
+			this.selectTicketListModal.hide();
+			this.emit('close');
+		});
+		this.selectTicketListModal = Modal.createModal(this.selectTicketList);
+		SV.el('div', { parent: this.selectTicketListModal.mainView, innerHTML: 'Cancel', className: 'btn',
+			style: { marginTop: '1em' },
+			events: { click: () => { this.selectTicketListModal.hide();  }}});
+		this.selectTicketListModal.node.style.zIndex = 3;
+		this.header.node.insertBefore(SV.el('div', { className: 'row-nofill touch material-icons', innerHTML: 'reply',
+			events: { click: () => { 
+				hub.clearTicketSearch();
+				this.selectTicketListModal.show();
+		}}}), this.header.close);
 		this.render();
 	#render:function
 		this.node.classList.toggle('hide', !this.data);
@@ -893,6 +914,7 @@ window.recSettings = new LocalSyncNode('recSettings');
 SV.onLoad(() => { 
 
 		importCode('components.html'); 
+		importCode('kitchenComponents.html'); 
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {
@@ -900,6 +922,7 @@ SV.onLoad(() => {
 			var rec = data.reconciliations[window.recSettings.selectedRecKey];
 			hub.update(rec);
 			ticketList.update(rec.tickets);
+			ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
 			menuCategories.update(data.menu.categories);			
 			header.update(rec);			
 
@@ -918,8 +941,7 @@ SV.onLoad(() => {
 	
 		window.recSettings.on('updated', (data) => {
 			header.userSelect.select(data.currentUser);
-			console.log('call sort', data.currentUser);
-			ticketList.sortGroups();	
+			ticketList.ticketList.sortGroups();	
 		});
 });
 

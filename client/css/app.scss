@@ -263,7 +263,7 @@ $input-height: $increment - $margin;
 .row {
 	min-height: $increment;
 	line-height: $increment; 
-	box-sizing: padding-box;
+	box-sizing: border-box;
 
 	input, select {
     		height: $input-height;
@@ -327,7 +327,7 @@ $input-height: $increment - $margin;
 }
 
 .bold {
-	color: rgba(0,0,0,0.87);
+	//color: rgba(0,0,0,0.87);
 	font-weight: bold;
 }
 .italic {
