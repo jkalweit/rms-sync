@@ -1,0 +1,88 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/bower_components/moment/moment.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+<link rel="import" id="components.html" href="/components.html">
+<link rel="import" id="kitchenComponents.html" href="/kitchenComponents.html">
+</head>
+<body style="background-color: #444">
+
+
+<script id="view" type="text/other">
+
+#hub:RecHub
+#header:Header
+#barOrders:BarOrders
+
+
+RecHub
+
+	
+Header[row dark]
+	:style
+		z-index: 1;
+		height: 56px;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+	:div[left margin1] 'Bar'
+	//:div[row-nofill touch material-icons row-right] 'settings'
+	//	events:
+	//		click:
+	#init:function
+	#render:function
+		
+
+BarOrders
+	:style
+		margin-top: 56px;
+	#list:List({ ctor: 'KitchenOrder' })
+	#render:function
+		this.list.update(this.data)
+
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+window.recSettings = new LocalSyncNode('recSettings');	
+
+
+SV.onLoad(() => { 
+
+		importCode('components.html'); 
+		importCode('kitchenComponents.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			console.log('data', data);
+			var rec = data.reconciliations[window.recSettings.selectedRecKey];
+			hub.update(rec);
+			header.update(rec);			
+			if(rec.bar) barOrders.update(rec.bar.orders);
+		});
+		
+	
+		window.recSettings.on('updated', (data) => {
+		});
+});
+
+
+</script>
+</body>
+</html>
