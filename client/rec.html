@@ -22,6 +22,33 @@
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 
+RecList
+	#header:SimpleHeader({ text: 'Select a Rec', close: true })
+		events:
+			close:
+				window.selectRecModal.hide();
+	#list:SimpleList({ ctor: 'Rec' })
+		events:
+			selected(rec):
+				console.log('selected', rec.name);
+				window.recSettings.set('selectedRecKey', rec.key);
+	#init:function
+		window.recSettings.on('updated', () => { 
+		 	SV.forEach(this.list.list.views, (view) => view.render() ); 
+		});
+	#render:function
+		this.list.update(this.data);
+		
+Rec[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan$(data.name)
+	#render:function
+		console.log('render', this.data.name, this.data.key, window.recSettings.selectedRecKey);
+		this.node.classList.toggle('selected', this.data.key === window.recSettings.selectedRecKey);
+
+
 RecHub
 	#init:function
 		this.ticketFilter = { showPaid: false, selectedTicket: null };
@@ -160,12 +187,17 @@ Header[row row-flex dark]
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
+	#title[row-nofill bold]
 	#status[row-fill bold]
 	#totals:RecTotals[row-nofill]
 	:div[row-nofill touch material-icons] 'settings'
 		events:
 			click:
 				this.recSettingsModal.show();
+	:div[row-nofill touch material-icons] 'check'
+		events:
+			click:
+				window.selectRecModal.show();
 	#init:function
 		this.recSettings = buildComponent('RecSettings');
 		this.recSettingsModal = Modal.createModal(this.recSettings);
@@ -181,6 +213,7 @@ Header[row row-flex dark]
 
 	#render:function
 		this.totals.update(this.data.totals);
+		this.title.innerHTML = this.data.name;
 		this.recSettings.update(this.data.drawer);
 		
 
@@ -262,8 +295,8 @@ TicketList[]
 		this.list.update(sorted);
 	#render:function 
 		this.sortGroups();
-		if(this.test) return;
 		this.test = true;
+		if(this.test) return;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
 		ticketDetails.totals.sendToKitchen();
@@ -905,6 +938,7 @@ window.Input = Input
 
 SV.startReloader();
 
+
 var sync = new SyncNodeSocket('/data', {});
 window.membersSync = new SyncNodeSocket('/members', {});
 window.recSettings = new LocalSyncNode('recSettings');	
@@ -917,18 +951,22 @@ SV.onLoad(() => {
 		importCode('kitchenComponents.html'); 
 		parse(SV.id('view').innerHTML); 
 
-		sync.on('updated', (data) => {
-			console.log('data', data);
-			var rec = data.reconciliations[window.recSettings.selectedRecKey];
+		var recList = buildComponent('RecList');
+		window.selectRecModal = Modal.createModal(recList);
+
+		function updateRec() {
+			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
 			hub.update(rec);
 			ticketList.update(rec.tickets);
 			ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
-			menuCategories.update(data.menu.categories);			
 			header.update(rec);			
+		}
 
-			if(ticketDetails.data) {
-				ticketDetails.update(rec.tickets[ticketDetails.data.key]);
-			}
+		sync.on('updated', (data) => {
+			console.log('data', data);
+			recList.update(data.reconciliations);
+			updateRec();
+			menuCategories.update(sync.data.menu.categories);			
 		});
 		
 		window.membersSync.on('updated', (data) => {
@@ -942,6 +980,7 @@ SV.onLoad(() => {
 		window.recSettings.on('updated', (data) => {
 			header.userSelect.select(data.currentUser);
 			ticketList.ticketList.sortGroups();	
+			updateRec();
 		});
 });
 
