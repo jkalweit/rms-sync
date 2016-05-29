@@ -21,17 +21,63 @@
 #ticketDetails:TicketDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
+#recDisabled:Disable
+
+Disable[flex hide]
+	:style
+		position: absolute;
+		justify-content: center;
+		align-items: center;
+		top: 56px;
+		bottom: 0; left: 0; right: 0;
+		z-index: 100;
+		background-color: rgba(0,0,0,0.8);
+	#message[shadow]
+		style:
+			padding: 2em;
+			width: 50%;
+			text-align: center;
+			background-color: #FFF:
+	
 
 RecList
-	#header:SimpleHeader({ text: 'Select a Rec', close: true })
+	#header:SimpleHeader({ text: 'Select a Rec', add: true, close: true })
 		events:
+			add:
+				this.addRec();
 			close:
 				window.selectRecModal.hide();
 	#list:SimpleList({ ctor: 'Rec' })
 		events:
 			selected(rec):
-				console.log('selected', rec.name);
-				window.recSettings.set('selectedRecKey', rec.key);
+				this.select(rec.key);
+	#select:function(key)
+		window.recSettings.set('selectedRecKey', key);
+		this.emit('close');
+	#addRec:function
+		var added = new Date().toISOString();
+		var now = moment();
+		var name = moment(added).format('dddd MMM Do, YYYY') + ' - ' + (now.hour() < 13 ? 'Lunch' : 'Dinner');
+		var newRec = {
+			key: name,
+			added: added,
+			name: name,
+			tickets: {},
+			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
+		};
+
+		if(this.data[name]) {
+			Modal.confirm('Duplicate Rec', 'There is already a rec named "' + name + '", are you sure you want to create another one?',
+					() => {
+						newRec.key += (' ' + now.format('h:mma'));
+						newRec.name = newRec.key;
+						this.data.set(newRec.key, newRec);
+						this.select(newRec.key);
+					});
+		} else {
+			this.data.set(newRec.key, newRec);
+			this.select(newRec.key);
+		}
 	#init:function
 		window.recSettings.on('updated', () => { 
 		 	SV.forEach(this.list.list.views, (view) => view.render() ); 
@@ -957,9 +1003,12 @@ SV.onLoad(() => {
 		function updateRec() {
 			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
 			hub.update(rec);
-			ticketList.update(rec.tickets);
-			ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
 			header.update(rec);			
+			ticketList.node.classList.toggle('hide', !rec);
+			if(rec) {
+				ticketList.update(rec.tickets);
+				ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
+			}
 		}
 
 		sync.on('updated', (data) => {

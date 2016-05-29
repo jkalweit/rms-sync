@@ -421,6 +421,9 @@ h6 {
   .disabled.selected {
     background-color: rgba(200, 200, 100, 0.7); }
 
+.flex {
+  display: flex; }
+
 .hide {
   display: none; }
 
