@@ -283,6 +283,10 @@ class SV {
 		var re = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 		return re.test(email);
 	}
+
+	static isEmptyObject(obj) {
+		return Object.keys(obj).length === 0;
+	}
 }
 
 
