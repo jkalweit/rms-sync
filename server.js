@@ -126,6 +126,7 @@ app.use('/images', express.static(imagesPath));
 
 
 var syncServer = new Sync.SyncNodeServer('data', io, {});
+var eventsServer = new Sync.SyncNodeServer('events', io, {});
 var progressServer = new Sync.SyncNodeServer('progress', io, {});
 var membersServer = new MemberServer(io);
 
@@ -349,6 +350,34 @@ function sendTextToAdmin(body) {
 	sendText(membersServer.data.admin.data.info.phone, body);
 }
 
+function printReceipt(receipt) {
+	var data = JSON.stringify(receipt);
+	console.log('Sending receipt: ', data);
+
+	var req = http.request({
+		port: 1338,
+		host: '192.168.6.25',
+		path: '',
+	    	method: 'POST',
+    		headers: {
+	          'Content-Type': 'application/json',
+        	  'Content-Length': Buffer.byteLength(data)
+	      	}	
+	}, (response) => {
+		response.on('data', (chunk) => {
+			console.log(`Print Receipt Response: ${chunk}`);
+		});
+		response.on('end', () => {
+			console.log('Print Receipt End');
+		});
+	});
+
+	req.write(data);
+	req.end();
+	
+	console.log('Print Receipt Sent');
+}
+
 io.on('connection', (socket) => {
 	socket.on('send text', (msg) => {	
 		sendText(msg.phone, msg.body);
@@ -356,7 +385,14 @@ io.on('connection', (socket) => {
 	socket.on('send text to admin', (body) => {	
 		sendTextToAdmin(body);
 	});
+	socket.on('print receipt', (receipt) => {
+		printReceipt(receipt);
+	});
+	socket.on('play kitchen bell', () => {
+		eventsServer.ioNamespace.emit('play kitchen bell');
+	});
 });
+
 
 var xoauth2 = require('xoauth2');
 var generator = xoauth2.createXOAuth2Generator({

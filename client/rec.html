@@ -202,8 +202,10 @@ RecTotalsEdit
 			font-weight: bold;
 			font-size: 24px;
 	#render:function
-		this.total.value.innerHTML = SV.formatCurrency(this.data.beginning);
-		this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
+		if(this.data) {
+			this.total.value.innerHTML = SV.formatCurrency(this.data.beginning);
+			this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
+		}
 
 
 RecSettings
@@ -238,7 +240,7 @@ Header[row row-flex dark]
 			selected(name):
 				window.recSettings.set('currentUser', name);
 	#title[row-nofill bold]
-	#status[row-fill bold]
+	#status[row-fill margin1 bold]
 	#totals:RecTotals[row-nofill]
 	:div[row-nofill touch material-icons] 'settings'
 		events:
@@ -356,7 +358,7 @@ TicketGroup
 		style:
 			padding: 8px 8px;
 			color: rgba(0,0,0,0.5);
-	#list:SimpleList({ ctor: 'Ticket', sort: 'name', searchProp: 'name' })[col-fill]
+	#list:SimpleList({ ctor: 'Ticket', sort: 'addedAt', searchProp: 'name' })[col-fill]
 		events:
 			selected(ticket):
 				this.emit('selected', ticket);
@@ -418,7 +420,11 @@ TicketTotals[header row-flex]
 	#total:div[row-fill]
 		style:
 			text-align: right;
-	#payment[right touch material-icons row-nofill]
+	#print[touch material-icons row-nofill] 'print'
+		events:
+			click:
+				this.printReceipt();
+	#payment[touch material-icons row-nofill]
 		events:
 			click:
 				this.cyclePaymentStatus();
@@ -494,6 +500,8 @@ TicketTotals[header row-flex]
 				newStatus = 'Unpaid';
 		}
 		this.data.set('paymentStatus', newStatus);
+	#printReceipt:function
+		SV.printReceipt(this.data);	
 	#init:function
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
 		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
@@ -504,6 +512,7 @@ TicketTotals[header row-flex]
 				var order = this.kitchenOrderToSubmit.order;
 				hub.data.kitchen.orders.set(order.key, order);	
 				this.data.orderItems.merge(this.kitchenOrderToSubmit.merge);
+				SV.playKitchenBell();
 				this.kitchenOrderToSubmit = null;
 			}}});
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Cancel',
@@ -580,12 +589,14 @@ TicketDetails[col col-flex wide shadow]
 	#items:OrderItemList[col-fill]
 		events:
 			edit(orderItem):
-				hub.selectOrderItem(orderItem);
-				this.orderItemDetailsModal.show();	
-				this.orderItemDetails.noteInput.focus();
+				this.editOrderItem(orderItem);
 	#totals:TicketTotals[col-nofill]
 	#close:function
-			this.update(null);
+		this.update(null);
+	#editOrderItem:function(orderItem)
+		hub.selectOrderItem(orderItem);
+		this.orderItemDetailsModal.show();	
+		this.orderItemDetails.noteInput.focus();
 	#add:function(menuItem)
 		if(!this.data) {
 			console.log('no ticket selected');
@@ -638,8 +649,9 @@ TicketDetails[col col-flex wide shadow]
 			//all options selected, add order item
 			var newItem = this.orderItemToAdd;
 			var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
-			ticketDetails.items.list.select(result.key);
+			//ticketDetails.items.list.select(result.key);
 			hub.emit('ticketTotalsChanged', this.data.key);
+			this.editOrderItem(result);
 		}
 	#init:function
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
@@ -767,8 +779,7 @@ OrderItemGroup[item tight]
 		click(e):
 			e.stopPropagation();
 			this.showMore = !this.showMore;
-			this.list.node.style.display = this.showMore ? 'flex' : 'none';
-			this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+			this.updateShowMore();
 	#more[right tight touch material-icons] 'keyboard_arrow_down'
 	#repeat[right tight touch material-icons] 'replay'
 		events:
@@ -782,6 +793,9 @@ OrderItemGroup[item tight]
 	#list:SearchList({ ctor: 'OrderItem' })
 		style:
 			display: none;
+	#updateShowMore:function
+		this.list.node.style.display = this.showMore ? 'flex' : 'none';
+		this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
 	#repeatItem:function
 		var orderItem = this.model;
 		var newItem = { 
@@ -803,7 +817,9 @@ OrderItemGroup[item tight]
 	#init:function
 		this.list.header.node.style.display = 'none';
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
+		this.showMore = true;
 	#render:function
+		this.updateShowMore();
 		var items = SV.toArray(this.data);
 		var quantity = 0;
 		var hasUnsubmitted = false;
@@ -828,7 +844,7 @@ OrderItem
 		click(e):
 			e.stopPropagation();
 			this.emit('edit', this.data);
-	#settings[right margin1 tight touch material-icons] 'settings'
+	//#settings[right margin1 tight touch material-icons] 'settings'
 	//	events:
 	//		click(e):
 	//			e.stopPropagation();
@@ -1097,7 +1113,7 @@ class RecUtils {
 			}
 		});
 
-		totals.tax = totals.food * 0.09;
+		totals.tax = parseFloat((totals.food * 0.09).toPrecision(2));
 		totals.total = totals.food + totals.tax + totals.alcohol;
 
 		return totals;

@@ -232,6 +232,13 @@ class SV {
 		setTimeout(() => { elem.classList.remove('flash'); }, 500);
 	}
 
+	static printReceipt(receipt) {
+		io().emit('print receipt', receipt);
+	}
+	
+	static playKitchenBell() {
+		io().emit('play kitchen bell');
+	}
 
 	static sendText(msg) {
 		io().emit('send text', msg);

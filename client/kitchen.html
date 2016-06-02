@@ -12,15 +12,13 @@
 </head>
 <body style="background-color: #444">
 
+<audio src="/imgs/sounds/bell.mp3" preload="auto" id="bell"></audio>
 
 <script id="view" type="text/other">
 
-#hub:RecHub
 #header:Header
 #kitchenOrders:KitchenOrders
 
-
-RecHub
 
 	
 Header[row dark]
@@ -35,6 +33,9 @@ Header[row dark]
 	:div[row-nofill touch material-icons row-right] 'settings'
 		events:
 			click:
+				//Modal.confirm('Delete all kitchen orders?', '', () => {
+				//	this.data.kitchen.remove('orders');
+				//});
 	#init:function
 	#render:function
 		
@@ -42,8 +43,9 @@ Header[row dark]
 KitchenOrders
 	:style
 		margin-top: 56px;
-	#list:List({ ctor: 'KitchenOrder' })
+	#list:List({ ctor: 'KitchenOrder', sort: 'submittedAt' })
 	#render:function
+		console.log('updating kitchenorders!', this.data);
 		this.list.update(this.data)
 
 
@@ -55,13 +57,18 @@ KitchenOrders
 <script>
 "use strict"
 
-window.Input = Input
+window.Input = Input;
 
-SV.startReloader();
+//SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
+var eventsServer = new SyncNodeSocket('/events', {});
 window.recSettings = new LocalSyncNode('recSettings');	
+console.log('rec settings', window.recSettings);
 
+eventsServer.server.on('play kitchen bell', function() {
+	SV.id('bell').play();
+});
 
 SV.onLoad(() => { 
 
@@ -69,16 +76,26 @@ SV.onLoad(() => {
 		importCode('kitchenComponents.html'); 
 		parse(SV.id('view').innerHTML); 
 
+		function updateRec(data) {
+			var rec = (data || sync.data).reconciliations[window.recSettings.selectedRecKey];
+			console.log('update rec', rec);
+			if(rec) {
+				header.update(rec);			
+				if(rec.kitchen) { 
+					if(!rec.kitchen.orders) rec.kitchen.set('orders', {});
+					else kitchenOrders.update(rec.kitchen.orders);
+				}
+			}
+		}
+
 		sync.on('updated', (data) => {
 			console.log('data', data);
-			var rec = data.reconciliations[window.recSettings.selectedRecKey];
-			hub.update(rec);
-			header.update(rec);			
-			if(rec.kitchen) kitchenOrders.update(rec.kitchen.orders);
+			updateRec();
 		});
 		
 	
 		window.recSettings.on('updated', (data) => {
+			updateRec(data);
 		});
 });
 
