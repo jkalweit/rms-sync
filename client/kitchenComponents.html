@@ -9,16 +9,33 @@ KitchenOrder[left]
 		position: relative;
 	:events
 		click:
-			if(!this.data.completedAt) {
-				this.data.set('completedAt', new Date().toISOString());
+			if(this.data.serveType === 'Bar') {
+				this.data.completedAt.set('Bar', new Date().toISOString());
 			}
-	#progress
+			else if(!this.data.completedAt[window.recSettings.kitchenStation]) {
+				this.data.completedAt.set(window.recSettings.kitchenStation, new Date().toISOString());
+			}
+	#progressGrill
 		style:
 			position: absolute;
 			top: 0;
 			left: 0;
-			height: 28px;
+			height: 10px;
 			background-color: #0F0;
+	#progressLine
+		style:
+			position: absolute;
+			top: 10;
+			left: 0;
+			height: 8px;
+			background-color: #4F4;
+	#progressServer
+		style:
+			position: absolute;
+			top: 18;
+			left: 0;
+			height: 10px;
+			background-color: #7F7;
 	#orderTime[row tight right padding1]
 		style:
 			position: relative;
@@ -31,8 +48,8 @@ KitchenOrder[left]
 			position: absolute;
 			top: 0; bottom: 0; left: 0; right: 0;
 			background-color: rgba(0,0,0,0.4);
-	#updateOrderTime:function
-		var now = this.data.completedAt ? moment(this.data.completedAt) : moment();
+	#updateOrderTimeHelper:function(completedAt, el)
+		var now = completedAt ? moment(completedAt) : moment();
 		var submitted = moment(this.data.submittedAt);
 		var d = moment.duration(now.diff(submitted));
 		var m = d.asMilliseconds();
@@ -40,16 +57,28 @@ KitchenOrder[left]
 		var target = 20 * 60 * 1000;
 		var progress = m/target;
 		if(progress > 1) progress = 1;
-		this.progress.style.backgroundColor = (progress === 1) ? '#F00' : '#0F0'; 
-		this.progress.style.width = (progress * 100).toPrecision(1) + '%';
-		this.dimmer.classList.toggle('hide', !this.data.completedAt);
+		el.style.backgroundColor = (progress === 1) ? '#F00' : '#0F0'; 
+		el.style.width = (progress * 100).toPrecision(1) + '%';
+	#updateOrderTime:function
+		if(this.data.serveType === 'Bar') {
+			this.updateOrderTimeHelper(this.data.completedAt['Bar'], this.progressGrill);
+			this.updateOrderTimeHelper(this.data.completedAt['Bar'], this.progressLine);
+			this.updateOrderTimeHelper(this.data.completedAt['Bar'], this.progressServer);
+			this.dimmer.classList.toggle('hide', !this.data.completedAt['Bar']);
+		} else {
+			this.updateOrderTimeHelper(this.data.completedAt['Grill'], this.progressGrill);
+			this.updateOrderTimeHelper(this.data.completedAt['Line'], this.progressLine);
+			this.updateOrderTimeHelper(this.data.completedAt['Server'], this.progressServer);
+			this.dimmer.classList.toggle('hide', !this.data.completedAt[window.recSettings.kitchenStation]);
+		}
 	#render:function
 		this.header.innerHTML = this.data.table + ' ' + this.data.name;
 		this.list.update(this.data.orderItems);
 		this.updateOrderTime();
-		if(!this.data.completedAt && !this.orderTimer) {
+		var completedAt = this.data.completedAt['Server'];
+		if(!completedAt && !this.orderTimer) {
 			this.orderTimer = setInterval(() => { this.updateOrderTime(); }, 1000);
-		} else if(this.data.completedAt && this.orderTimer) {
+		} else if(completedAt && this.orderTimer) {
 			clearInterval(this.orderTimer);
 			this.orderTimer = null;	
 		}

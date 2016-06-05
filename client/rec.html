@@ -119,6 +119,23 @@ RecHub
 		this.fireTicketFilterChanged();
 	#fireTicketFilterChanged:function
 		hub.emit('ticketFilterChanged', this.ticketFilter);
+	#moveOrderItem:function(oldTicketKey, orderItemKey, newTicketKey)
+		var oldTicket = this.data.tickets[oldTicketKey];
+		var newTicket = this.data.tickets[newTicketKey];
+		if(RecUtils.isTicketPaid(newTicket) || oldTicket.key === newTicket.key) return;
+		var orderItem = oldTicket.orderItems[orderItemKey];
+		if(!orderItem) return;
+		var mergeOldTicket = { orderItems: { __remove: orderItem.key } };
+		var mergeNewTicket = { orderItems: {} };
+		mergeNewTicket.orderItems[orderItem.key] = orderItem;
+		var merge = {};
+		merge[oldTicket.key] = mergeOldTicket;
+		merge[newTicket.key] = mergeNewTicket;
+		this.data.tickets.merge(merge);
+		oldTicket = this.data.tickets[oldTicket.key];
+		newTicket = this.data.tickets[newTicket.key];
+		this.emit('ticketTotalsChanged', oldTicket.key);
+		this.emit('ticketTotalsChanged', newTicket.key);
 	#render:function	
 		if(this.ticketFilter.selectedTicket) {
 			var selectedOrderItem = this.ticketFilter.selectedOrderItem;
@@ -277,7 +294,7 @@ TicketListMain[col col-flex col-left]
 	#render:function
 		this.ticketList.update(this.data);
 
-TicketList[]
+TicketList[col-flex]
 	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
 		events:
 			add(value):
@@ -347,7 +364,7 @@ TicketList[]
 		this.list.update(sorted);
 	#render:function 
 		this.sortGroups();
-		this.test = true;
+		//this.test = true;
 		if(this.test) return;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
@@ -370,6 +387,13 @@ Ticket[item tight]
 	:events
 		click:
 			this.emit('selected', this.data);
+		dragover(e):
+			e.preventDefault();
+			e.dataTransfer.dropEffect = 'move';
+		drop(e):
+			var data = JSON.parse(e.dataTransfer.getData('text/plain'));
+			console.log('dropped', data);
+			hub.moveOrderItem(data.ticketKey, data.orderItemKey, this.data.key);
 	#total[right margin1]
 	#nameSpan
 	#lastOrderTime[italic margin1]
@@ -439,6 +463,7 @@ TicketTotals[header row-flex]
 					name: this.data.name,
 					submittedAt: submittedAt, 
 					submittedBy: submittedBy,
+					completedAt: {},
 					orderItems: {}
 		};
 		SV.forEach(this.data.orderItems, (item) => {
@@ -469,6 +494,8 @@ TicketTotals[header row-flex]
 					name: this.data.name,
 					submittedAt: submittedAt, 
 					submittedBy: submittedBy,
+					serveType: 'Bar',
+					completedAt: {},
 					orderItems: {}
 		};
 		SV.forEach(this.data.orderItems, (item) => {
@@ -839,11 +866,20 @@ OrderItemGroup[item tight]
 		this.list.update(this.data);
 
 
-OrderItem
+OrderItem[row row-flex tight]
 	:events
 		click(e):
 			e.stopPropagation();
 			this.emit('edit', this.data);
+		dragstart(e):
+			var transfer = JSON.stringify({ ticketKey: this.data.parent.parent.key, orderItemKey: this.data.key });
+			console.log('drag start!', transfer);
+			e.dataTransfer.dropEffect = 'move';
+			e.dataTransfer.setData('text/plain', transfer);
+	#move[margin1 tight touch material-icons] 'reorder'
+		events:
+			click(e):
+				//e.stopPropagation();
 	//#settings[right margin1 tight touch material-icons] 'settings'
 	//	events:
 	//		click(e):
@@ -853,6 +889,8 @@ OrderItem
 	#updateTime:function
 		var quantity = `${this.data.quantity} @ `;
 		this.time.innerHTML = quantity + moment(this.data.addedAt).from(moment());
+	#init:function
+		this.node.draggable = true;
 	#render:function
 		this.updateTime();
 		if(!this.timer) { this.timer = setInterval(() => { this.updateTime(); }, 30000); }	
@@ -915,19 +953,7 @@ OrderItemDetails[col-flex]
 		this.selectTicketList.showPaidBtn.style.display = 'none';
 		this.selectTicketList.on('selected', (newTicket) => {
 			var oldTicket = this.data.parent.parent;
-			if(RecUtils.isTicketPaid(newTicket) || oldTicket.key === newTicket.key) return;
-			var orderItem = this.data;
-			var mergeOldTicket = { orderItems: { __remove: orderItem.key } };
-			var mergeNewTicket = { orderItems: {} };
-			mergeNewTicket.orderItems[orderItem.key] = orderItem;
-			var merge = {};
-			merge[oldTicket.key] = mergeOldTicket;
-			merge[newTicket.key] = mergeNewTicket;
-			hub.data.tickets.merge(merge);
-			oldTicket = hub.data.tickets[oldTicket.key];
-			newTicket = hub.data.tickets[newTicket.key];
-			hub.emit('ticketTotalsChanged', oldTicket.key);
-			hub.emit('ticketTotalsChanged', newTicket.key);
+			hub.moveOrderItem(oldTicket.key, this.data.key, newTicket.key);
 			hub.clearTicketSearch();
 			this.selectTicketListModal.hide();
 			this.emit('close');
@@ -1036,7 +1062,6 @@ SV.onLoad(() => {
 			if(!rec) {
 				recDisable.show('Select a Rec');
 			} else if(!window.recSettings.currentUser) {
-				console.log('hereeeee');
 				recDisable.show('Select a User');
 			} else {
 				recDisable.hide();
@@ -1123,8 +1148,8 @@ class RecUtils {
 		var unsubmittedBar = {};
 		SV.toArray(ticket.orderItems).forEach((item) => { 
 			if(!item.submittedAt) {
-				if(item.isAlcohol) unsubmittedBar[item.key]  = item; 
-				else unsubmittedKitchen[item.key] = item;
+				if(item.serveType === 'Bar') unsubmittedBar[item.key]  = item; 
+				else if(item.serveType === 'Kitchen') unsubmittedKitchen[item.key]  = item; 
 			}
 		});
 		return { kitchen: unsubmittedKitchen, bar: unsubmittedBar };

@@ -636,8 +636,10 @@ class Modal extends SyncView {
 	constructor() {
 		super();
 		this.node.className = 'modal';
+		this.node.addEventListener('click', () => { this.hide(); });
 
-		this.mainView = SV.el('div', { parent: this.node, className: 'main-view group' });
+		this.mainView = SV.el('div', { parent: this.node, className: 'main-view group',
+	   		events: { click: (e) => { e.stopPropagation(); }}});
 	}
 	show() {
 		this.node.style.display = 'initial';

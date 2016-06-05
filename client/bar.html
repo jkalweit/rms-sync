@@ -32,9 +32,12 @@ Header[row dark]
 		left: 0;
 		right: 0;
 	:div[left margin1] 'Bar'
-	//:div[row-nofill touch material-icons row-right] 'settings'
-	//	events:
-	//		click:
+	:div[row-nofill touch material-icons row-right] 'settings'
+		events:
+			click:
+				Modal.confirm('Delete all bar orders?', '', () => {
+					this.data.remove('bar');
+				});
 	#init:function
 	#render:function
 		

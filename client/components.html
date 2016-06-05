@@ -8,21 +8,27 @@ Select[label-set]
 				this.selected = this.selectInput.value;
 				this.emit('selected', this.selected);
 	#init:function(options)
+		options = options || {};
 		this.prop = options.prop;
 		if(options.label) this.text.innerHTML = options.label;
 		else this.text.style.display = 'none';
+		if(options.values) {
+			this.data = options.values;
+			this.updateValues();
+		}
 	#select:function(value)
 		this.selectInput.value = value;
 		this.selected = this.selectInput.value;
-	#render:function
+	#updateValues:function
 		var selected = this.selectInput.value;
 		this.selectInput.innerHTML = '';
-		SV.toArray(this.data).forEach((item) => {
+		SV.forEach(this.data, (item) => {
 			var value = this.prop ? SV.getProperty(item, this.prop) : item;
 			SV.el('option', { parent: this.selectInput, innerHTML: value }); 
 		});
 		this.selectInput.value = selected;
-		
+	#render:function
+		this.updateValues()	
 
 LabeledValue[label-set]
 	#label[label]

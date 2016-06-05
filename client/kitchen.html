@@ -21,7 +21,7 @@
 
 
 	
-Header[row dark]
+Header[row row-flex dark]
 	:style
 		z-index: 1;
 		height: 56px;
@@ -29,15 +29,22 @@ Header[row dark]
 		top: 0;
 		left: 0;
 		right: 0;
-	:div[left margin1] 'Kitchen'
-	:div[row-nofill touch material-icons row-right] 'settings'
+	#stationSelect:Select({ values: ['Grill', 'Line', 'Server'] })[row-nofill margin1]
+		style:
+			width: 239px;
+		events:
+			selected(station):
+				window.recSettings.set('kitchenStation', station);
+	:div[row-fill margin1] 'Kitchen'
+	:div[row-nofill touch material-icons] 'settings'
 		events:
 			click:
-				//Modal.confirm('Delete all kitchen orders?', '', () => {
-				//	this.data.kitchen.remove('orders');
-				//});
+				Modal.confirm('Delete all kitchen orders?', '', () => {
+					this.data.kitchen.remove('orders');
+				});
 	#init:function
 	#render:function
+		
 		
 
 KitchenOrders
@@ -45,7 +52,6 @@ KitchenOrders
 		margin-top: 56px;
 	#list:List({ ctor: 'KitchenOrder', sort: 'submittedAt' })
 	#render:function
-		console.log('updating kitchenorders!', this.data);
 		this.list.update(this.data)
 
 
@@ -59,12 +65,11 @@ KitchenOrders
 
 window.Input = Input;
 
-//SV.startReloader();
+SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
 var eventsServer = new SyncNodeSocket('/events', {});
 window.recSettings = new LocalSyncNode('recSettings');	
-console.log('rec settings', window.recSettings);
 
 eventsServer.server.on('play kitchen bell', function() {
 	SV.id('bell').play();
@@ -75,10 +80,11 @@ SV.onLoad(() => {
 		importCode('components.html'); 
 		importCode('kitchenComponents.html'); 
 		parse(SV.id('view').innerHTML); 
+			
+		header.stationSelect.select(window.recSettings.kitchenStation);
 
 		function updateRec(data) {
 			var rec = (data || sync.data).reconciliations[window.recSettings.selectedRecKey];
-			console.log('update rec', rec);
 			if(rec) {
 				header.update(rec);			
 				if(rec.kitchen) { 
@@ -95,7 +101,8 @@ SV.onLoad(() => {
 		
 	
 		window.recSettings.on('updated', (data) => {
-			updateRec(data);
+			updateRec();
+			header.stationSelect.select(data.kitchenStation);
 		});
 });
 

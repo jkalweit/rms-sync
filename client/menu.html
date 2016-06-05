@@ -166,6 +166,10 @@ MenuItemDetails[col col-flex wide]
 	#alcoholToggle:ToggleButton({ prop: 'isAlcohol', trueText: 'Alcohol', falseText: 'Not Alcohol' })$(update=data)
 	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price', number: true })$(update=data)
+	#serveType:Select({ values: ['Kitchen', 'Bar', 'Server'] })
+		events:
+			selected(value):
+				this.data.set('serveType', value);	
 	#optionsHeader:SimpleHeader({ text: 'Options', add: true })
 		events:
 			add:
@@ -209,6 +213,7 @@ MenuItemDetails[col col-flex wide]
 	#render:function
 		this.updateFilter();
 		if(this.data) { 
+			this.serveType.select(this.data.serveType);
 			this.options.update(this.data.options);
 			this.optionCategories.update(this.data.parent.parent.parent.parent.menuOptions.categories);
 			if(this.editingOption) {
