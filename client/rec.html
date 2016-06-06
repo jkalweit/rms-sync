@@ -3,6 +3,7 @@
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="/bower_components/moment/moment.js"></script>
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
 <script type="text/javascript" src="/SyncNodeSocket.js"></script>
 <script type="text/javascript" src="/SyncView.js"></script>
@@ -12,6 +13,9 @@
 </head>
 <body>
 
+<script type="text/javascript">
+  Stripe.setPublishableKey('pk_test_HgozEWRWusGTiLHoVNbIvAtW');
+</script>
 
 <script id="view" type="text/other">
 
@@ -22,6 +26,45 @@
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 #recDisable:Disable
+
+CreditCardDetails
+	#title:h1 'Credit Card'
+	#input:textarea[margin1]
+		style:
+			width: 100%;
+			height: 50px;
+	#submitBtn:div[btn] 'Submit'
+		events:
+			click:
+				this.submit();
+	#init:function
+	#parseCC:function(str)
+		var number = /%B(\d{16})\^/.exec(str)[1];
+		var name = /\^(.*?)\^/.exec(str)[1];	
+		var lastname = /(.*?)\//.exec(name)[1];	
+		var firstname = /.*?\/(.*)/.exec(name)[1];	
+		var exp_year = /\^.*?\^(\d{2})/.exec(str)[1];	
+		var exp_month = /\^.*?\^\d{2}(\d{2})/.exec(str)[1];	
+		var result = { firstname: firstname, lastname: lastname, 
+						cc: { name: name, number: number, exp_month: exp_month, exp_year: exp_year }
+					 };
+		console.log('result', result);
+		return result;
+	
+	#submit:function
+		console.log('Submit!');
+		var data = this.parseCC('%B4242424242424242^KALWEIT/JUSTIN ^1812');	
+		Stripe.card.createToken(data.cc, (status, response) => {
+			console.log('response:', status, response);
+			if(response.error) {
+				console.log('Error: ', response.error.message);
+			} else {
+				console.log('response:', status, response);
+				var token = response.id;
+				SV.chargeCreditCard(token, 1.00);
+			}
+		});
+		console.log('Submitted');
 
 Disable[flex hide]
 	:style
@@ -95,7 +138,6 @@ Rec[item tight]
 			this.emit('selected', this.data);
 	#nameSpan$(data.name)
 	#render:function
-		console.log('render', this.data.name, this.data.key, window.recSettings.selectedRecKey);
 		this.node.classList.toggle('selected', this.data.key === window.recSettings.selectedRecKey);
 
 
@@ -587,7 +629,6 @@ TicketTotals[header row-flex]
 		}
 		this.payment.innerHTML = icon;
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		console.log('unsubmitted', unsubmitted);
 		this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendKitchen.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendBar.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.bar));
@@ -1065,12 +1106,16 @@ SV.onLoad(() => {
 
 		var recList = buildComponent('RecList');
 		window.selectRecModal = Modal.createModal(recList);
+		
+		var creditCardDetails = buildComponent('CreditCardDetails');
+		window.creditCardDetailsModal = Modal.createModal(creditCardDetails);
+		window.creditCardDetailsModal.on('show', () => { creditCardDetails.input.focus(); });
+		window.creditCardDetailsModal.show();
 
 		function updateRec() {
 			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
 			hub.update(rec);
 			header.update(rec);			
-			console.log('user', window.recSettings.currentUser);
 			if(!rec) {
 				recDisable.show('Select a Rec');
 			} else if(!window.recSettings.currentUser) {

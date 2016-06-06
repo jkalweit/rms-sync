@@ -32,6 +32,7 @@ var io = socketio.listen(server);
 
 var config = JSON.parse(fs.readFileSync('../data/config.json'));
 
+var stripe = require('stripe')(config.stripe.secret_key);
 
 
 var cookieParser = require('cookie-parser')(config.sessions.secret);
@@ -378,6 +379,22 @@ function printReceipt(receipt) {
 	console.log('Print Receipt Sent');
 }
 
+function chargeCreditCard(token, amount) {
+	console.log('charge credit card', token, amount);
+	var charge = stripe.charges.create({
+		amount: amount * 100,
+		currency: 'usd',
+		source: token,
+		description: 'Test Charge'
+	}, (err, charge) => {
+		if(err) {
+			console.log('Charge error: ', err);
+		} else {
+			console.log('Charge success', charge);
+		}
+	});
+}
+
 io.on('connection', (socket) => {
 	socket.on('send text', (msg) => {	
 		sendText(msg.phone, msg.body);
@@ -390,6 +407,9 @@ io.on('connection', (socket) => {
 	});
 	socket.on('play kitchen bell', () => {
 		eventsServer.ioNamespace.emit('play kitchen bell');
+	});
+	socket.on('charge credit card', (token, amount) => {	
+			chargeCreditCard(token, amount);
 	});
 });
 

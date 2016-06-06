@@ -240,6 +240,10 @@ class SV {
 		io().emit('play kitchen bell');
 	}
 
+	static chargeCreditCard(token, amount) {
+		io().emit('charge credit card', token, amount);
+	}
+
 	static sendText(msg) {
 		io().emit('send text', msg);
 	}
@@ -640,12 +644,18 @@ class Modal extends SyncView {
 
 		this.mainView = SV.el('div', { parent: this.node, className: 'main-view group',
 	   		events: { click: (e) => { e.stopPropagation(); }}});
+		this.isShown = false;
 	}
 	show() {
+		if(this.isShown) return;
+		this.isShown = true;
 		this.node.style.display = 'initial';
 		document.body.style.overflowY = 'hidden';
+		this.emit('show');
 	}
 	hide() {
+		if(!this.isShown) return;
+		this.isShown = false;
 		this.node.style.display = 'none';
 		document.body.style.overflowY = 'initial';	
 		this.emit('hide');
