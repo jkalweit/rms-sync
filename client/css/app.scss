@@ -384,6 +384,9 @@ $input-height: $increment - $margin;
 .highlight {
 	color: #00F;
 }
+.glow {
+	box-shadow: 0px 0px 10px #FF0;
+}
 .disabled {
 	background-color: palette(Grey, 300);
 	color: rgba(0, 0, 0, 0.5);

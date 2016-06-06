@@ -415,6 +415,9 @@ h6 {
 .highlight {
   color: #00F; }
 
+.glow {
+  box-shadow: 0px 0px 10px #FF0; }
+
 .disabled {
   background-color: #E0E0E0;
   color: rgba(0, 0, 0, 0.5); }

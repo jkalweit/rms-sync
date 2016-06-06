@@ -366,6 +366,7 @@ TicketList[col-flex]
 		this.sortGroups();
 		//this.test = true;
 		if(this.test) return;
+		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
 		hub.emit('ticketFilterChanged', hub.ticketFilter);
 		ticketDetails.totals.sendToKitchen();
@@ -394,6 +395,17 @@ Ticket[item tight]
 			var data = JSON.parse(e.dataTransfer.getData('text/plain'));
 			console.log('dropped', data);
 			hub.moveOrderItem(data.ticketKey, data.orderItemKey, this.data.key);
+			this.dragenterCount = 0;
+			this.updateDragover();
+		dragenter:
+			if(!this.dragenterCount) this.dragenterCount = 0;
+			this.dragenterCount++;
+			this.updateDragover();
+		dragleave:
+			this.dragenterCount--;
+			this.updateDragover();
+	#updateDragover:function
+		this.node.classList.toggle('glow', this.dragenterCount > 0);
 	#total[right margin1]
 	#nameSpan
 	#lastOrderTime[italic margin1]
