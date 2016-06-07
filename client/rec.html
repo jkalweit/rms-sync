@@ -61,7 +61,7 @@ CreditCardDetails
 			} else {
 				console.log('response:', status, response);
 				var token = response.id;
-				SV.chargeCreditCard(token, 1.00);
+				SV.chargeCreditCard({ token: token, amount: 1.00, memberId: 'jkalweit' });
 			}
 		});
 		console.log('Submitted');

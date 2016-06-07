@@ -154,7 +154,7 @@ var findUser = (comparator) => {
 	var keys = Object.keys(membersServer.data);	
 	for(var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		if(key !== 'lastModified') {
+		if(key !== 'lastModified' && key !== 'version') {
 			var currUser = membersServer.data[key];
 			if(comparator(currUser)) {
 				return currUser;
@@ -379,12 +379,37 @@ function printReceipt(receipt) {
 	console.log('Print Receipt Sent');
 }
 
-function chargeCreditCard(token, amount) {
-	console.log('charge credit card', token, amount);
+function chargeCreditCard(values) {
+	console.log('charge credit card', values);
+	if(values.memberId) {
+		var member = findUser((user) => {
+			return user.key === values.memberId;		
+		});
+		console.log('member', member);
+		if(!member.stripeId) {
+			stripe.customers.create({
+				source: values.token,
+				description: member.data.info.email
+			}).then((customer) => {
+				return stripe.charges.create({
+					amount: values.amount * 100,
+					currency: "usd",
+					customer: customer.id
+				});
+			}).then((charge) => {
+				// YOUR CODE: Save the customer ID and other info in a database for later!
+				console.log('customer', charge.customer);
+				var merge = {};
+			   merge[member.key];
+		   	   merge.stripeId = charge.customer.id; 
+			   membersSync.doMerge(merge);
+			}
+	}
+	return;
 	var charge = stripe.charges.create({
-		amount: amount * 100,
+		amount: values.amount * 100,
 		currency: 'usd',
-		source: token,
+		source: values.token,
 		description: 'Test Charge'
 	}, (err, charge) => {
 		if(err) {
@@ -408,8 +433,8 @@ io.on('connection', (socket) => {
 	socket.on('play kitchen bell', () => {
 		eventsServer.ioNamespace.emit('play kitchen bell');
 	});
-	socket.on('charge credit card', (token, amount) => {	
-			chargeCreditCard(token, amount);
+	socket.on('charge credit card', (values) => {	
+			chargeCreditCard(values);
 	});
 });
 

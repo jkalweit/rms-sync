@@ -240,8 +240,8 @@ class SV {
 		io().emit('play kitchen bell');
 	}
 
-	static chargeCreditCard(token, amount) {
-		io().emit('charge credit card', token, amount);
+	static chargeCreditCard(values) {
+		io().emit('charge credit card', values);
 	}
 
 	static sendText(msg) {
