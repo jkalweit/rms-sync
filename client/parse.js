@@ -84,8 +84,8 @@ class List extends SyncView {
 		this.sortDirection = options.direction;
 	}
 	render() {
-		if(!this.data) return;
-		var itemsArr = SV.toArray(this.data, this.sort, this.sortDirection);
+		var data = this.data || {};
+		var itemsArr = SV.toArray(data, this.sort, this.sortDirection);
 		var previous = null;
 		itemsArr.forEach((item) => {
 			var view  = this.views[item.key];
@@ -103,7 +103,7 @@ class List extends SyncView {
 		});
 		Object.keys(this.views).forEach((key) => {
 			var view = this.views[key];
-			if(!SV.getByKey(this.data, view.data.key)) {
+			if(!SV.getByKey(data, view.data.key)) {
 				this.node.removeChild(view.node);
 				delete this.views[view.data.key];
 				this.emit('removedView', view);

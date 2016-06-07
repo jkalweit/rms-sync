@@ -41,10 +41,14 @@ MenuHub
 		}
 
 
-Header[row dark]
+Header[row row-flex dark]
 	:style
 		height: 56px;
-	#title[margin1] 'Menu'
+	#title[margin1 row-fill] 'Menu'
+	#validateButton[row-nofill touch material-icons] 'check'
+		events:
+			click:
+				console.log('Validating...');
 	#init:function
 	#render:function
 

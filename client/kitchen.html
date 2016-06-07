@@ -86,7 +86,6 @@ SV.onLoad(() => {
 		header.stationSelect.select(window.recSettings.kitchenStation);
 
 		sync.on('updated', (data) => {
-			console.log('data', data);
 			if(!data.kitchen) data.set('kitchen', { orders: {}});
 			header.update(data);
 			kitchenOrders.update(data.kitchen.orders);
@@ -94,7 +93,6 @@ SV.onLoad(() => {
 		
 	
 		window.recSettings.on('updated', (data) => {
-			updateRec();
 			header.stationSelect.select(data.kitchenStation);
 		});
 });
