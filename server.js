@@ -357,7 +357,7 @@ function printReceipt(receipt) {
 
 	var req = http.request({
 		port: 1338,
-		host: '192.168.6.25',
+		host: '192.168.6.4',
 		path: '',
 	    	method: 'POST',
     		headers: {
