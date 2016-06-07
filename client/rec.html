@@ -406,7 +406,7 @@ TicketList[col-flex]
 		this.list.update(sorted);
 	#render:function 
 		this.sortGroups();
-		//this.test = true;
+		this.test = true;
 		if(this.test) return;
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
@@ -1110,7 +1110,7 @@ SV.onLoad(() => {
 		var creditCardDetails = buildComponent('CreditCardDetails');
 		window.creditCardDetailsModal = Modal.createModal(creditCardDetails);
 		window.creditCardDetailsModal.on('show', () => { creditCardDetails.input.focus(); });
-		window.creditCardDetailsModal.show();
+		//window.creditCardDetailsModal.show();
 
 		function updateRec() {
 			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];

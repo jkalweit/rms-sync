@@ -76,9 +76,12 @@ KitchenOrder[left]
 		this.list.update(this.data.orderItems);
 		this.updateOrderTime();
 		var completedAt = this.data.completedAt['Server'];
+		console.log('completedAt', completedAt);
 		if(!completedAt && !this.orderTimer) {
+			console.log('     setting timer');
 			this.orderTimer = setInterval(() => { this.updateOrderTime(); }, 1000);
 		} else if(completedAt && this.orderTimer) {
+			console.log('     clearing timer');
 			clearInterval(this.orderTimer);
 			this.orderTimer = null;	
 		}
