@@ -53,7 +53,6 @@ KitchenOrders
 		margin-top: 56px;
 	#list:List({ ctor: 'KitchenOrder', sort: 'submittedAt' })
 	#render:function
-		console.log('here is the orders', this.data);
 		this.list.update(this.data)
 
 
@@ -86,7 +85,8 @@ SV.onLoad(() => {
 		header.stationSelect.select(window.recSettings.kitchenStation);
 
 		sync.on('updated', (data) => {
-			if(!data.kitchen) data.set('kitchen', { orders: {}});
+			if(!data.kitchen) data.set('kitchen', {});
+			if(!data.kitchen.orders) data.kitchen.set('orders', {});
 			header.update(data);
 			kitchenOrders.update(data.kitchen.orders);
 		});

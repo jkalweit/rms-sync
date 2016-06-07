@@ -137,7 +137,6 @@ class SyncNode extends EventEmitter {
 						if(!SyncNode.isSyncNode(currVal)) {
 							currVal = new SyncNode({}, this);	
 						}
-
 						
 						currVal.on('updated', this.createOnUpdated(key));
 
@@ -147,6 +146,9 @@ class SyncNode extends EventEmitter {
 						}
 						this[key] = currVal;
 						if(!disableUpdates && result.hasChanges) {
+							if(typeof currVal.version === 'undefined') {
+								currVal.version = SyncNode.guidShort();
+							}
 							this.version = currVal.version;
 							newMerge[key] = result.merge;
 							hasChanges = true;

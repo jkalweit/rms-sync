@@ -57,7 +57,11 @@ KitchenOrder[left]
 		var target = 20 * 60 * 1000;
 		var progress = m/target;
 		if(progress > 1) progress = 1;
-		el.style.backgroundColor = (progress === 1) ? '#F00' : '#0F0'; 
+		if(completedAt) {	
+			el.style.backgroundColor = (progress === 1) ? '#800' : '#080';
+		} else {
+			el.style.backgroundColor = (progress === 1) ? '#F00' : '#0F0';
+		}
 		el.style.width = (progress * 100).toPrecision(1) + '%';
 	#updateOrderTime:function
 		if(this.data.serveType === 'Bar') {
@@ -76,12 +80,9 @@ KitchenOrder[left]
 		this.list.update(this.data.orderItems);
 		this.updateOrderTime();
 		var completedAt = this.data.completedAt['Server'];
-		console.log('completedAt', completedAt);
 		if(!completedAt && !this.orderTimer) {
-			console.log('     setting timer');
 			this.orderTimer = setInterval(() => { this.updateOrderTime(); }, 1000);
 		} else if(completedAt && this.orderTimer) {
-			console.log('     clearing timer');
 			clearInterval(this.orderTimer);
 			this.orderTimer = null;	
 		}

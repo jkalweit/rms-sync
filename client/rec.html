@@ -48,7 +48,6 @@ CreditCardDetails
 		var result = { firstname: firstname, lastname: lastname, 
 						cc: { name: name, number: number, exp_month: exp_month, exp_year: exp_year }
 					 };
-		console.log('result', result);
 		return result;
 	
 	#submit:function
@@ -435,7 +434,6 @@ Ticket[item tight]
 			e.dataTransfer.dropEffect = 'move';
 		drop(e):
 			var data = JSON.parse(e.dataTransfer.getData('text/plain'));
-			console.log('dropped', data);
 			hub.moveOrderItem(data.ticketKey, data.orderItemKey, this.data.key);
 			this.dragenterCount = 0;
 			this.updateDragover();
@@ -469,7 +467,6 @@ Ticket[item tight]
 		this.node.classList.toggle('selected', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
 	#updateDisplay:function
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		console.log('updating display', this.data.name, unsubmitted);
 		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen) || !SV.isEmptyObject(unsubmitted.bar);
 		this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
 		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
@@ -595,10 +592,12 @@ TicketTotals[header row-flex]
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Order',
 			events: { click: () => { 
 				this.kitchenOrderPreviewModal.hide(); 
-				if(!sync.data.kitchen) sync.data.set('kitchen', { orders: {} });
-				if(!sync.data.kitchen.orders) sync.data.kitchen.set('orders', {});
+				if(!sync.data.kitchen) { sync.data.set('kitchen', {}); }
+				if(!sync.data.kitchen.orders) { sync.data.kitchen.set('orders', {}); }
 				var order = this.kitchenOrderToSubmit.order;
-				sync.data.kitchen.orders.set(order.key, order);	
+				var merge = { orders: {}};
+				merge.orders[order.key] = order;
+				sync.data.kitchen.merge(merge);	
 				this.data.orderItems.merge(this.kitchenOrderToSubmit.merge);
 				SV.playKitchenBell();
 				this.kitchenOrderToSubmit = null;
@@ -934,7 +933,6 @@ OrderItem[row row-flex tight]
 			this.emit('edit', this.data);
 		dragstart(e):
 			var transfer = JSON.stringify({ ticketKey: this.data.parent.parent.key, orderItemKey: this.data.key });
-			console.log('drag start!', transfer);
 			e.dataTransfer.dropEffect = 'move';
 			e.dataTransfer.setData('text/plain', transfer);
 	#move[margin1 tight touch material-icons] 'reorder'
@@ -1140,6 +1138,7 @@ SV.onLoad(() => {
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
+			console.log('kitchen version', data.kitchen.orders.version);
 			recList.update(data.reconciliations);
 			updateRec();
 			menuCategories.update(sync.data.menu.categories);			
@@ -1212,7 +1211,6 @@ class RecUtils {
 		var unsubmittedKitchen = {};
 		var unsubmittedBar = {};
 		SV.toArray(ticket.orderItems).forEach((item) => { 
-			console.log('serveType', item.name, item.serveType);
 			if(!item.submittedAt) {
 				if(item.serveType === 'Bar') unsubmittedBar[item.key]  = item; 
 				else if(item.serveType === 'Kitchen') unsubmittedKitchen[item.key]  = item; 
