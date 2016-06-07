@@ -1,0 +1,132 @@
+<html>
+<head>
+<link rel="import" id="components.html" href="components.html">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#hub:Hub
+#header:Header
+#memberList:MemberList
+#memberDetails:MemberDetails
+
+Hub
+	#init:function
+		this.filter = {};
+	#select:function(key)
+		this.filter.selected = this.data[key];
+		this.emit('filterChanged', this.filter);
+	#render:function	
+		if(this.filter.selected) {
+			this.select(this.filter.selected.key);
+		}
+
+
+Header[row dark]
+	:style
+		height: 56px;
+	#title[margin1] 'Members'
+	#init:function
+	#render:function
+
+MemberList[col col-left col-flex]
+	#list:SearchList({ text: 'Members', ctor: 'Member', searchBox: true, addBtn: true, sort: 'data.info.name', searchProp: 'name' })[col-fill]
+			add(value):
+				this.list.clearSearch();
+				this.add(value);
+	#add:function(name)
+		name = name || '';
+		name = name.trim();
+		if(!name) return;
+		var newItem = { 
+			key: new Date().toISOString(), 
+			name: name,
+			items: {} };
+		//var result = this.data.set(newItem.key, newItem)[newItem.key];
+		//hub.select(result.key);
+	#init:function
+	#render:function 
+		this.list.update(this.data);
+		if(!this.test) {
+			this.test = true;
+			hub.select(SV.toArray(this.data)[0].key);
+		}
+		
+Member[item tight]
+	:events
+		click:
+			hub.select(this.data.key);
+	#nameSpan$(data.data.info.name)[name]
+	#updateFilter:function
+		this.node.classList.toggle('selected', (hub.filter.selected || {}).key === this.data.key);
+	#init:function
+		hub.on('filterChanged', () => this.updateFilter());
+	#render:function
+		this.updateFilter();
+		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
+
+MemberDetails[col col-left col-flex wide]
+	#header:SimpleHeader({ text: 'Details', close: true, del: true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#key:LabeledValue({ prop: 'key', label: 'Id' })$(update=data)
+	#stripeId:LabeledValue({ prop: 'stripeId', label: 'Stripe Id' })$(update=data)
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data.data.info)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data.data.info)
+	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data.data.info)
+	#isStaffToggle:ToggleButton({ prop: 'isStaff', trueText: 'Staff', falseText: 'Not Staff' })$(update=data.data.info)
+	#close:function
+			this.update(null);
+	#updateFilter:function	
+		this.node.classList.toggle('hide', !this.data);	
+	#init:function
+		this.updateFilter();
+		hub.on('filterChanged', () => { this.update(hub.filter.selected); });
+	#render:function
+		this.updateFilter();
+		if(this.data) {
+		}
+
+
+</script>
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/members', {});
+
+
+SV.onLoad(() => { 
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			console.log('members', data);
+			hub.update(data);
+			memberList.update(data);
+		});
+});
+
+</script>
+</body>
+</html>

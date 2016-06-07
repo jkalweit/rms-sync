@@ -40,6 +40,7 @@ Header[row row-flex dark]
 		events:
 			click:
 				Modal.confirm('Delete all kitchen orders?', '', () => {
+					console.log('this.data', this.data);
 					this.data.kitchen.remove('orders');
 				});
 	#init:function
@@ -52,6 +53,7 @@ KitchenOrders
 		margin-top: 56px;
 	#list:List({ ctor: 'KitchenOrder', sort: 'submittedAt' })
 	#render:function
+		console.log('here is the orders', this.data);
 		this.list.update(this.data)
 
 
@@ -83,20 +85,11 @@ SV.onLoad(() => {
 			
 		header.stationSelect.select(window.recSettings.kitchenStation);
 
-		function updateRec(data) {
-			var rec = (data || sync.data).reconciliations[window.recSettings.selectedRecKey];
-			if(rec) {
-				header.update(rec);			
-				if(rec.kitchen) { 
-					if(!rec.kitchen.orders) rec.kitchen.set('orders', {});
-					else kitchenOrders.update(rec.kitchen.orders);
-				}
-			}
-		}
-
 		sync.on('updated', (data) => {
 			console.log('data', data);
-			updateRec();
+			if(!data.kitchen) data.set('kitchen', { orders: {}});
+			header.update(data);
+			kitchenOrders.update(data.kitchen.orders);
 		});
 		
 	

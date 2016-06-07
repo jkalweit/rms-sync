@@ -458,6 +458,7 @@ Ticket[item tight]
 		this.lastOrderTime.innerHTML = RecUtils.getLastOrderTimeFriendly(this.data.orderItems);
 	#init:function
 		hub.on('ticketFilterChanged', () => { this.doFilter(); });
+		hub.on('ticketTotalsChanged', () => { this.updateDisplay(); });
 	#doFilter:function
 		var hide = false;
 		if(hub.ticketFilter.name) {
@@ -466,15 +467,18 @@ Ticket[item tight]
 		hide = hide || (!hub.ticketFilter.showPaid && RecUtils.isTicketPaid(this.data));
 		this.node.classList.toggle('hide', hide);	
 		this.node.classList.toggle('selected', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
+	#updateDisplay:function
+		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
+		console.log('updating display', this.data.name, unsubmitted);
+		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen) || !SV.isEmptyObject(unsubmitted.bar);
+		this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
+		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
 		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
 		if(this.data.isTogo) this.nameSpan.innerHTML += ' <span class="highlight">[TOGO]</span>';
-		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen) || !SV.isEmptyObject(unsubmitted.bar);
-		this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
-		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 		this.doFilter();
+		this.updateDisplay();
 		this.updateLastOrderTime();
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		if(!this.lastOrderTimeTimer) {
@@ -520,7 +524,8 @@ TicketTotals[header row-flex]
 					completedAt: {},
 					orderItems: {}
 		};
-		SV.forEach(this.data.orderItems, (item) => {
+		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
+		SV.forEach(unsubmitted.kitchen, (item) => {
 			if(!item.submittedAt && !item.isAlcohol) {
 				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
 				var orderItem = {
@@ -552,7 +557,8 @@ TicketTotals[header row-flex]
 					completedAt: {},
 					orderItems: {}
 		};
-		SV.forEach(this.data.orderItems, (item) => {
+		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
+		SV.forEach(unsubmitted.bar, (item) => {
 			if(!item.submittedAt && item.isAlcohol) {
 				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
 				var orderItem = {
@@ -589,9 +595,10 @@ TicketTotals[header row-flex]
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Order',
 			events: { click: () => { 
 				this.kitchenOrderPreviewModal.hide(); 
-				if(!hub.data.kitchen) hub.data.set('kitchen', { orders: {} });
+				if(!sync.data.kitchen) sync.data.set('kitchen', { orders: {} });
+				if(!sync.data.kitchen.orders) sync.data.kitchen.set('orders', {});
 				var order = this.kitchenOrderToSubmit.order;
-				hub.data.kitchen.orders.set(order.key, order);	
+				sync.data.kitchen.orders.set(order.key, order);	
 				this.data.orderItems.merge(this.kitchenOrderToSubmit.merge);
 				SV.playKitchenBell();
 				this.kitchenOrderToSubmit = null;
@@ -886,6 +893,7 @@ OrderItemGroup[item tight]
 			price: orderItem.price,
 			quantity: 1,
 			isAlcohol: orderItem.isAlcohol,
+			serveType: orderItem.serveType,
 			taxType: orderItem.taxType,
 			note: orderItem.note || '',
 			options: JSON.parse(JSON.stringify(orderItem.options))
@@ -1204,6 +1212,7 @@ class RecUtils {
 		var unsubmittedKitchen = {};
 		var unsubmittedBar = {};
 		SV.toArray(ticket.orderItems).forEach((item) => { 
+			console.log('serveType', item.name, item.serveType);
 			if(!item.submittedAt) {
 				if(item.serveType === 'Bar') unsubmittedBar[item.key]  = item; 
 				else if(item.serveType === 'Kitchen') unsubmittedKitchen[item.key]  = item; 

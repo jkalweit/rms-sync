@@ -403,7 +403,8 @@ function chargeCreditCard(values) {
 			   merge[member.key];
 		   	   merge.stripeId = charge.customer.id; 
 			   membersSync.doMerge(merge);
-			}
+			});
+		}
 	}
 	return;
 	var charge = stripe.charges.create({
