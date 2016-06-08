@@ -74,8 +74,8 @@ class SV {
 
 		if(sortField) {
 			result.sort(function (a, b) {
-				var a1 = a[sortField];
-				var b1 = b[sortField];
+				var a1 = SV.getProperty(a, sortField);
+				var b1 = SV.getProperty(b, sortField);
 				if(typeof a1 === 'string') a1 = a1.toLowerCase();
 				if(typeof b1 === 'string') b1 = b1.toLowerCase();
 				if (a1 < b1)
@@ -673,9 +673,9 @@ class Modal extends SyncView {
 
 	static showNotification(title, message) {
 		var modal = new Modal();
-		modal.mainView.appendChild(SV.el('h1', { innerHTML: title }));
-		modal.mainView.appendChild(SV.el('p', { innerHTML: message }));
-		modal.mainView.appendChild(SV.el('button', { innerHTML: 'Ok', className: 'btn',
+		modal.mainView.appendChild(SV.el('h1', { innerHTML: title || '' }));
+		modal.mainView.appendChild(SV.el('p', { innerHTML: message || '' }));
+		modal.mainView.appendChild(SV.el('div', { innerHTML: 'Ok', className: 'btn',
 	       		events: { click: () => { modal.hide(); }}}));
 		document.body.appendChild(modal.node);
 		modal.show();

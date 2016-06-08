@@ -10,6 +10,7 @@ Select[label-set]
 	#init:function(options)
 		options = options || {};
 		this.prop = options.prop;
+		this.sort = options.sort;
 		if(options.label) this.text.innerHTML = options.label;
 		else this.text.style.display = 'none';
 		if(options.values) {
@@ -22,7 +23,8 @@ Select[label-set]
 	#updateValues:function
 		var selected = this.selectInput.value;
 		this.selectInput.innerHTML = '';
-		SV.forEach(this.data, (item) => {
+		var sorted = SV.toArray(this.data, this.sort);
+		sorted.forEach((item) => {
 			var value = this.prop ? SV.getProperty(item, this.prop) : item;
 			SV.el('option', { parent: this.selectInput, innerHTML: value }); 
 		});
@@ -44,7 +46,6 @@ ToggleButton[btn]
 	#text:span
 	:events
 		click:
-			console.log('here', this.prop, this.data);
 			this.data.set(this.prop, !this.data[this.prop]);
 	#init:function(options)
 		this.prop = options.prop;
@@ -128,6 +129,7 @@ SearchList[col-flex]
 	#doFilter:function() 
 		var filtered = this.data;
 		if(this.searchProp) {
+			console.log('Warning: doing old filter');
 			if(this.searchValue) {
 				filtered = SV.filterMap(this.data, (item) => { 
 					var itemVal = item[this.searchProp];
@@ -161,11 +163,11 @@ SearchList[col-flex]
 		this.updateSelected();
 		this.emit('selected', this.selected);
 	#updateSelected:function()
-		SV.toArray(this.list.views).forEach((view) => {
-			var isSelected = this.selected ? this.selected.key === view.data.key : false;
-			view.node.classList.toggle('selected', isSelected);
-			if(isSelected) view.node.scrollIntoViewIfNeeded();
-		});
+		//SV.toArray(this.list.views).forEach((view) => {
+		//	var isSelected = this.selected ? this.selected.key === view.data.key : false;
+		//	view.node.classList.toggle('selected', isSelected);
+		//	if(isSelected) view.node.scrollIntoViewIfNeeded();
+		//});
 	#render:function()
 		this.doFilter();
 		if(this.selected) this.selected = this.data[this.selected.key];

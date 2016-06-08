@@ -49,6 +49,19 @@ Header[row row-flex dark]
 		events:
 			click:
 				console.log('Validating...');
+				var categories = sync.data.menu.categories;
+				SV.forEach(categories, (category) => {
+					SV.forEach(category.items, (item) => {
+						if(typeof item.price !== 'number') {
+							console.log('Price is not a number: ', category.name, item.name, item.price);
+						}
+						var s = item.serveType;
+						if(s != 'Kitchen' && s != 'Bar' && s != 'Server') {
+							console.log('Unknown serveType: ', category.name, item.name, item.serveType);
+						} 
+					});
+				});
+				console.log('Done validating.');
 	#init:function
 	#render:function
 
@@ -131,6 +144,9 @@ MenuItemList[col-fill col-flex]
 		var newItem = { 
 			key: new Date().toISOString(), 
 			name: name,
+			serveType: 'Kitchen',
+			price: 0,
+			isAlcohol: false,	
 			options: {} };
 		var result = this.data.set(newItem.key, newItem)[newItem.key];
 		this.list.select(result.key);

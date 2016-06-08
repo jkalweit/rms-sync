@@ -42,7 +42,7 @@ class Input extends SyncView {
 								this.input.value = this.options.formatter ? this.options.formatter(value) : value; 
 							}
 					}
-					if(this.data[this.options.prop] !== value) {
+					if(this.data && this.data[this.options.prop] !== value) {
 						var oldValue = this.data[this.options.prop];
 						this.data.set(this.options.prop, value);
 						this.emit('changed', value, oldValue);

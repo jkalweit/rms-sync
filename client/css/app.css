@@ -2,6 +2,10 @@
  * google-material-color v1.2.6
  * https://github.com/danlevan/google-material-color
  */
+/** App specific **/
+.ticket {
+  background-color: #D1C4E9; }
+
 /*
 *,
 *::before,
@@ -382,9 +386,15 @@ h6 {
 .left {
   float: left; }
 
+.black {
+  background-color: #000;
+  color: rgba(255, 255, 255, 0.87); }
+
 .dark {
   background-color: #311B92;
   color: rgba(255, 255, 255, 0.87); }
+  .dark.disabled {
+    color: rgba(255, 255, 255, 0.5); }
 
 .medium {
   background-color: #673AB7;
@@ -419,10 +429,7 @@ h6 {
   box-shadow: 0px 0px 10px #FF0; }
 
 .disabled {
-  background-color: #E0E0E0;
   color: rgba(0, 0, 0, 0.5); }
-  .disabled.selected {
-    background-color: rgba(200, 200, 100, 0.7); }
 
 .flex {
   display: flex; }

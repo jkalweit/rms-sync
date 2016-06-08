@@ -39,6 +39,7 @@ Header[row dark]
 
 MemberList[col col-left col-flex]
 	#list:SearchList({ text: 'Members', ctor: 'Member', searchBox: true, addBtn: true, sort: 'data.info.name', searchProp: 'name' })[col-fill]
+		events:
 			add(value):
 				this.list.clearSearch();
 				this.add(value);
@@ -46,19 +47,33 @@ MemberList[col col-left col-flex]
 		name = name || '';
 		name = name.trim();
 		if(!name) return;
-		var newItem = { 
-			key: new Date().toISOString(), 
-			name: name,
-			items: {} };
-		//var result = this.data.set(newItem.key, newItem)[newItem.key];
-		//hub.select(result.key);
+		var created = new Date().toISOString();
+		var newMember = {
+			key: created,
+			loginid: created,
+			password: 'password',
+			permissions: {},
+			data:{
+				info: {
+					name: name,
+					memberSince: created,
+					email: '',
+					phone: '',
+					isStaff: false,
+					note: ''
+				},
+				loyalty: {
+					points: 0,
+					pointsHistory: {}
+				}
+			}
+		};
+		this.data.set(newMember.key, newMember);
+		SV.sendToAdmin('Added Loyalty Member: ' + newMember.name);
+		hub.select(newMember.key);
 	#init:function
 	#render:function 
 		this.list.update(this.data);
-		if(!this.test) {
-			this.test = true;
-			hub.select(SV.toArray(this.data)[0].key);
-		}
 		
 Member[item tight]
 	:events
@@ -66,12 +81,13 @@ Member[item tight]
 			hub.select(this.data.key);
 	#nameSpan$(data.data.info.name)[name]
 	#updateFilter:function
-		this.node.classList.toggle('selected', (hub.filter.selected || {}).key === this.data.key);
+		var isMatch = (hub.filter.selected || {}).key === this.data.key;
+		this.node.classList.toggle('selected', isMatch);
 	#init:function
 		hub.on('filterChanged', () => this.updateFilter());
 	#render:function
 		this.updateFilter();
-		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
+		this.node.style.color = this.data.data.info.isStaff ? '#00F' : '#000';
 
 MemberDetails[col col-left col-flex wide]
 	#header:SimpleHeader({ text: 'Details', close: true, del: true})
@@ -121,7 +137,6 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 
 		sync.on('updated', (data) => {
-			console.log('members', data);
 			hub.update(data);
 			memberList.update(data);
 		});

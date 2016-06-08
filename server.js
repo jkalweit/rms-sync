@@ -133,6 +133,7 @@ var membersServer = new MemberServer(io);
 
 
 
+
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
@@ -436,6 +437,10 @@ io.on('connection', (socket) => {
 	});
 	socket.on('charge credit card', (values) => {	
 			chargeCreditCard(values);
+	});
+	socket.on('verify admin pin', (pin, guid) => {	
+			console.log('verifying pin', pin, guid, pin == config.admin.pin);
+			socket.emit('verify admin pin result', guid, pin == config.admin.pin);
 	});
 });
 

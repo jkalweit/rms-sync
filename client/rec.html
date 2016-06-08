@@ -20,12 +20,105 @@
 <script id="view" type="text/other">
 
 #hub:RecHub
+#menuHub:MenuHub
 #header:Header
 #ticketList:TicketListMain
 #ticketDetails:TicketDetails[col]
 #menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
 #recDisable:Disable
+
+MenuHub
+	#init:function
+		this.filter = {};
+	#selectCategory:function(key)
+		this.filter.selectedCategory = this.data.categories[key];
+		this.emit('filterChanged', this.filter);
+	#render:function	
+		if(this.filter.selectedCategory) {
+			this.selectCategory(this.filter.selectedCategory.key);
+		}
+
+
+
+DeleteOrderItem
+	#header:SimpleHeader({ text: 'Delete Order Item', cancel: true })
+	#note:Input({ label: 'Note' })
+	#compNotServed[btn] 'Not Served'
+		events:
+			click:
+				if(this.validate()) this.doDelete('Not Served');
+	#compQuality[btn] 'Bad Quality/Service'
+		events:
+			click:
+				if(this.validate()) this.doDelete('Bad Quality/Service');
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.itemToDelete = null;
+				this.emit('close');
+	#validate:function
+		var isValid = this.note.input.value.trim() !== '';
+		if(!isValid) {
+			Modal.showNotification('Note is required');
+		}
+		return isValid;
+	#delete:function(orderItem)
+		this.itemToDelete = orderItem;
+		if(!orderItem.submittedAt) {
+			this.doDelete();
+		} else {
+			this.header.text.innerHTML = 'Delete Order Item: ' + orderItem.name + ' ' + SV.formatCurrency(RecUtils.getOrderItemTotal(orderItem))
+			this.modal.show();
+		}
+	#doDelete:function(reason)
+		if(reason) {
+			var message = this.header.text.innerHTML + ': ' + reason + ': ' + this.note.value;
+			SV.sendToAdmin(message);
+		}
+		var ticket = this.itemToDelete.parent.parent;
+		ticket.orderItems.remove(this.itemToDelete.key);
+		hub.emit('ticketTotalsChanged', ticket.key);
+		this.itemToDelete = null;
+		this.emit('close');
+	#init:function
+		this.modal = Modal.createModal(this);
+
+AdminPin
+	#title:h1 'Enter Admin Pin'
+	#error:h3[hide] 'Incorrect, try again'
+		style:
+			color: #F00;
+	#pin:Input({ label: 'Pin' })
+	#submit[btn] 'Submit'
+		events:
+			click:
+				this.doSubmit();
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
+	#doSubmit:function
+		this.error.classList.add('hide');
+		verifyAdminPin(this.pin.input.value, (result) => {
+			this.pin.input.value = '';
+			if(result) {
+				if(this.callback) this.callback();
+				this.callback = null;
+				this.modal.hide();
+			} else {
+				this.error.classList.remove('hide');
+			}
+		});
+	#verify:function(callback)
+		this.error.classList.add('hide');
+		this.pin.input.value = '';
+		this.callback = callback;
+		this.modal.show();
+	#init:function
+		this.pin.input.type = 'password';
+		this.modal = Modal.createModal(this);
+		this.modal.on('show', () => { this.pin.focus(); });
 
 CreditCardDetails
 	#title:h1 'Credit Card'
@@ -288,10 +381,10 @@ RecTotals[header]
 	#render:function
 		this.total.innerHTML = SV.formatCurrency(this.data.total);
 
-Header[row row-flex dark]
+Header[row row-flex black]
 	:style
 		height: 56px;
-	#userSelect:Select({ prop: 'data.info.name' })[row-nofill]
+	#userSelect:Select({ prop: 'data.info.name', sort: 'data.info.name' })[row-nofill]
 		style:
 			width: 239px;
 		events:
@@ -425,7 +518,7 @@ TicketGroup
 		this.server.innerHTML = this.data.key;
 		this.list.update(this.data);
 		
-Ticket[item tight]
+Ticket[item tight ticket]
 	:events
 		click:
 			this.emit('selected', this.data);
@@ -464,7 +557,7 @@ Ticket[item tight]
 		}
 		hide = hide || (!hub.ticketFilter.showPaid && RecUtils.isTicketPaid(this.data));
 		this.node.classList.toggle('hide', hide);	
-		this.node.classList.toggle('selected', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
+		this.node.classList.toggle('dark', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
 	#updateDisplay:function
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen) || !SV.isEmptyObject(unsubmitted.bar);
@@ -483,7 +576,7 @@ Ticket[item tight]
 		}
 
 
-TicketTotals[header row-flex]
+TicketTotals[header dark row-flex]
 	:style
 		//border-top: 1px solid rgba(0,0,0,0.5);
 		padding-left: 0;
@@ -523,17 +616,15 @@ TicketTotals[header row-flex]
 		};
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		SV.forEach(unsubmitted.kitchen, (item) => {
-			if(!item.submittedAt && !item.isAlcohol) {
-				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
-				var orderItem = {
-					key: item.key,
-					name: item.name,
-					quantity: item.quantity,
-					note: item.note,
-					options: JSON.parse(JSON.stringify(item.options))
-				};
-				ko.orderItems[orderItem.key] = orderItem;
-			}
+			merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
+			var orderItem = {
+				key: item.key,
+				name: item.name,
+				quantity: item.quantity,
+				note: item.note,
+				options: JSON.parse(JSON.stringify(item.options))
+			};
+			ko.orderItems[orderItem.key] = orderItem;
 		});
 		if(SV.toArray(ko.orderItems).length === 0) return;
 		this.kitchenOrderToSubmit = { order: ko, merge: merge };
@@ -556,16 +647,14 @@ TicketTotals[header row-flex]
 		};
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		SV.forEach(unsubmitted.bar, (item) => {
-			if(!item.submittedAt && item.isAlcohol) {
-				merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
-				var orderItem = {
-					key: item.key,
-					name: item.name,
-					quantity: item.quantity,
-					note: item.note
-				};
-				ko.orderItems[orderItem.key] = orderItem;
-			}
+			merge[item.key] = { submittedAt: submittedAt, submittedBy: submittedBy  };	
+			var orderItem = {
+				key: item.key,
+				name: item.name,
+				quantity: item.quantity,
+				note: item.note
+			};
+			ko.orderItems[orderItem.key] = orderItem;
 		});
 		if(SV.toArray(ko.orderItems).length === 0) return;
 		this.barOrderToSubmit = { order: ko, merge: merge };
@@ -656,19 +745,21 @@ TicketDetails[col col-flex wide shadow]
 			position: absolute;
 			top: 0; bottom: 56px; left: 0; right: 0;
 			z-index: 1;
-	#header:SimpleHeader({ text: 'Ticket Details', more: true, del: true})[medium border-bottom tight]
+	#header:SimpleHeader({ text: 'Ticket Details', more: true, del: true})[dark border-bottom tight]
 		events:
 			more:
 				this.showMore = !this.showMore;
 				this.render();
 			delete:
 				Modal.confirm('Delete?', this.data.name, () => {
-					var key = this.data.key;
-					this.data.parent.remove(key);
-					hub.ticketFilter.selectedTicket = null;
-					hub.emit('ticketTotalsChanged', key);
-					hub.emit('ticketFilterChanged');
-					this.close();
+					window.adminPin.verify(() => {
+						var key = this.data.key;
+						this.data.parent.remove(key);
+						hub.ticketFilter.selectedTicket = null;
+						hub.emit('ticketTotalsChanged', key);
+						hub.emit('ticketFilterChanged');
+						this.close();
+					});
 				});
 	#details:TicketDetailsMore[col-nofill]
 	#moreEdit:TicketDetailsMoreEdit[col-nofill light]
@@ -841,13 +932,12 @@ TicketDetailsMoreEdit
 		}
 
 OrderItemList[col-flex]
-	#list:SearchList({ ctor: 'OrderItemGroup' })[col-fill]
+	#list:List({ ctor: 'OrderItemGroup' })[col-fill list scroll-y]
 		events:
 			selected(item): 
 				this.emit('selected', item);
 	#init:function
-		this.list.header.node.style.display = 'none';
-		this.list.list.on('viewAdded', (view) => { view.on('edit', (orderItem) => { this.emit('edit', orderItem); }); });
+		this.list.on('viewAdded', (view) => { view.on('edit', (orderItem) => { this.emit('edit', orderItem); }); });
 	#render:function 
 		var groups = SV.group(this.data, (item) => { 
 			var diff = item.name + ' ' + item.note + ' ' + item.price;
@@ -912,7 +1002,7 @@ OrderItemGroup[item tight]
 		var hasUnsubmitted = false;
 		items.forEach((item) => {
 			quantity += item.quantity
-			if(!item.submittedAt) hasUnsubmitted = true;
+			if(!RecUtils.isOrderItemSubmitted(item)) hasUnsubmitted = true;
 		});
 		this.node.classList.toggle('highlight', hasUnsubmitted);
 		this.model = items[0];
@@ -953,12 +1043,10 @@ OrderItem[row row-flex tight]
 	#render:function
 		this.updateTime();
 		if(!this.timer) { this.timer = setInterval(() => { this.updateTime(); }, 30000); }	
-		this.node.classList.toggle('light-text', this.data.submittedAt || false);
+		var isSubmitted = RecUtils.isOrderItemSubmitted(this.data);
+		this.node.classList.toggle('light-text', isSubmitted);
 
-
-DeleteOrderItem
-	#header:SimpleHeader({ text: 'Delete Order Item', cancel: true })
-		
+	
 
 
 OrderItemDetails[col-flex]
@@ -967,16 +1055,8 @@ OrderItemDetails[col-flex]
 			close:
 				this.emit('close');
 			delete:
-				if(!this.data.submittedAt)
-					this.delete();
-				Modal.confirm('Delete?', this.data.name, () => {
-					this.delete();
-				});
-	#delete:function
-		var ticket = this.data.parent.parent;
-		ticket.orderItems.remove(this.data.key);
-		hub.emit('ticketTotalsChanged', ticket.key);
-		this.emit('close');
+				window.deleteOrderItem.delete(this.data);
+				this.emit('close');
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note', isTextArea: true })$(update=data)
 	#quantityInput:Input({ prop: 'quantity', label: 'Quantity', number: true  })$(update=data)[number]
@@ -1041,45 +1121,53 @@ OrderItemDetailsOption[item tight]
 		this.nameSpan.innerHTML = this.data.name + ': ' + this.data.value;
 	
 MenuCategories[col col-flex col-right]
-	#list:SearchList({ ctor: 'MenuItemCategory', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
+	#list:SearchList({ ctor: 'MenuCategory', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
 		events:
 			selected(item): 
-				menuItems.update(item.items);
+				menuHub.selectCategory(item.key);
+				//menuItems.update(item.items);
 	#init:function
 		this.list.header.node.style.display = 'none';
-		this.list.postFilter = (data) => {
-			return SV.filterMap(data, item => !item.isDisabled);
-		}
+		//this.list.postFilter = (data) => {
+		//	return SV.filterMap(data, item => !item.isDisabled);
+		//}
+		
 	#render:function 
 		this.list.update(this.data);
-		menuItems.update((this.list.selected || {}).items);
+		//menuItems.update((this.list.selected || {}).items);
 
-MenuItemCategory[item tight]
+MenuCategory[item tight]
+	:events
+		click:
+			menuHub.selectCategory(this.data.key);
 	#nameSpan$(data.name)[name]
+	#updateFilter:function
+		this.node.classList.toggle('selected', this.data.key === (menuHub.filter.selectedCategory || {}).key);
+		this.node.classList.toggle('hide', this.data.isDisabled);
 	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
+		menuHub.on('filterChanged', () => this.updateFilter() );
+	#render:function
+		this.updateFilter();
 
 
 MenuItems[col col-flex col-right]
-	#list:SearchList({ text: 'Items', ctor: 'MenuItem', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
-		events:
-			selected(item): 
-				ticketDetails.add(item);
+	#header:SearchHeader({ searchBox: true, clearBtn: true })[col-nofill]
+	#list:List({ ctor: 'MenuItem', sort: 'name' })[col-fill list scroll-y]
+	#updateFilter:function
+		this.list.update((menuHub.filter.selectedCategory || {}).items);
 	#init:function
-		this.list.postFilter = (data) => {
-			return SV.filterMap(data, item => !item.isDisabled);
-		}
+		menuHub.on('filterChanged', () => this.updateFilter() );
 	#render:function 
-		this.list.update(this.data);
+		this.updateFilter();
 
 MenuItem[item tight]
+	:events
+		click:
+			ticketDetails.add(this.data);
 	#price[right margin1]
 	#nameSpan$(data.name)[name]
-	#init:function
-		this.node.addEventListener('click', 
-			() => { this.emit('selected', this.data); });
 	#render:function()
+		this.node.classList.toggle('hide', this.data.isDisabled);
 		this.price.innerHTML = SV.formatCurrency(this.data.price);
 
 
@@ -1102,7 +1190,24 @@ var sync = new SyncNodeSocket('/data', {});
 window.membersSync = new SyncNodeSocket('/members', {});
 window.recSettings = new LocalSyncNode('recSettings');	
 
+var pinRequests = {};
 
+function verifyAdminPin(pin, callback) {
+	var request = {
+		key: SyncNode.guidShort(),
+		callback: callback
+	};
+	pinRequests[request.key] = request;
+	io().emit('verify admin pin', pin, request.key);
+}
+io().on('verify admin pin result', (key, result) => {
+	var request = pinRequests[key];
+	if(!request) return;
+	delete pinRequests[key];
+	if(request.callback) {
+		request.callback(result);
+	}
+});
 
 SV.onLoad(() => { 
 
@@ -1117,6 +1222,9 @@ SV.onLoad(() => {
 		window.creditCardDetailsModal = Modal.createModal(creditCardDetails);
 		window.creditCardDetailsModal.on('show', () => { creditCardDetails.input.focus(); });
 		//window.creditCardDetailsModal.show();
+		
+		window.adminPin = buildComponent('AdminPin');
+		window.deleteOrderItem = buildComponent('DeleteOrderItem');
 
 		function updateRec() {
 			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
@@ -1138,7 +1246,7 @@ SV.onLoad(() => {
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
-			console.log('kitchen version', data.kitchen.orders.version);
+			menuHub.update(data.menu);
 			recList.update(data.reconciliations);
 			updateRec();
 			menuCategories.update(sync.data.menu.categories);			
@@ -1165,6 +1273,9 @@ SV.onLoad(() => {
 
 
 class RecUtils {
+	static getOrderItemTotal(orderItem) {
+		return orderItem.quantity * orderItem.price;
+	}
 	static getLastOrderItem(orderItems) {
 		var lastOrderItem;
 		SV.toArray(orderItems).forEach((orderItem) => {
@@ -1183,7 +1294,7 @@ class RecUtils {
 		var lastOrderItem = RecUtils.getLastOrderItem(orderItems);
 		return lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
 	}
-
+	static isOrderItemSubmitted(item) { return item.submittedAt || item.serveType === 'Server'; }
 	static isTicketPaid(ticket) { return ticket.paymentStatus !== 'Unpaid'; };
 	static getTicketTotals(ticket) {
 		var totals = {
@@ -1211,7 +1322,7 @@ class RecUtils {
 		var unsubmittedKitchen = {};
 		var unsubmittedBar = {};
 		SV.toArray(ticket.orderItems).forEach((item) => { 
-			if(!item.submittedAt) {
+			if(!RecUtils.isOrderItemSubmitted(item)) {
 				if(item.serveType === 'Bar') unsubmittedBar[item.key]  = item; 
 				else if(item.serveType === 'Kitchen') unsubmittedKitchen[item.key]  = item; 
 			}
