@@ -24,8 +24,8 @@
 #header:Header
 #ticketList:TicketListMain
 #ticketDetails:TicketDetails[col]
-#menuItems:MenuItems[col right]
 #menuCategories:MenuCategories[col right]
+#menuItems:MenuItems[col right]
 #recDisable:Disable
 
 MenuHub
@@ -421,6 +421,8 @@ Header[row row-flex black]
 		
 
 TicketListMain[col col-flex col-left]
+	:style
+		background-color: #888;
 	#ticketList:TicketList
 		events: 
 			selected(ticket):
@@ -731,7 +733,7 @@ TicketTotals[header dark row-flex]
 
 
 
-TicketDetails[col col-flex wide shadow]
+TicketDetails[col col-flex wide light shadow]
 	:style
 		display: none;
 		margin: 1em;
@@ -954,8 +956,13 @@ OrderItemGroup[item tight]
 	:events
 		click(e):
 			e.stopPropagation();
-			this.showMore = !this.showMore;
+			if(this.itemCount === 1) {
+				this.emit('edit', this.model);
+			} else {
+				this.showMore = !this.showMore;
+			}
 			this.updateShowMore();
+	#settings[right tight touch material-icons] 'settings'
 	#more[right tight touch material-icons] 'keyboard_arrow_down'
 	#repeat[right tight touch material-icons] 'replay'
 		events:
@@ -989,15 +996,18 @@ OrderItemGroup[item tight]
 		};
 		var ticket = this.model.parent.parent;
 		var result = ticket.orderItems.set(newItem.key, newItem)[newItem.key];
-		ticketDetails.items.list.select(result.key);
+		//ticketDetails.items.list.select(result.key);
 		hub.emit('ticketTotalsChanged', ticket.key);
 	#init:function
 		this.list.header.node.style.display = 'none';
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
-		this.showMore = true;
+		this.showMore = false;
 	#render:function
 		this.updateShowMore();
 		var items = SV.toArray(this.data);
+		this.itemCount = items.length;
+		this.settings.classList.toggle('hide', this.itemCount > 1);
+		this.more.classList.toggle('hide', this.itemCount === 1);
 		var quantity = 0;
 		var hasUnsubmitted = false;
 		items.forEach((item) => {
@@ -1006,9 +1016,9 @@ OrderItemGroup[item tight]
 		});
 		this.node.classList.toggle('highlight', hasUnsubmitted);
 		this.model = items[0];
-		this.nameSpan.innerHTML = this.model.name;
 		var quantityText = quantity !== 1 ? quantity + ' x ' : '';	
-		this.price.innerHTML = quantityText + SV.formatCurrency(this.model.price);
+		this.nameSpan.innerHTML = quantityText + this.model.name;
+		this.price.innerHTML = SV.formatCurrency(this.model.price);
 		var optionsText = '';
 		SV.forEach(this.model.options, (option) => { optionsText += ' ' + option.value });
 		this.options.innerHTML = optionsText;
@@ -1036,7 +1046,7 @@ OrderItem[row row-flex tight]
 	//			this.emit('edit', this.data);
 	#time[margin1 italic]
 	#updateTime:function
-		var quantity = `${this.data.quantity} @ `;
+		var quantity = `${this.data.quantity} - `;
 		this.time.innerHTML = quantity + moment(this.data.addedAt).from(moment());
 	#init:function
 		this.node.draggable = true;
@@ -1121,28 +1131,22 @@ OrderItemDetailsOption[item tight]
 		this.nameSpan.innerHTML = this.data.name + ': ' + this.data.value;
 	
 MenuCategories[col col-flex col-right]
-	#list:SearchList({ ctor: 'MenuCategory', searchBox: true, sort: 'name', searchProp: 'name', clearBtn: true })[col-fill]
-		events:
-			selected(item): 
-				menuHub.selectCategory(item.key);
-				//menuItems.update(item.items);
+	:style
+		background-color: #888;
+	#list:List({ ctor: 'MenuCategory', sort: 'name' })[col-fill list scroll-y]
 	#init:function
-		this.list.header.node.style.display = 'none';
-		//this.list.postFilter = (data) => {
-		//	return SV.filterMap(data, item => !item.isDisabled);
-		//}
-		
 	#render:function 
 		this.list.update(this.data);
-		//menuItems.update((this.list.selected || {}).items);
 
-MenuCategory[item tight]
+MenuCategory[item tight secondary-medium]
 	:events
 		click:
 			menuHub.selectCategory(this.data.key);
 	#nameSpan$(data.name)[name]
 	#updateFilter:function
-		this.node.classList.toggle('selected', this.data.key === (menuHub.filter.selectedCategory || {}).key);
+		var isSelected = this.data.key === (menuHub.filter.selectedCategory || {}).key;
+		this.node.classList.toggle('secondary-medium', !isSelected);
+		this.node.classList.toggle('secondary-dark', isSelected);
 		this.node.classList.toggle('hide', this.data.isDisabled);
 	#init:function
 		menuHub.on('filterChanged', () => this.updateFilter() );
@@ -1151,6 +1155,8 @@ MenuCategory[item tight]
 
 
 MenuItems[col col-flex col-right]
+	:style
+		background-color: #888;
 	#header:SearchHeader({ searchBox: true, clearBtn: true })[col-nofill]
 	#list:List({ ctor: 'MenuItem', sort: 'name' })[col-fill list scroll-y]
 	#updateFilter:function
@@ -1160,7 +1166,7 @@ MenuItems[col col-flex col-right]
 	#render:function 
 		this.updateFilter();
 
-MenuItem[item tight]
+MenuItem[item tight secondary-dark]
 	:events
 		click:
 			ticketDetails.add(this.data);

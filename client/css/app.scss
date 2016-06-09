@@ -4,17 +4,19 @@ $typeGrid: 4px;
 $margin: 16px;
 $increment: 56px;
 
-$color-primary: palette(Deep Purple, 500);
-$color-secondary: palette(Deep Purple, 700);
-$color-light: palette(Deep Purple, 200);
-$color-dark: palette(Deep Purple, 900);
+$color-light: palette(Teal, 200);
+$color-primary: palette(Teal, 500);
+$color-dark: palette(Teal, 900);
+$color-secondary-light: palette(Deep Purple, 200);
+$color-secondary-medium: palette(Deep Purple, 500);
+$color-secondary-dark: palette(Deep Purple, 900);
 
 
 
 /** App specific **/
 
 .ticket {
-	background-color: palette(Deep Purple, 100);
+	background-color: palette(Teal, 100);
 }
 
 
@@ -61,7 +63,7 @@ body, input {
 body {
 	margin: 0;
 	padding: 0;
-	background-color: #CCC;
+	background-color: #555;
 }
 
 .touch {
@@ -82,7 +84,7 @@ body {
 	color: rgba(0,0,0,0.5);
 
 	&.highlight {
-		color: rgba(0,0,255,0.7);
+		color: rgba(255,255,0,0.7);
 	}
 }
 
@@ -363,13 +365,21 @@ $input-height: $increment - $margin;
 .black {
 	background-color: #000;
 	color: rgba(255,255,255,0.87);
+
+	.touch:hover {
+		color: rgba(255,255,0,0.7);
+	}
 }
 .dark {
 	background-color: $color-dark;
-	color: rgba(255,255,255,0.87);
+	color: rgba(255,255,255, 1);
 	
 	&.disabled {
 		color: rgba(255,255,255,0.5);
+	}
+
+	.highlight {
+		color: rgba(255, 255, 0, 1);
 	}
 }
 .medium {
@@ -378,6 +388,26 @@ $input-height: $increment - $margin;
 }
 .light {
 	background-color: $color-light;
+	color: #000;
+}
+.secondary-dark {
+	background-color: $color-secondary-dark;
+	color: rgba(255,255,255, 1);
+	
+	&.disabled {
+		color: rgba(255,255,255,0.5);
+	}
+
+	.highlight {
+		color: rgba(255, 255, 0, 1);
+	}
+}
+.secondary-medium {
+	background-color: $color-secondary-medium;
+	color: rgba(255,255,255,0.87);
+}
+.secondary-light {
+	background-color: $color-secondary-light;
 	color: #FFF;
 }
 .error {
@@ -399,7 +429,7 @@ $input-height: $increment - $margin;
 	border-bottom: 1px solid rgba(0,0,0,0.35);
 }
 .highlight {
-	color: #00F;
+	color: rgba(255, 255, 0, 1);
 }
 .glow {
 	box-shadow: 0px 0px 10px #FF0;
