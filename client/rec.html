@@ -355,18 +355,38 @@ RecTotalsEdit
 		style:
 			font-weight: bold;
 			font-size: 24px;
+	#print[btn] 'Print'
+		events:
+			click:
+				SV.printRec(this.getRecCalcs());
+	#getRecCalcs:function
+		if(!this.data) return {};
+		var sales = JSON.parse(JSON.stringify(this.data.parent.totals));
+		var cashTake = (this.data.ending || 0) - (this.data.beginning || 0) 
+				+ (this.data.payouts || 0) + (this.data.ccTips || 0);
+		var totalTake = cashTake + (this.data.cc || 0) + (this.data.giftCards || 0);
+		var diff = totalTake - sales.total;
+		return {
+			name: this.data.parent.name,
+			sales: sales, 
+			beginningDrawer: this.data.beginning,
+			endingDrawer: this.data.ending,
+			payouts: this.data.payouts,
+			ccTips: this.data.ccTips,
+			cc: this.data.cc,
+			giftCards: this.data.giftCards,
+			cashTake: cashTake,
+			totalTake: totalTake,
+			difference: diff
+		};
+
 	#render:function
 		if(this.data) {
-			this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
-			var cashTake = (this.data.ending || 0) - (this.data.beginning || 0) 
-					+ (this.data.payouts || 0) + (this.data.ccTips || 0);
-			this.cashTake.value.innerHTML = SV.formatCurrency(cashTake);
-			var totalTake = cashTake + (this.data.cc || 0) + (this.data.giftCards || 0);
-			this.totalTake.value.innerHTML = SV.formatCurrency(totalTake);
-			var sales = this.data.parent.totals.total || 0;
-			this.sales.value.innerHTML = SV.formatCurrency(sales);
-			var diff = totalTake - sales;
-			this.diff.value.innerHTML = SV.formatCurrency(diff);
+			var calcs = this.getRecCalcs();
+			this.sales.value.innerHTML = SV.formatCurrency(calcs.sales.total);
+			this.cashTake.value.innerHTML = SV.formatCurrency(calcs.cashTake);
+			this.totalTake.value.innerHTML = SV.formatCurrency(calcs.totalTake);
+			this.diff.value.innerHTML = SV.formatCurrency(calcs.difference);
 		}
 
 
