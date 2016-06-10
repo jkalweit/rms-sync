@@ -352,9 +352,9 @@ function sendTextToAdmin(body) {
 	sendText(membersServer.data.admin.data.info.phone, body);
 }
 
-function printReceipt(receipt) {
-	var data = JSON.stringify(receipt);
-	console.log('Sending receipt: ', data);
+function sendToPrinter(type, doc) {
+	var data = JSON.stringify({ type: type, document: doc });
+	console.log('Sending to printer: ', data);
 
 	var req = http.request({
 		port: 1338,
@@ -367,17 +367,23 @@ function printReceipt(receipt) {
 	      	}	
 	}, (response) => {
 		response.on('data', (chunk) => {
-			console.log(`Print Receipt Response: ${chunk}`);
+			console.log(`Printer Response: ${chunk}`);
 		});
 		response.on('end', () => {
-			console.log('Print Receipt End');
+			console.log('Print End');
 		});
 	});
 
 	req.write(data);
 	req.end();
 	
-	console.log('Print Receipt Sent');
+	console.log('Send to Printer');}
+
+function printReceipt(receipt) {
+	sendToPrinter('ticket receipt', receipt);
+}
+function printRec(rec) {
+	sendToPrinter('reconciliation receipt', rec);
 }
 
 function chargeCreditCard(values) {
@@ -431,6 +437,9 @@ io.on('connection', (socket) => {
 	});
 	socket.on('print receipt', (receipt) => {
 		printReceipt(receipt);
+	});
+	socket.on('print reconciliation receipt', (rec) => {
+		printRec(rec);
 	});
 	socket.on('play kitchen bell', () => {
 		eventsServer.ioNamespace.emit('play kitchen bell');

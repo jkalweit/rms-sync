@@ -202,6 +202,7 @@ RecList
 			added: added,
 			name: name,
 			tickets: {},
+			drawer: {},
 			totals: { food: 0, tax: 0, alcohol: 0, total: 0 }
 		};
 
@@ -315,7 +316,7 @@ TableSelect
 				this.emit('close');
 	#init:function
 		var tables1 = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', 'Bar'];
-		var tables2 = ['2-1', '2-2', '2-3', '2-4', '2-5', 'Deck', 'Other'];
+		var tables2 = ['2-1', '2-2', '2-3', '2-4', '2-5', 'Deck', 'TOGO'];
 		this.list1 = SV.el('div', { parent: this.lists, className: 'col-left list',
 			style: { width: '50%' }});
 		tables1.forEach((table) => {
@@ -342,20 +343,30 @@ Table[item]
 
 RecTotalsEdit
 	#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
-	#sales:LabeledValue({ label: 'Sales' })[number]
 	#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
-	#credit:Input({ label: 'Credit, no tips', prop: 'Credit', number: true })$(update=data)[number]
-	#creditTips:Input({ label: 'Credit Tips', prop: 'Credit Tips', number: true })$(update=data)[number]
+	#payouts:Input({ label: 'Payouts', prop: 'payouts', number: true })$(update=data)[number]
+	#creditTips:Input({ label: 'CC Tips', prop: 'ccTips', number: true })$(update=data)[number]
+	#cashTake:LabeledValue({ label: 'Cash Take' })[number]
+	#credit:Input({ label: 'CC, no tips', prop: 'cc', number: true })$(update=data)[number]
 	#giftCards:Input({ label: 'Gift Cards', prop: 'giftCards', number: true })$(update=data)[number]
-	#payouts:Input({ label: 'Payouts', prop: 'Payouts', number: true })$(update=data)[number]
-	#total:LabeledValue({ label: 'Total' })[number]
+	#totalTake:LabeledValue({ label: 'Take' })[number]
+	#sales:LabeledValue({ label: 'Sales' })[number]
+	#diff:LabeledValue({ label: 'Diff' })[number]
 		style:
 			font-weight: bold;
 			font-size: 24px;
 	#render:function
 		if(this.data) {
-			this.total.value.innerHTML = SV.formatCurrency(this.data.beginning);
 			this.sales.value.innerHTML = SV.formatCurrency(this.data.parent.totals.total);
+			var cashTake = (this.data.ending || 0) - (this.data.beginning || 0) 
+					+ (this.data.payouts || 0) + (this.data.ccTips || 0);
+			this.cashTake.value.innerHTML = SV.formatCurrency(cashTake);
+			var totalTake = cashTake + (this.data.cc || 0) + (this.data.giftCards || 0);
+			this.totalTake.value.innerHTML = SV.formatCurrency(totalTake);
+			var sales = this.data.parent.totals.total || 0;
+			this.sales.value.innerHTML = SV.formatCurrency(sales);
+			var diff = totalTake - sales;
+			this.diff.value.innerHTML = SV.formatCurrency(diff);
 		}
 
 
@@ -364,7 +375,7 @@ RecSettings
 	#totals:RecTotalsEdit
 		style:
 			width: 50%;
-			float: left;
+			//float: left;
 	#close[btn] 'Close'
 		events:
 			click:
@@ -418,6 +429,10 @@ Header[row row-flex black]
 		this.totals.update(this.data.totals);
 		this.title.innerHTML = this.data.name;
 		this.recSettings.update(this.data.drawer);
+		this.test = true;
+		if(this.test) return;
+		this.test = true;
+		this.recSettingsModal.show();
 		
 
 TicketListMain[col col-flex col-left]
@@ -962,7 +977,14 @@ OrderItemGroup[item tight]
 				this.showMore = !this.showMore;
 			}
 			this.updateShowMore();
-	#settings[right tight touch material-icons] 'settings'
+	#move[right tight touch material-icons] 'reorder'
+		events:
+			click(e):
+				e.stopPropagation();
+			dragstart(e):
+				var transfer = JSON.stringify({ ticketKey: this.model.parent.parent.key, orderItemKey: this.model.key });
+				e.dataTransfer.dropEffect = 'move';
+				e.dataTransfer.setData('text/plain', transfer);
 	#more[right tight touch material-icons] 'keyboard_arrow_down'
 	#repeat[right tight touch material-icons] 'replay'
 		events:
@@ -1002,11 +1024,12 @@ OrderItemGroup[item tight]
 		this.list.header.node.style.display = 'none';
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
 		this.showMore = false;
+		this.move.draggable = true;
 	#render:function
 		this.updateShowMore();
 		var items = SV.toArray(this.data);
 		this.itemCount = items.length;
-		this.settings.classList.toggle('hide', this.itemCount > 1);
+		this.move.classList.toggle('hide', this.itemCount > 1);
 		this.more.classList.toggle('hide', this.itemCount === 1);
 		var quantity = 0;
 		var hasUnsubmitted = false;
@@ -1189,7 +1212,7 @@ MenuItem[item tight secondary-dark]
 
 window.Input = Input
 
-SV.startReloader();
+//SV.startReloader();
 
 
 var sync = new SyncNodeSocket('/data', {});
@@ -1234,6 +1257,9 @@ SV.onLoad(() => {
 
 		function updateRec() {
 			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
+			if(!rec.drawer) {
+				rec.set('drawer', {});
+			}
 			hub.update(rec);
 			header.update(rec);			
 			if(!rec) {

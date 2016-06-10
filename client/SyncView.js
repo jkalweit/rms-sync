@@ -236,6 +236,10 @@ class SV {
 		io().emit('print receipt', receipt);
 	}
 	
+	static printRec(rec) {
+		io().emit('print reconciliation receipt', rec);
+	}
+	
 	static playKitchenBell() {
 		io().emit('play kitchen bell');
 	}
