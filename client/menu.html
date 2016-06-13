@@ -26,18 +26,15 @@ MenuHub
 		this.categoryFilter = {};
 	#selectCategory:function(category)
 		this.categoryFilter.selected = category;
-		this.categoryFilter.selectedValue = null;
+		var selectedValue = this.categoryFilter.selectedValue;
+		this.categoryFilter.selectedValue = ((this.categoryFilter.selected || {}).items || {})[(selectedValue || {}).key];
 		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
 	#selectValue:function(value)
 		this.categoryFilter.selectedValue = value;
 		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
 	#render:function	
 		if(this.categoryFilter.selected) {
-			var selectedValue = this.categoryFilter.selectedValue;
 			this.selectCategory(this.data.menu.categories[this.categoryFilter.selected.key]);
-			if(selectedValue) {
-				this.selectValue(this.categoryFilter.selected.items[selectedValue.key]);
-			}
 		}
 
 

@@ -247,7 +247,7 @@ RecHub
 		this.fireTicketFilterChanged();
 	#selectTicket:function(ticket)
 		this.ticketFilter.selectedTicket = ticket;
-		this.ticketFilter.selectedOrderItem = null;
+		this.ticketFilter.selectedOrderItem = ((ticket || {}).orderItems || {})[(this.ticketFilter.selectedOrderItem || {}).key];
 		this.fireTicketFilterChanged();
 	#selectOrderItem:function(orderItem)
 		this.ticketFilter.selectedOrderItem = orderItem;
@@ -275,13 +275,6 @@ RecHub
 		if(this.ticketFilter.selectedTicket) {
 			var selectedOrderItem = this.ticketFilter.selectedOrderItem;
 			this.selectTicket(this.data.tickets[this.ticketFilter.selectedTicket.key]);
-			if(selectedOrderItem) {
-				if(this.ticketFilter.selectedTicket) {
-					this.selectOrderItem(this.ticketFilter.selectedTicket.orderItems[selectedOrderItem.key]);
-				} else {
-					this.selectOrderItem(null);
-				}
-			}
 		}
 
 
@@ -1128,6 +1121,7 @@ OrderItemDetails[col-flex]
 				this.selectOptionsView.update(option);
 				this.selectOptionsViewModal.show();
 	#init:function
+		this.name = 'OrderItemDetails'; //for debugging
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedOrderItem));
 		this.selectOptionsView = buildComponent('SelectOptionsView');
 		this.selectOptionsView.on('selected', (value) => { 
@@ -1162,6 +1156,7 @@ OrderItemDetails[col-flex]
 		}}}), this.header.close);
 		this.render();
 	#render:function
+		console.log('Rendering details', (this.data || {}).version);
 		this.node.classList.toggle('hide', !this.data);
 		if(this.data) this.options.update(this.data.options);
 
@@ -1232,7 +1227,7 @@ MenuItem[item tight secondary-dark]
 
 window.Input = Input
 
-//SV.startReloader();
+SV.startReloader();
 
 
 var sync = new SyncNodeSocket('/data', {});
