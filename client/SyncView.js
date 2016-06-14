@@ -367,9 +367,6 @@ class SyncView {
 	}
 	hasChanged(newData) {
 
-
-		if(this.name) console.log('		########', this.name, (this.data || {}).version, (newData || {}).version);
-
 		// if(this.name) console.log(this.name + ' doing hasChanged #########################');
 		if(!this.data && !newData) {
 		 	if(this.name) console.log(this.name + 'here1 both are null');

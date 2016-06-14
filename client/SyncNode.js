@@ -74,9 +74,27 @@ class SyncNode extends EventEmitter {
 	}
 	set(key, val) {
 		var merge = {};
-		merge[key] = val;
+		var split = key.split('.');
+		var curr = merge;
+		for(var i = 0; i < split.length - 1; i++) {
+			curr[split[i]] = {};
+			curr = curr[split[i]];		
+		}
+		curr[split[split.length-1]] = val;
 		var result = this.merge(merge);
 		return this;
+	}
+	get(path) {
+		if(!path) return this;
+		return SyncNode.getHelper(this, path.split('.'));
+	}
+	static getHelper(obj, split) {
+		var isObject = SyncNode.isObject(obj);
+		if(split.length === 1) { 
+			return isObject ? obj[split[0]] : null;
+		}
+		if(!isObject) return null;
+		return SyncNode.getHelper(obj[split[0]], split.slice(1, split.length));
 	}
 	remove(key) {
 		if(this.hasOwnProperty(key)) {

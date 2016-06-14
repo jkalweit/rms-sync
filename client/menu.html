@@ -56,6 +56,16 @@ Header[row row-flex dark]
 						if(s != 'Kitchen' && s != 'Bar' && s != 'Server') {
 							console.log('Unknown serveType: ', category.name, item.name, item.serveType);
 						} 
+						s = item.taxType;
+						if(s != '9%' && s != 'Included') {
+							console.log('Unknown taxType: ', category.name, item.name, item.taxType);
+						} 
+						if(s === '9%' && item.isAlcohol) {
+							console.log('WARNING: 9% on Alcohol Item', category.name, item.name, item.taxType);
+						} 
+						if(s === 'Included' && !item.isAlcohol) {
+							console.log('WARNING: Tax included on non-Alcohol Item', category.name, item.name, item.taxType);
+						} 
 					});
 				});
 				console.log('Done validating.');
@@ -142,6 +152,7 @@ MenuItemList[col-fill col-flex]
 			key: new Date().toISOString(), 
 			name: name,
 			serveType: 'Kitchen',
+			taxType: '9%',
 			price: 0,
 			isAlcohol: false,	
 			options: {} };
@@ -183,6 +194,10 @@ MenuItemDetails[col col-flex wide]
 	#alcoholToggle:ToggleButton({ prop: 'isAlcohol', trueText: 'Alcohol', falseText: 'Not Alcohol' })$(update=data)
 	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
 	#priceInput:Input({ prop: 'price', label: 'Price', number: true })$(update=data)
+	#taxType:Select({ values: ['9%', 'Included'] })
+		events:
+			selected(value):
+				this.data.set('taxType', value);	
 	#serveType:Select({ values: ['Kitchen', 'Bar', 'Server'] })
 		events:
 			selected(value):
@@ -231,6 +246,7 @@ MenuItemDetails[col col-flex wide]
 		this.updateFilter();
 		if(this.data) { 
 			this.serveType.select(this.data.serveType);
+			this.taxType.select(this.data.taxType);
 			this.options.update(this.data.options);
 			this.optionCategories.update(this.data.parent.parent.parent.parent.menuOptions.categories);
 			if(this.editingOption) {

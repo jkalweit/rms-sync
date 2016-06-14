@@ -46,13 +46,14 @@ ToggleButton[btn]
 	#text:span
 	:events
 		click:
-			this.data.set(this.prop, !this.data[this.prop]);
+			this.data.set(this.prop, !this.data.get(this.prop));
+			this.emit('changed', this.data.get(this.prop));
 	#init:function(options)
 		this.prop = options.prop;
 		this.trueText = options.trueText || 'Yes';
 		this.falseText = options.falseText || 'No';
 	#render:function
-		if(this.data) this.text.innerHTML = this.data[this.prop] ? this.trueText : this.falseText;
+		if(this.data) this.text.innerHTML = this.data.get(this.prop) ? this.trueText : this.falseText;
 
 
 SimpleHeader[header col-nofill row row-flex]
