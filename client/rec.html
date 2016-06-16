@@ -68,7 +68,7 @@ DeleteOrderItem
 		if(!orderItem.submittedAt) {
 			this.doDelete();
 		} else {
-			this.header.text.innerHTML = 'Delete Order Item: ' + orderItem.name + ' ' + SV.formatCurrency(RecUtils.getOrderItemTotals.total(orderItem))
+			this.header.text.innerHTML = 'Delete Order Item: ' + orderItem.name + ' ' + SV.formatCurrency(RecUtils.getOrderItemTotals(orderItem).total)
 			this.modal.show();
 		}
 	#doDelete:function(reason)
@@ -591,7 +591,7 @@ Ticket[item tight ticket]
 		this.node.classList.toggle('dark', (hub.ticketFilter.selectedTicket || {}).key === this.data.key );	
 	#updateDisplay:function
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen) || !SV.isEmptyObject(unsubmitted.bar);
+		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen); // || !SV.isEmptyObject(unsubmitted.bar);
 		this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
 		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 	#render:function
@@ -599,7 +599,7 @@ Ticket[item tight ticket]
 		var total = SV.formatCurrency(totals.foodSubtotal + totals.alcoholSubtotal + totals.taxSubtotal);
 		console.log('totals', totals);
 		var discounts = totals.foodDiscount + totals.alcoholDiscount + totals.taxDiscount;
-		if(discounts !== 0) {
+		if(discounts) {
 			total += '<span style="color: #F00"> ' + SV.formatCurrency(discounts) + '</span>';	
 		}
 		this.total.innerHTML = total;
@@ -764,8 +764,8 @@ TicketTotals[header dark row-flex]
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendKitchen.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.kitchen));
-		this.sendBar.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.bar));
-		this.sendBar.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.bar));
+		//this.sendBar.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.bar));
+		//this.sendBar.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.bar));
 
 
 
@@ -1053,6 +1053,7 @@ OrderItemGroup[item tight]
 		this.list.list.on('viewAdded', (view) => { view.on('edit', (item) => { this.emit('edit', item); }); });
 		this.showMore = false;
 		this.move.draggable = true;
+		hub.on('ticketTotalsChanged', (ticketKey) => { if(ticketKey === this.model.parent.parent.key) this.render(); });
 	#render:function
 		this.updateShowMore();
 		var items = SV.toArray(this.data);
@@ -1069,7 +1070,13 @@ OrderItemGroup[item tight]
 		this.model = items[0];
 		var quantityText = quantity !== 1 ? quantity + ' x ' : '';	
 		this.nameSpan.innerHTML = quantityText + this.model.name;
-		this.price.innerHTML = SV.formatCurrency(this.model.price);
+		var price = SV.formatCurrency(this.model.price);
+		var totals = RecUtils.getOrderItemTotals(this.model);
+		var discounts = totals.foodDiscount + totals.alcoholDiscount; // + totals.taxDiscount;
+		if(discounts) {
+			price += '<span style="color: #F00"> ' + SV.formatCurrency(discounts) + '</span>';	
+		}
+		this.price.innerHTML = price;
 		var optionsText = '';
 		SV.forEach(this.model.options, (option) => { optionsText += ' ' + option.value });
 		this.options.innerHTML = optionsText;
@@ -1240,7 +1247,7 @@ MenuItem[item tight secondary-dark]
 
 window.Input = Input
 
-SV.startReloader();
+//SV.startReloader();
 
 
 var sync = new SyncNodeSocket('/data', {});
@@ -1351,7 +1358,7 @@ class RecUtils {
 		var lastOrderItem = RecUtils.getLastOrderItem(orderItems);
 		return lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
 	}
-	static isOrderItemSubmitted(item) { return item.submittedAt || item.serveType === 'Server'; }
+	static isOrderItemSubmitted(item) { return item.submittedAt || item.serveType === 'Server' || item.serveType === 'Bar'; }
 	static isTicketPaid(ticket) { return ticket.paymentStatus !== 'Unpaid'; };
 	static getOrderItemTotals(item) {
 		var totals = {
@@ -1365,7 +1372,8 @@ class RecUtils {
 			alcohol: 0,
 			total: 0		
 		};
-		var amount = parseFloat((item.price * item.quantity).toPrecision(2));
+		var amount = parseFloat((item.price * item.quantity).toPrecision(3));
+		console.log('order item', item.price, item.quantity, item.price * item.quantity, (item.price * item.quantity).toPrecision(3), amount, item.name, totals);
 		if(item.taxType === '9%') {
 			totals.foodSubtotal = amount;
 			totals.taxSubtotal = parseFloat((totals.foodSubtotal * .09).toPrecision(2));
@@ -1373,7 +1381,6 @@ class RecUtils {
 			totals.alcoholSubtotal = amount;
 		}
 		var ticket = item.parent.parent;
-		console.log('mods', ticket.modifiers);
 		if(ticket.modifiers.isEmployeeDiscount) {
 			totals.foodDiscount = -1 * totals.foodSubtotal * 0.5;	
 			totals.taxDiscount = -1 * totals.taxSubtotal * 0.5;	

@@ -21,6 +21,7 @@ class SV {
 
 	static getPropertyHelper(obj, split) {
 		if(split.length === 1) return obj[split[0]];
+		if(obj == null) return null;
 		return SV.getPropertyHelper(obj[split[0]], split.slice(1, split.length));
 	}
 

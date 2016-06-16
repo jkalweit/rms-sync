@@ -87,6 +87,7 @@ Member[item tight]
 		hub.on('filterChanged', () => this.updateFilter());
 	#render:function
 		this.updateFilter();
+		console.log('here', this.data);
 		this.node.style.color = this.data.data.info.isStaff ? '#00F' : '#000';
 
 MemberDetails[col col-left col-flex wide]

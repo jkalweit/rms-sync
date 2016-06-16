@@ -156,8 +156,8 @@ MenuItemList[col-fill col-flex]
 			price: 0,
 			isAlcohol: false,	
 			options: {} };
-		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		this.list.select(result.key);
+		this.data.set(newItem.key, newItem);
+		this.list.select(newItem.key);
 	#render:function 
 		this.list.update(this.data);
 
