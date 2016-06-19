@@ -440,6 +440,7 @@ $input-height: $increment - $margin;
 }
 .flex { display: flex; }
 .hide { display: none; }
+.invisible { opacity: 0; }
 
 .blink {
 	animation: blinker 1s linear infinite;

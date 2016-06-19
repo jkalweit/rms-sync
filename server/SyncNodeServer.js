@@ -17,6 +17,8 @@ class Response {
 class SyncNodeServer {
     constructor(namespace, io, defaultData) {
         if (defaultData === void 0) { defaultData = {}; }
+		this.backupCount = 0;
+		this.numBackups = 9;
         this.namespace = namespace;
         this.directory = '../data';
         this.io = io;
@@ -58,7 +60,7 @@ class SyncNodeServer {
         });
     }
 	get(callback) {
-		var path = this.buildFilePath();
+		var path = this.buildFilePath() + '.json';
 		fs.readFile(path, 'utf8', (err, data) => {
 			if (err) {
 				if (err.code === 'ENOENT') {
@@ -86,16 +88,23 @@ class SyncNodeServer {
 					return;
 				}
 			}
-			fs.writeFile(path, JSON.stringify(this.data), (err) => {
+			var str = JSON.stringify(this.data);
+			fs.writeFile(path + '.json', str, (err) => {
 				if (err) {
 					console.error('Failed to write ' + path + ': ' + err);
 				}
 			});
+			var backupPath = path + ((this.backupCount++ % this.numBackups) + 1).toString() + '.json';
+			fs.writeFile(backupPath, str, (err) => {
+				if (err) {
+					console.error('Failed to write backup ' + backupPath + ': ' + err);
+				}
+			});	
 		});
 	}
 
 	buildFilePath() {
-		return path.join(this.directory, this.namespace + '.json');
+		return path.join(this.directory, this.namespace);
 	}
 	isObject(val) {
 		return typeof val === 'object' && val != null;	

@@ -457,6 +457,9 @@ h6 {
 .hide {
   display: none; }
 
+.invisible {
+  opacity: 0; }
+
 .blink {
   animation: blinker 1s linear infinite; }
 

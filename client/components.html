@@ -38,9 +38,13 @@ LabeledValue[label-set]
 	#init:function(options)
 		this.label.innerHTML = options.label;
 		this.prop = options.prop;
+		this.isNumber = options.number
 	#render:function
-		if(this.prop && this.data) this.value.innerHTML = SV.getProperty(this.data, this.prop);
-
+		this.value.style.textAlign = this.isNumber ? 'right' : 'left';
+		if(this.prop && this.data) {
+			var val = SV.getProperty(this.data, this.prop);
+			this.value.innerHTML = this.isNumber ? SV.formatCurrency(val) : val;
+		}
 
 ToggleButton[btn]
 	#text:span
@@ -105,14 +109,14 @@ SearchHeader[row row-flex]
 			click: 
 				this.clear();
 	#add:function 
-			this.emit('add', this.searchBox.value);
+		this.emit('add', this.searchBox.value);
 	#clear:function
-			this.searchBox.value = '';
-			this.emit('searchChanged', this.searchBox.value);
+		this.searchBox.value = '';
+		this.emit('searchChanged', this.searchBox.value);
 	#init:function(options)
-			if(!options.addBtn) this.addBtn.style.display = 'none';
-			if(!options.clearBtn) this.clearBtn.style.display = 'none';
-			if(!options.searchBox) this.searchBox.style.display = 'none';
+		if(!options.addBtn) this.addBtn.style.display = 'none';
+		if(!options.clearBtn) this.clearBtn.style.display = 'none';
+		if(!options.searchBox) this.searchBox.style.display = 'none';
 
 
 SearchList[col-flex]
@@ -128,7 +132,7 @@ SearchList[col-flex]
 		this.searchValue = value.trim().toLowerCase();
 		this.doFilter();
 	#doFilter:function() 
-		var filtered = this.data;
+		var filtered = this.data || {};
 		if(this.searchProp) {
 			console.log('Warning: doing old filter');
 			if(this.searchValue) {

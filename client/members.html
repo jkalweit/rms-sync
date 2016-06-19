@@ -10,13 +10,13 @@
 </head>
 <body>
 
-
 <script id="view" type="text/other">
 
 #hub:Hub
 #header:Header
 #memberList:MemberList
 #memberDetails:MemberDetails
+#loyaltyPointsList:LoyaltyPointsList
 
 Hub
 	#init:function
@@ -28,7 +28,6 @@ Hub
 		if(this.filter.selected) {
 			this.select(this.filter.selected.key);
 		}
-
 
 Header[row dark]
 	:style
@@ -47,16 +46,18 @@ MemberList[col col-left col-flex]
 		name = name || '';
 		name = name.trim();
 		if(!name) return;
-		var created = new Date().toISOString();
+		var key = SyncNode.guidShort();
+		var addedAt = new Date().toISOString();
 		var newMember = {
-			key: created,
-			loginid: created,
+			key: key,
+			addedAt: addedAt,
+			loginid: key,
 			password: 'password',
 			permissions: {},
 			data:{
 				info: {
 					name: name,
-					memberSince: created,
+					memberSince: addedAt,
 					email: '',
 					phone: '',
 					isStaff: false,
@@ -87,7 +88,6 @@ Member[item tight]
 		hub.on('filterChanged', () => this.updateFilter());
 	#render:function
 		this.updateFilter();
-		console.log('here', this.data);
 		this.node.style.color = this.data.data.info.isStaff ? '#00F' : '#000';
 
 MemberDetails[col col-left col-flex wide]
@@ -107,7 +107,7 @@ MemberDetails[col col-left col-flex wide]
 	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data.data.info)
 	#isStaffToggle:ToggleButton({ prop: 'isStaff', trueText: 'Staff', falseText: 'Not Staff' })$(update=data.data.info)
 	#close:function
-			this.update(null);
+		this.update(null);
 	#updateFilter:function	
 		this.node.classList.toggle('hide', !this.data);	
 	#init:function
@@ -115,9 +115,30 @@ MemberDetails[col col-left col-flex wide]
 		hub.on('filterChanged', () => { this.update(hub.filter.selected); });
 	#render:function
 		this.updateFilter();
+
+LoyaltyPointsList[col col-left col-flex wide]
+	#header:SimpleHeader({ text: 'Loyalty Points' })
+	#total:LabeledValue({ label: 'Total', prop: 'points' })$(update=data)	
+	#list:List({ ctor: 'LoyaltyPoints' })
+	#updateFilter:function	
+		this.node.classList.toggle('hide', !this.data);	
+	#init:function
+		this.updateFilter();
+		hub.on('filterChanged', () => { this.update(hub.filter.selected.data.loyalty); });
+	#render:function
+		this.updateFilter();
 		if(this.data) {
+			this.list.update(this.data.pointsHistory)
 		}
 
+LoyaltyPoints[item tight row row-flex]
+	#type[row-fill]$(data.type)
+	#amount[row-nofill]$(data.amount)
+//	#del[row-nofill touch material-icons tight] 'delete'
+//		events:
+//			click:
+//				this.data.parent.remove(this.data.key);
+	
 
 </script>
 
@@ -137,8 +158,10 @@ SV.onLoad(() => {
 		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
 
+		var test2 = false;
 		sync.on('updated', (data) => {
 			hub.update(data);
+			if(!test2) { test2 = true; hub.select(SV.toArray(data)[0].key); }
 			memberList.update(data);
 		});
 });

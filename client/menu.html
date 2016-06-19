@@ -24,17 +24,17 @@
 MenuHub
 	#init:function
 		this.categoryFilter = {};
-	#selectCategory:function(category)
-		this.categoryFilter.selected = category;
+	#selectCategory:function(key)
+		this.categoryFilter.selected = ((this.data.menu || {}).categories || {})[key];
 		var selectedValue = this.categoryFilter.selectedValue;
 		this.categoryFilter.selectedValue = ((this.categoryFilter.selected || {}).items || {})[(selectedValue || {}).key];
 		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
-	#selectValue:function(value)
-		this.categoryFilter.selectedValue = value;
+	#selectValue:function(key)
+		this.categoryFilter.selectedValue = ((this.categoryFilter.selected || {}).items || {})[key];
 		hub.emit('menuCategoryFilterChanged', this.categoryFilter);
 	#render:function	
 		if(this.categoryFilter.selected) {
-			this.selectCategory(this.data.menu.categories[this.categoryFilter.selected.key]);
+			this.selectCategory(this.categoryFilter.selected.key);
 		}
 
 
@@ -73,34 +73,38 @@ Header[row row-flex dark]
 	#render:function
 
 MenuItemCategoryList[col col-left col-flex]
-	#list:SearchList({ text: 'Categories', ctor: 'MenuItemCategory', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
+	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
+		events:
 			add(value):
-				this.list.clearSearch();
+				this.header.clear();
 				this.add(value);
-				
+	#list:List({ ctor: 'MenuItemCategory', sort: 'name' })[col-fill list scroll-y]
 	#add:function(name)
 		var name = name || '';
 		name = name.trim();
 		if(!name) return;
 		var newItem = { 
-			key: new Date().toISOString(), 
+			key: SyncNode.guidShort(), 
+			addedAt: new Date().toISOString(), 
 			name: name,
+			isDisabled: false,
 			items: {} };
-		var result = this.data.set(newItem.key, newItem)[newItem.key];
-		hub.selectCategory(result.key);
+		console.log('my data', this.data, newItem.key);
+		this.data.set(newItem.key, newItem);
+		hub.selectCategory(newItem.key);
 	#init:function
 	#render:function 
 		this.list.update(this.data);
 		if(!this.test) {
 			this.test = true;
-			hub.selectCategory(SV.toArray(this.data)[0]);
+			hub.selectCategory((SV.toArray(this.data)[0] || {}).key);
 		}
 		
 
 MenuItemCategory[item tight]
 	:events
 		click:
-			hub.selectCategory(this.data);
+			hub.selectCategory(this.data.key);
 	#nameSpan$(data.name)[name]
 	#updateFilter:function
 		this.node.classList.toggle('selected', (hub.categoryFilter.selected || {}).key === this.data.key);
@@ -138,26 +142,29 @@ MenuItemCategoryDetails[col col-left col-flex wide]
 		if(this.data) this.items.update(this.data.items);
 		if(this.data && !this.test) {
 			this.test = true;
-			hub.selectValue(SV.toArray(this.data.items)[0]);	
+			hub.selectValue((SV.toArray(this.data.items)[0] ||{}).key);	
 		}
 
 MenuItemList[col-fill col-flex]
-	#list:SearchList({ text: 'Items', ctor: 'MenuItem', searchBox: true, addBtn: true, sort: 'name', searchProp: 'name' })[col-fill]
+	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
 		events:
 			add(value):
-				this.list.clearSearch();
+				this.header.clear();
 				this.add(value);
+	#list:List({ ctor: 'MenuItem', sort: 'name'})[col-fill list scroll-y]
 	#add:function(name)
 		var newItem = { 
-			key: new Date().toISOString(), 
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(), 
 			name: name,
 			serveType: 'Kitchen',
 			taxType: '9%',
 			price: 0,
 			isAlcohol: false,	
+			isDisabled: false,
 			options: {} };
 		this.data.set(newItem.key, newItem);
-		this.list.select(newItem.key);
+		hub.selectValue(newItem.key);
 	#render:function 
 		this.list.update(this.data);
 
@@ -171,7 +178,7 @@ MenuItem[item tight]
 		if(this.isSelected && !wasSelected) this.node.scrollIntoViewIfNeeded();
 	#init:function
 		this.node.addEventListener('click', 
-			() => { hub.selectValue(this.data); });
+			() => { hub.selectValue(this.data.key); });
 		hub.on('menuCategoryFilterChanged', () => { this.updateFilter(); });
 	#render:function()
 		this.updateFilter();
@@ -325,9 +332,10 @@ SV.onLoad(() => {
 			if(!data.menu) {
 				data.set('menu', { 
 					categories: {}, 
-					items: {} 
+					menuOptions: { categories: {} }
 				});
 			} else { 
+				console.log('menu', data.menu);
 				hub.update(data);
 				categoryList.update(data.menu.categories);
 			}
