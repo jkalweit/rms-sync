@@ -206,7 +206,12 @@ $footer-height: $increment;
 	}
 }
 
-
+@for $i from 1 through 12 {
+	.width#{$i} {
+		display: inline-block;
+		width: #{$i * $increment};
+	}
+}
 
 @for $i from 1 through 6 {
 	.margin#{$i} {

@@ -238,8 +238,16 @@ class SV {
 		io().emit('print receipt', receipt);
 	}
 	
+	static printKitchen(kitchenOrder) {
+		io().emit('print kitchen', kitchenOrder);
+	}
+
 	static printRec(rec) {
 		io().emit('print reconciliation receipt', rec);
+		var f = SV.formatCurrency;
+		var message = `${name}\nFood: ${f(rec.sales.food)}\nTax: ${f(rec.sales.tax)}\nAlcohol: ${f(rec.sales.alcohol)}\nTotal: ${f(rec.sales.total)}\nDiff: ${f(rec.difference)}`;
+		console.log('message', message);
+		SV.sendToAdmin(message);
 	}
 	
 	static playKitchenBell() {
@@ -268,7 +276,7 @@ class SV {
 
 	static formatCurrency(value, precision) {
 		if(value === '') value = 0;
-		precision = precision || 2;
+		precision = (typeof precision === 'number') ? precision : 2;
 		var number = (typeof value === 'string') ? parseFloat(value) : value;
 		if(value == null) {
 			return '';

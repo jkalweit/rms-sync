@@ -45,9 +45,18 @@ Header[row row-flex dark]
 				});
 	#init:function
 	#render:function
+		if(window.recSettings.kitchenStation === 'Server') {
+			var isOrderUp = false;
+			SV.forEach(this.data.kitchen.orders, (order) => {
+				if(!order.completedAt.Server && order.completedAt.Grill && order.completedAt.Line) {
+					isOrderUp = true;
+				}
+			});
+			console.log('isOrderUp', isOrderUp);
+			this.node.style.backgroundColor = isOrderUp ? '#F0F' : '';
+			this.node.classList.toggle('blink', isOrderUp);
+		}
 		
-		
-
 KitchenOrders
 	:style
 		margin-top: 56px;
@@ -66,7 +75,7 @@ KitchenOrders
 
 window.Input = Input;
 
-//SV.startReloader();
+SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
 var eventsServer = new SyncNodeSocket('/events', {});

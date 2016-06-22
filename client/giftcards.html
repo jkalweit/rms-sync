@@ -1,0 +1,99 @@
+<html>
+<head>
+<link rel="import" id="components.html" href="components.html">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+
+<style>
+	.heading {
+		font-weight: bold;
+		padding: 16px 0px;
+	}
+	.cell {
+		display: inline-block;
+		width: 80px;
+		text-align: right;
+	}
+</style>
+
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#hub:Hub
+#header:Header
+#giftsList:GiftsList
+
+
+Hub
+	#init:function
+		this.filter = {};
+	#render:function	
+		giftsList.update(this.data.gifts.loyalty);
+
+EditGiftCards
+
+Header[row row-flex dark]
+	:style
+		height: 56px;
+	#title[margin1 row-fill] 'Gifts'
+	#init:function
+	#render:function
+
+GiftsList[col col-left list]
+	:style
+		width: 100%;
+	:div[width6 heading] 'Name'
+		style:
+			margin-left: 16px;
+	:div[cell heading] 'Amount'
+	#list:List({ ctor: 'Gift', sort: 'addedAt' })$(update=data)
+
+Gift[item tight]
+	#nameSpan[width6]$(data.name)
+	#amount[cell bold]
+	#init:function
+		hub.on('filterChanged', () => this.render());
+	#render:function
+		this.amount.innerHTML = SV.formatCurrency(this.data.amount);
+		
+
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+
+SV.onLoad(() => { 
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			console.log('data', data);
+			if(!data.gifts) {
+				data.set('gifts', { loyalty: {}, giftCards: {} });
+				return;
+			}
+			hub.update(data);
+		});
+});
+
+</script>
+</body>
+</html>

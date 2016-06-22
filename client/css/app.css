@@ -180,6 +180,54 @@ h6 {
   .dark > h6 {
     color: #FFF; }
 
+.width1 {
+  display: inline-block;
+  width: 56px; }
+
+.width2 {
+  display: inline-block;
+  width: 112px; }
+
+.width3 {
+  display: inline-block;
+  width: 168px; }
+
+.width4 {
+  display: inline-block;
+  width: 224px; }
+
+.width5 {
+  display: inline-block;
+  width: 280px; }
+
+.width6 {
+  display: inline-block;
+  width: 336px; }
+
+.width7 {
+  display: inline-block;
+  width: 392px; }
+
+.width8 {
+  display: inline-block;
+  width: 448px; }
+
+.width9 {
+  display: inline-block;
+  width: 504px; }
+
+.width10 {
+  display: inline-block;
+  width: 560px; }
+
+.width11 {
+  display: inline-block;
+  width: 616px; }
+
+.width12 {
+  display: inline-block;
+  width: 672px; }
+
 .margin1 {
   margin-left: 16px; }
 

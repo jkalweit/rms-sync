@@ -374,6 +374,8 @@ function sendToPrinter(type, doc) {
 		});
 	});
 
+	req.on('error', (err) => { console.error('failed to print ' + type); });
+
 	req.write(data);
 	req.end();
 	
@@ -381,6 +383,9 @@ function sendToPrinter(type, doc) {
 
 function printReceipt(receipt) {
 	sendToPrinter('ticket receipt', receipt);
+}
+function printKitchen(kitchenOrder) {
+	sendToPrinter('kitchen order', kitchenOrder);
 }
 function printRec(rec) {
 	sendToPrinter('reconciliation receipt', rec);
@@ -437,6 +442,9 @@ io.on('connection', (socket) => {
 	});
 	socket.on('print receipt', (receipt) => {
 		printReceipt(receipt);
+	});
+	socket.on('print kitchen', (kitchenOrder) => {
+		printKitchen(kitchenOrder);
 	});
 	socket.on('print reconciliation receipt', (rec) => {
 		printRec(rec);

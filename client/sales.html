@@ -1,0 +1,146 @@
+<html>
+<head>
+<link rel="import" id="components.html" href="components.html">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+
+<style>
+	.heading {
+		font-weight: bold;
+		padding: 16px 0px;
+	}
+	.cell {
+		display: inline-block;
+		width: 80px;
+		text-align: right;
+	}
+</style>
+
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#hub:SalesHub
+#header:Header
+#recsList:RecsList
+
+
+SalesHub
+	#init:function
+		this.filter = {};
+	#select:function(rec)
+		this.filter[rec.key] = rec;
+		hub.emit('filterChanged', this.filter);
+	#unselect:function(rec)
+		delete this.filter[rec.key];
+		hub.emit('filterChanged', this.filter);
+	#render:function	
+		recsList.update(this.data.reconciliations);
+
+
+Header[row row-flex dark]
+	:style
+		height: 56px;
+	#title[margin1 row-fill] 'Sales'
+	#init:function
+	#render:function
+
+Totals
+	#nameSpan[heading width6] 'Totals:'
+		style:
+			margin-left: 16px;
+	#food[cell]
+	#tax[cell]
+	#alcohol[cell]
+	#total[cell bold]
+	#updateTotals:function
+		var totals = {};
+		SV.forEach(hub.filter, (rec) => {
+			Object.keys(rec.totals).forEach((key) => {
+				if(key === 'version') return;
+				totals[key] = (totals[key] || 0) + rec.totals[key];
+			});
+		});
+
+		this.food.innerHTML = SV.formatCurrency(totals.food, 0);
+		this.tax.innerHTML = SV.formatCurrency(totals.tax, 0);
+		this.alcohol.innerHTML = SV.formatCurrency(totals.alcohol, 0);
+		this.total.innerHTML = SV.formatCurrency(totals.total, 0);
+	#init:function
+		hub.on('filterChanged', () => this.updateTotals());	
+
+	
+
+RecsList[col col-left list]
+	:style
+		width: 100%;
+	:div[width6 heading] 'Name'
+		style:
+			margin-left: 16px;
+	:div[cell heading] 'Food'
+	:div[cell heading] 'Tax'
+	:div[cell heading] 'Alcohol'
+	:div[cell heading] 'Total'
+	#list:List({ ctor: 'Rec', sort: 'added' })$(update=data)
+	#totals:Totals
+
+Rec[item tight]
+	:events
+		mousedown:
+			this.toggleSelect();
+		mouseover(e):
+			if(e.buttons) this.toggleSelect();
+	#nameSpan[width6]$(data.name)
+	#food[cell]
+	#tax[cell]
+	#alcohol[cell]
+	#total[cell bold]
+	#toggleSelect:function
+		this.isSelected = !this.isSelected;
+		if(this.isSelected) hub.select(this.data);
+		else hub.unselect(this.data);
+	#init:function
+		hub.on('filterChanged', () => this.render());
+	#render:function
+		this.food.innerHTML = SV.formatCurrency(this.data.totals.food, 0);
+		this.tax.innerHTML = SV.formatCurrency(this.data.totals.tax, 0);
+		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol, 0);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total, 0);
+		this.node.style.backgroundColor = this.isSelected ? '#AFA' : '#FFF';
+		
+
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+
+SV.onLoad(() => { 
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			console.log('data', data);
+			hub.update(data);
+		});
+});
+
+</script>
+</body>
+</html>

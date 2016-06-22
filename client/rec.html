@@ -557,7 +557,6 @@ TicketList[col-flex]
 		var isStaff = false;
 		if(memberKey) {
 			var member = membersSync.data[memberKey];	
-			console.log('member2', member);
 			if(member) {
 				isStaff = member.data.info.isStaff;
 			} 
@@ -811,7 +810,7 @@ TicketTotals[header dark row-flex]
 				key: this.data.key,
 				recKey: this.data.parent.parent.key,
 				type: 'Earned',
-				amount: this.data.totals.total
+				amount: RecUtils.getLoyaltyPointsEarned(this.data)
 			};
 		} else {
 			loyaltyMerge.pointsHistory['__remove'] = this.data.key;	
@@ -829,9 +828,20 @@ TicketTotals[header dark row-flex]
 		loyaltyMerge.points = totalPoints;
 		member.data.loyalty.merge(loyaltyMerge);
 		console.log('after', member.data.loyalty);
-		
 	#printReceipt:function
-		SV.printReceipt(this.data);	
+		var ticket = JSON.parse(JSON.stringify(this.data)); //make a copy of the ticket for immutability, then add loyalty.
+		var member = membersSync.data[this.data.memberKey];	
+		if(member) {
+			var previousPoints = member.data.loyalty.points;
+			var pointsEarned = RecUtils.getLoyaltyPointsEarned(ticket);
+			if(RecUtils.isTicketPaid(ticket)) {
+				// Ticket is paid, so points are included in the total. Remove them:
+				previousPoints -= pointsEarned;
+			}
+			ticket.loyalty = { previousPoints: previousPoints, pointsEarned: pointsEarned, pointsTotal: previousPoints + pointsEarned };
+			console.log('receipt', ticket, member);
+		}
+		SV.printReceipt(ticket);
 	#init:function
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
 		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
@@ -973,7 +983,7 @@ TicketDetails[col col-flex wide light shadow]
 			var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
 			//ticketDetails.items.list.select(result.key);
 			hub.emit('ticketTotalsChanged', this.data.key);
-			this.editOrderItem(result);
+			if(newItem.serveType === 'Kitchen') this.editOrderItem(result);
 		}
 	#init:function
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
@@ -1111,7 +1121,6 @@ TicketDetailsMoreEdit
 	#render:function
 		this.updateTime();
 		var isMember = this.data.memberKey || false;
-		console.log('isMember', isMember, this.data.memberKey);
 		this.nameLabel.node.classList.toggle('hide', !isMember);
 		this.removeMemberBtn.classList.toggle('hide', !isMember);
 		this.nameInput.node.classList.toggle('hide', isMember);
@@ -1494,6 +1503,9 @@ SV.onLoad(() => {
 
 
 class RecUtils {
+	static getLoyaltyPointsEarned(ticket) {
+		return ticket.totals.total;	
+	}
 	static getBlankTotals() {
 		var totals = {
 			foodSubtotal: 0,
