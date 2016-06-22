@@ -522,7 +522,7 @@ Header[row row-flex black]
 		this.recSettingsModal.show();
 		
 
-TicketListMain[col col-flex col-left wide]
+TicketListMain[col col-flex col-left]
 	:style
 		background-color: #888;
 	#ticketList:TicketList
@@ -1110,7 +1110,8 @@ TicketDetailsMoreEdit
 		this.tableSelectModal = Modal.createModal(this.tableSelect);
 	#render:function
 		this.updateTime();
-		var isMember = this.data.memberKey;
+		var isMember = this.data.memberKey || false;
+		console.log('isMember', isMember, this.data.memberKey);
 		this.nameLabel.node.classList.toggle('hide', !isMember);
 		this.removeMemberBtn.classList.toggle('hide', !isMember);
 		this.nameInput.node.classList.toggle('hide', isMember);
