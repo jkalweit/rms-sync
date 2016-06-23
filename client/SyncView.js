@@ -9,6 +9,49 @@ if (window.location.hash == '#_=_'){
 }
 
 
+class RMS {
+	constructor(sync) {
+		this.sync = sync;
+		this.sync.on('updated', (data) => { this.data = data; });
+		this.pinRequests = {};
+		io().on('verify admin pin result', (key, result) => {
+			var request = this.pinRequests[key];
+			if(!request) return;
+			delete this.pinRequests[key];
+			if(request.callback) {
+				request.callback(result);
+			}
+		});
+	}
+	
+	verifyAdminPin(pin, callback) {
+		var request = {
+			key: SyncNode.guidShort(),
+			callback: callback
+		};
+		this.pinRequests[request.key] = request;
+		io().emit('verify admin pin', pin, request.key);
+	}
+
+	createCredit(type) {
+		var code = SV.generateCode(4);
+		while(this.data.credits[code]) code = SV.generateCode(4);  // Make sure code is unique
+		var credit = {
+			key: code,
+			addedAt: new Date().toISOString(),
+			addedBy: '',
+			memberKey: '',
+			type: type,
+			note: '',
+			amount: 0,
+			balance: 0,
+			history: {}
+		};
+		return credit;
+	}
+}
+
+
 class SV {
 	static id(id, context) {
 		context = context || document;
@@ -44,6 +87,14 @@ class SV {
 		return (str || '').trim().toLowerCase();
 	}
 
+	static generateCode(length) {
+		var code = '';
+		var chars = 'abcdefghijkLmnopqrstuvwxyz1234567890';
+		for(var i = 0; i < length; i++) {
+			code += chars[Math.floor(Math.random() * chars.length)];
+		}
+		return code;
+	}
 
 	static createElement(name) {
 		var proto = Object.create(HTMLElement.prototype);
@@ -57,6 +108,22 @@ class SV {
 			element.data = data;
 			return element;
 		};
+	}
+
+	static toMap(arr, keyValFunc) {
+		keyValFunc = keyValFunc || ((obj) => { return obj.key });
+		if(typeof arr !== 'array') return arr;
+		var result = {};
+		var curr;
+		for(var i = 0; i < arr.length; i++) {
+			curr = arr[i];	
+			result[keyValFunc(curr)] = curr;	
+		}
+		return result;
+	}
+
+	static sortMap(obj, sortField, reverse, keyValFunc) {
+		return SV.toMap(SV.toArray(obj, sortField, reverse), keyValFunc);
 	}
 
 	static toArray(obj, sortField, reverse) {
@@ -74,9 +141,12 @@ class SV {
 		}
 
 		if(sortField) {
+			var getSortValue;
+			if(typeof sortField === 'function') getSortValue = sortField;
+			else getSortValue = (obj) => { return SV.getProperty(obj, sortField); }
 			result.sort(function (a, b) {
-				var a1 = SV.getProperty(a, sortField);
-				var b1 = SV.getProperty(b, sortField);
+				var a1 = getSortValue(a);
+				var b1 = getSortValue(b);
 				if(typeof a1 === 'string') a1 = a1.toLowerCase();
 				if(typeof b1 === 'string') b1 = b1.toLowerCase();
 				if (a1 < b1)

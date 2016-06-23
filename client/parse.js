@@ -49,6 +49,7 @@ class Input extends SyncView {
 					}
 				}
 			}});
+		if(options.number) this.input.style.textAlign = 'right';
 	}
 	focus() {
 		this.input.focus();

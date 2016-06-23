@@ -1,5 +1,43 @@
 <script id="components" type="text/other">
 
+AdminPin
+	#title:h1 'Enter Admin Pin'
+	#error:h3[hide] 'Incorrect, try again'
+		style:
+			color: #F00;
+	#pin:Input({ label: 'Pin' })
+	#submit[btn] 'Submit'
+		events:
+			click:
+				this.doSubmit();
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
+	#doSubmit:function
+		this.error.classList.add('hide');
+		rms.verifyAdminPin(this.pin.input.value, (result) => {
+			this.pin.input.value = '';
+			if(result) {
+				if(this.callback) this.callback();
+				this.callback = null;
+				this.modal.hide();
+			} else {
+				this.error.classList.remove('hide');
+			}
+		});
+	#verify:function(callback)
+		this.error.classList.add('hide');
+		this.pin.input.value = '';
+		this.callback = callback;
+		this.modal.show();
+	#init:function
+		this.pin.input.type = 'password';
+		this.modal = Modal.createModal(this);
+		this.modal.on('show', () => { this.pin.focus(); });
+
+
+
 Select[label-set]
 	#text[label]
 	#selectInput:select
@@ -40,6 +78,7 @@ LabeledValue[label-set]
 		this.prop = options.prop;
 		this.isNumber = options.number
 	#render:function
+		console.log('render here', this.prop, this.data);
 		this.value.style.textAlign = this.isNumber ? 'right' : 'left';
 		if(this.prop && this.data) {
 			var val = SV.getProperty(this.data, this.prop);

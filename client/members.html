@@ -70,7 +70,7 @@ MemberList[col col-left col-flex]
 			}
 		};
 		this.data.set(newMember.key, newMember);
-		SV.sendToAdmin('Added Loyalty Member: ' + newMember.name);
+		SV.sendToAdmin('Added Loyalty Member: ' + newMember.data.info.name);
 		hub.select(newMember.key);
 	#init:function
 	#render:function 

@@ -3,6 +3,7 @@
 <link rel="import" id="components.html" href="components.html">
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/bower_components/moment/moment.js"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
 <script type="text/javascript" src="/SyncNodeSocket.js"></script>
 <script type="text/javascript" src="/SyncView.js"></script>
@@ -28,40 +29,138 @@
 
 #hub:Hub
 #header:Header
-#giftsList:GiftsList
+#creditsList:CreditsList
 
 
 Hub
 	#init:function
 		this.filter = {};
+		this.creditEdit = buildComponent('CreditEdit');
+	#addCredit:function
+		var code = SV.generateCode(4);
+		while(this.data[code]) code = SV.generateCode(4);  // Make sure code is unique
+		var credit = {
+			key: code,
+			addedAt: new Date().toISOString(),
+			addedBy: '',
+			memberKey: '',
+			type: 'Gift Card',
+			note: '',
+			amount: 0,
+			balance: 0,
+			history: {}
+		};
+		this.creditEdit.edit(new SyncNode(credit));
+	#editCredit:function(credit)
+		window.adminPin.verify(() => {
+			this.creditEdit.edit(credit);
+		});
 	#render:function	
-		giftsList.update(this.data.gifts.loyalty);
+		creditsList.update(this.data.credits);
+		if(this.creditEdit.data) { 
+			var credit = this.data.credits[this.creditEdit.data.key];
+			if(credit) this.creditEdit.update(credit);
+			else this.creditEdit.modal.hide();
+		}
 
-EditGiftCards
+CreditEdit
+	#title:h1 'Credit'	
+	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
+	#code:LabeledValue({ label: 'Code', prop: 'key' })$(update=data)
+	#note:Input({ label: 'Note', prop: 'note' })$(update=data)
+	#amount:Input({ label: 'Amount', prop: 'amount', number: true })$(update=data)
+		events:
+			changed:
+				this.updateBalance();
+	#balance:LabeledValue({ label: 'Balance', prop: 'balance', number: true })$(update=data)
+	#history:List({ ctor: 'CreditHistoryItem', sort: 'addedAt' })
+	#ok[btn] 'Ok'
+		events:
+			click:
+				// TODO: validate
+				this.updateBalance();	
+				hub.data.credits.set(this.data.key, this.data);
+				this.modal.hide();
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
+	#del[btn] 'Delete'
+		events:
+			click:
+				Modal.confirm('Delete Credit?', this.data.type + ' ' + SV.formatCurrency(this.data.amount), () => {
+					this.data.parent.remove(this.data.key);
+					this.modal.hide();
+				});
+	#updateBalance:function
+		console.log('amount', this.data.amount);
+		var sum = this.data.amount;
+		SV.forEach(this.data.history, (history) => { sum += history.amount; });
+		console.log('sum', sum);
+		console.log('balance', this.data.balance);
+		this.data.set('balance', sum);
+		console.log('balance', this.data.balance);
+	#edit:function(gift)
+		this.update(gift);
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+CreditHistoryItem[item tight row row-flex]
+	#date[row-fill]
+	#type[row-nofill]$(data.type)
+	#amount[row-nofill]
+	#render:function
+		this.date.innerHTML = moment(this.data.addedAt).format('MM/DD/YYYY h:mma');
+		this.amount.innerHTML = SV.formatCurrency(this.data.amount);	
+
 
 Header[row row-flex dark]
 	:style
 		height: 56px;
-	#title[margin1 row-fill] 'Gifts'
+	#title[margin1 row-fill] 'Credits'
+	:[row-nofill touch material-icons] 'add'
+		events:
+			click:
+				hub.addCredit();
 	#init:function
 	#render:function
 
-GiftsList[col col-left list]
+CreditsList[col col-left list]
 	:style
 		width: 100%;
-	:div[width6 heading] 'Name'
+	:div[width5 heading] 'Date'
 		style:
-			margin-left: 16px;
+			margin-left: 42px;
+	:div[width3 heading] 'Type'
+	//:div[width3 heading] 'Code'
 	:div[cell heading] 'Amount'
-	#list:List({ ctor: 'Gift', sort: 'addedAt' })$(update=data)
+		style:
+			text-align: right;
+	:div[cell heading] 'Balance'
+		style:
+			text-align: right;
+	#list:List({ ctor: 'Credit', sort: 'addedAt' })$(update=data)
 
-Gift[item tight]
-	#nameSpan[width6]$(data.name)
+Credit[item tight row row-flex]
+	:div[left touch material-icons tight] 'settings'
+		events:
+			click:
+				hub.editCredit(this.data);
+	#date[row-no-fill width5]
+	#type[width3]$(data.type)
+	//#code[width3]$(data.key)
 	#amount[cell bold]
+	#balance[cell bold]
+	#note[width6 margin1]$(data.note)
 	#init:function
 		hub.on('filterChanged', () => this.render());
 	#render:function
+		console.log('Credit', this.data);
 		this.amount.innerHTML = SV.formatCurrency(this.data.amount);
+		this.balance.innerHTML = SV.formatCurrency(this.data.balance);
+		this.date.innerHTML = moment(this.data.addedAt).format('ddd MMM Do, YYYY h:mma');
 		
 
 
@@ -79,15 +178,18 @@ SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
 
+var rms = new RMS(sync);
 
 SV.onLoad(() => { 
 		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
+		
+		window.adminPin = buildComponent('AdminPin');
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
-			if(!data.gifts) {
-				data.set('gifts', { loyalty: {}, giftCards: {} });
+			if(!data.credits) {
+				data.set('credits', {});
 				return;
 			}
 			hub.update(data);

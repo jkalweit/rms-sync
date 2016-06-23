@@ -40,6 +40,65 @@ MenuHub
 			this.selectCategory(this.filter.selectedCategory.key);
 		}
 
+GiftCardAdd
+	#title:h1 'Buy Gift Card'	
+	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
+	#code:LabeledValue({ label: 'Code', prop: 'key' })$(update=data)
+	#note:Input({ label: 'Note', prop: 'note' })$(update=data)
+	#amount:Input({ label: 'Amount', prop: 'amount', number: true })$(update=data)
+	#ok[btn] 'Ok'
+		events:
+			click:
+				// TODO: validate
+				if(this.data.amount < 5 || this.data.amoun > 100) {
+					Modal.showNotification('Invalid amount', 'Amount must be between $5 and $100');
+					return;
+				}
+				this.data.balance = this.data.amount;
+				this.data.recKey = this.ticket.parent.parent.key;
+				this.data.ticketKey = this.ticket.key;
+				ticketDetails.buyCredit(this.data);
+				this.modal.hide();
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.ticket = null;
+				this.modal.hide();
+	#add:function(ticket)
+		this.ticket = ticket;
+		this.update(new SyncNode(rms.createCredit('Gift Card')));
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+GiftCardEdit
+	#title:h1 'Gift Card'	
+	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
+	#code:LabeledValue({ label: 'Code', prop: 'key' })$(update=data)
+	#note:LabeledValue({ label: 'Note', prop: 'note' })$(update=data)
+	#amount:LabeledValue({ label: 'Amount', prop: 'amount', number: true })$(update=data)
+	#del[btn] 'Delete'
+		events:
+			click:
+				Modal.confirm('Delete Gift Card', 'Are you sure you want to delete this gift card?', () => {
+					ticketDetails.deleteOrderItem(this.data.orderItemKey);
+					sync.data.credits.remove(this.data.key);
+					this.modal.hide();
+				});
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
+	#edit:function(creditKey)
+		this.update(sync.data.credits[creditKey]);
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+
+
 LoyaltyHub
 	#init:function
 		this.filter = {};
@@ -143,10 +202,11 @@ DeleteOrderItem
 		}
 	#doDelete:function(reason)
 		if(reason) {
-			var message = this.header.text.innerHTML + ': ' + reason + ': ' + this.note.value;
+			var message = this.header.text.innerHTML + ': ' + reason + ': ' + this.note.input.value;
 			SV.sendToAdmin(message);
 		}
 		var ticket = this.itemToDelete.parent.parent;
+		if(this.itemToDelete.creditKey) sync.data.credits.remove(this.itemToDelete.creditKey);
 		ticket.orderItems.remove(this.itemToDelete.key);
 		hub.emit('ticketTotalsChanged', ticket.key);
 		this.itemToDelete = null;
@@ -154,41 +214,6 @@ DeleteOrderItem
 	#init:function
 		this.modal = Modal.createModal(this);
 
-AdminPin
-	#title:h1 'Enter Admin Pin'
-	#error:h3[hide] 'Incorrect, try again'
-		style:
-			color: #F00;
-	#pin:Input({ label: 'Pin' })
-	#submit[btn] 'Submit'
-		events:
-			click:
-				this.doSubmit();
-	#cancel[btn] 'Cancel'
-		events:
-			click:
-				this.modal.hide();
-	#doSubmit:function
-		this.error.classList.add('hide');
-		verifyAdminPin(this.pin.input.value, (result) => {
-			this.pin.input.value = '';
-			if(result) {
-				if(this.callback) this.callback();
-				this.callback = null;
-				this.modal.hide();
-			} else {
-				this.error.classList.remove('hide');
-			}
-		});
-	#verify:function(callback)
-		this.error.classList.add('hide');
-		this.pin.input.value = '';
-		this.callback = callback;
-		this.modal.show();
-	#init:function
-		this.pin.input.type = 'password';
-		this.modal = Modal.createModal(this);
-		this.modal.on('show', () => { this.pin.focus(); });
 
 CreditCardDetails
 	#title:h1 'Credit Card'
@@ -680,7 +705,7 @@ Ticket[item ticket tight row row-flex]
 	#updateDisplay:function
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		var hasUnsubmitted = !SV.isEmptyObject(unsubmitted.kitchen); // || !SV.isEmptyObject(unsubmitted.bar);
-		this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
+		//this.nameSpan.classList.toggle('highlight', hasUnsubmitted);
 		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 	#render:function
 		var totals = this.data.totals;
@@ -695,7 +720,6 @@ Ticket[item ticket tight row row-flex]
 		this.updateDisplay();
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		this.member.classList.toggle('invisible', !this.data.memberKey);
-
 
 TicketTotals[header dark row-flex]
 	:style
@@ -845,7 +869,7 @@ TicketTotals[header dark row-flex]
 	#init:function
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
 		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
-		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Order',
+		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Submit Order',
 			events: { click: () => { 
 				this.kitchenOrderPreviewModal.hide(); 
 				if(!sync.data.kitchen) { sync.data.set('kitchen', {}); }
@@ -865,7 +889,7 @@ TicketTotals[header dark row-flex]
 		
 		this.barOrderPreview = buildComponent('KitchenOrderPreview');
 		this.barOrderPreviewModal = Modal.createModal(this.barOrderPreview);
-		SV.el('div', { parent: this.barOrderPreviewModal.mainView, className: 'btn blink', innerHTML: 'Submit Bar Order',
+		SV.el('div', { parent: this.barOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Submit Bar Order',
 			events: { click: () => { 
 				this.barOrderPreviewModal.hide(); 
 				if(!hub.data.bar) hub.data.set('bar', { orders: {} });
@@ -891,7 +915,7 @@ TicketTotals[header dark row-flex]
 		}
 		this.payment.innerHTML = icon;
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
+		//this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendKitchen.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.kitchen));
 		//this.sendBar.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.bar));
 		//this.sendBar.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.bar));
@@ -925,9 +949,34 @@ TicketDetails[col col-flex wide light shadow]
 	#close:function
 		this.update(null);
 	#editOrderItem:function(orderItem)
+		if(orderItem.name === 'Gift Card') {
+			this.giftCardEdit.edit(orderItem.creditKey);
+			return;
+		}
 		hub.selectOrderItem(orderItem);
 		this.orderItemDetails.show();	
 		this.orderItemDetails.noteInput.focus();
+	#buyCredit:function(credit)
+		var newItem = { 
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			name: credit.type,
+			price: credit.amount,
+			quantity: 1,
+			isAlcohol: false,
+			serveType: 'Server',
+			taxType: 'Included',
+			note: credit.note || '',
+			creditKey: credit.key,
+			options: {},
+			modifiers: {}
+		};
+		this.addOrderItem(newItem);	
+		console.log('this.data', this.data);
+		credit.memberKey = this.data.memberKey;
+		credit.orderItemKey = newItem.key;
+		sync.data.credits.set(credit.key, credit);
 	#add:function(menuItem)
 		if(!this.data) {
 			console.log('no ticket selected');
@@ -937,6 +986,12 @@ TicketDetails[col col-flex wide light shadow]
 			console.log('Ticket is already paid.');
 			return;
 		}
+
+		if(menuItem.name === 'Gift Card') {
+			this.giftCardAdd.add(this.data);
+			return;
+		}
+
 		var newItem = { 
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
@@ -979,16 +1034,21 @@ TicketDetails[col col-flex wide light shadow]
 			this.selectOptionsViewModal.show();
 		} else {
 			//all options selected, add order item
-			var newItem = this.orderItemToAdd;
-			var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
-			//ticketDetails.items.list.select(result.key);
-			hub.emit('ticketTotalsChanged', this.data.key);
-			if(newItem.serveType === 'Kitchen') this.editOrderItem(result);
+			this.addOrderItem(this.orderItemToAdd);
 		}
+	#addOrderItem:function(newItem)
+		var result = ticketDetails.data.orderItems.set(newItem.key, newItem)[newItem.key];
+		hub.emit('ticketTotalsChanged', this.data.key);
+		if(newItem.serveType === 'Kitchen') this.editOrderItem(result);
+	#deleteOrderItem:function(orderItemKey)
+		ticketDetails.data.orderItems.remove(orderItemKey);
+		hub.emit('ticketTotalsChanged', this.data.key);
 	#init:function
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedTicket));
 		this.moreEdit = buildComponent('TicketDetailsMoreEdit');
 		this.orderItemDetails = buildComponent('OrderItemDetails');
+		this.giftCardAdd = buildComponent('GiftCardAdd');
+		this.giftCardEdit = buildComponent('GiftCardEdit');
 		this.selectOptionsView = buildComponent('SelectOptionsView');
 		this.selectOptionsView.on('selected', (value) => { 
 			var option = this.orderItemToAdd.options[this.selectOptionsView.data.key];
@@ -1142,6 +1202,9 @@ OrderItemList[col-flex]
 			SV.forEach(item.options, (option) => { diff += ' ' + option.name + ' ' + option.value });
 			return diff;
 		});  
+		groups = SV.sortMap(groups, (group) => { 
+			return SV.toArray(group, 'addedAt')[0].addedAt;
+		});
 		this.list.update(groups);
 
 
@@ -1220,11 +1283,12 @@ OrderItemGroup[item tight]
 			quantity += item.quantity
 			if(!RecUtils.isOrderItemSubmitted(item)) hasUnsubmitted = true;
 		});
-		this.node.classList.toggle('highlight', hasUnsubmitted);
+		//this.node.classList.toggle('highlight', hasUnsubmitted);
+		this.node.style.backgroundColor = hasUnsubmitted ? '#FFF' : 'transparent';
 		this.model = items[0];
 		var quantityText = quantity !== 1 ? quantity + ' x ' : '';	
-		this.nameSpan.innerHTML = quantityText + this.model.name;
-		var price = SV.formatCurrency(this.model.price);
+		this.nameSpan.innerHTML = this.model.name;
+		var price = '<b>' + quantityText + '</b>' + SV.formatCurrency(this.model.price);
 		var totals = RecUtils.getOrderItemTotals(this.model);
 		var discounts = totals.foodDiscount + totals.alcoholDiscount; // + totals.taxDiscount;
 		if(discounts) {
@@ -1289,6 +1353,13 @@ OrderItemDetails[col-flex]
 		events:
 			changed:
 				hub.emit('ticketTotalsChanged', this.data.parent.parent.key);
+	#submittedAt:LabeledValue({ label: 'Submitted' })
+	#markSubmittedBtn[btn] 'Mark Submitted'
+		events:
+			click:
+				Modal.confirm('Mark Submitted', 'Are you sure you want to mark this item as submitted? It will not be sent to the kitchen, and you can not unsubmit it.', () => {
+					this.data.merge({ submittedAt: new Date().toISOString(), submittedBy: window.recSettings.currentUser });
+				});
 	#options:SimpleList({ ctor: 'OrderItemDetailsOption' })
 		style:
 			margin-top: 2em;
@@ -1335,7 +1406,11 @@ OrderItemDetails[col-flex]
 		this.render();
 	#render:function
 		this.node.classList.toggle('hide', !this.data);
-		if(this.data) this.options.update(this.data.options);
+		if(this.data) { 
+			this.options.update(this.data.options);
+			this.submittedAt.value.innerHTML = this.data.submittedAt ? moment(this.data.submittedAt).format('h:mma') + ' by ' + this.data.submittedBy : 'No';
+			this.markSubmittedBtn.classList.toggle('hide', this.data.submittedAt || false);
+		}
 
 OrderItemDetailsOption[item tight]
 	:events
@@ -1411,24 +1486,7 @@ var sync = new SyncNodeSocket('/data', {});
 window.membersSync = new SyncNodeSocket('/members', {});
 window.recSettings = new LocalSyncNode('recSettings');	
 
-var pinRequests = {};
-
-function verifyAdminPin(pin, callback) {
-	var request = {
-		key: SyncNode.guidShort(),
-		callback: callback
-	};
-	pinRequests[request.key] = request;
-	io().emit('verify admin pin', pin, request.key);
-}
-io().on('verify admin pin result', (key, result) => {
-	var request = pinRequests[key];
-	if(!request) return;
-	delete pinRequests[key];
-	if(request.callback) {
-		request.callback(result);
-	}
-});
+var rms = new RMS(sync);
 
 SV.onLoad(() => { 
 
