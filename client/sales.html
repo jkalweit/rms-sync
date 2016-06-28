@@ -33,12 +33,18 @@
 
 SalesHub
 	#init:function
-		this.filter = {};
+		this.filter = { selected: {}};
+	#search:function(value)
+		this.filter.search = SV.normalize(value);
+		hub.emit('filterChanged', this.filter);
+	#search2:function(value)
+		this.filter.search2 = SV.normalize(value);
+		hub.emit('filterChanged', this.filter);
 	#select:function(rec)
-		this.filter[rec.key] = rec;
+		this.filter.selected[rec.key] = rec;
 		hub.emit('filterChanged', this.filter);
 	#unselect:function(rec)
-		delete this.filter[rec.key];
+		delete this.filter.selected[rec.key];
 		hub.emit('filterChanged', this.filter);
 	#render:function	
 		recsList.update(this.data.reconciliations);
@@ -47,7 +53,15 @@ SalesHub
 Header[row row-flex dark]
 	:style
 		height: 56px;
-	#title[margin1 row-fill] 'Sales'
+	#title[margin1 row-nofill] 'Sales'
+	#search:input[row-nofill]	
+		events:
+			keyup:
+				hub.search(this.search.value);
+	#search2:input[row-nofill]	
+		events:
+			keyup:
+				hub.search2(this.search2.value);
 	#init:function
 	#render:function
 
@@ -61,7 +75,7 @@ Totals
 	#total[cell bold]
 	#updateTotals:function
 		var totals = {};
-		SV.forEach(hub.filter, (rec) => {
+		SV.forEach(hub.filter.selected, (rec) => {
 			Object.keys(rec.totals).forEach((key) => {
 				if(key === 'version') return;
 				totals[key] = (totals[key] || 0) + rec.totals[key];
@@ -113,6 +127,10 @@ Rec[item tight]
 		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcohol, 0);
 		this.total.innerHTML = SV.formatCurrency(this.data.totals.total, 0);
 		this.node.style.backgroundColor = this.isSelected ? '#AFA' : '#FFF';
+		var normalized = SV.normalize(this.data.key);
+		var show1 = normalized.indexOf(hub.filter.search || '') >= 0;
+		var show2 = normalized.indexOf(hub.filter.search2 || '') >= 0;
+		this.node.classList.toggle('hide', !(show1 && show2));
 		
 
 

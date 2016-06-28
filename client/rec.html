@@ -40,6 +40,88 @@ MenuHub
 			this.selectCategory(this.filter.selectedCategory.key);
 		}
 
+ApplyCredit
+	#title:h1 'Apply Credit'	
+	#search:Input({ label: 'Code:' })
+	#list:List({ ctor: 'ApplyCreditItem' })[list tight]
+		events:
+			viewAdded:function(view)
+				view.on('selected', (credit) => {
+					ticketDetails.applyCredit(credit);
+					this.modal.hide();
+				});
+	#cancel[btn] 'Cancel'
+		style:
+			margin-top: 1em;
+		events:
+			click:
+				this.ticket = null;
+				this.modal.hide();
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+		this.search.input.addEventListener('keyup', () => {
+			var code = SV.normalize(this.search.input.value);
+			SV.forEach(this.list.views, (view) => { view.updateFilter(code); });
+		});
+	#render:function
+		this.list.update(SV.filterMap(this.data, (credit) => { return credit.balance !== 0; }));
+
+ApplyCreditItem[item tight row row-flex]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#code[width1 row-nofill]$(data.key)
+	#amount[width1 row-nofill]
+	#balance[width1 row-nofill]
+	#updateFilter:function(code)
+		var hide = SV.normalize(this.data.key).indexOf(code) < 0;
+		this.node.classList.toggle('hide', hide);
+	#render:function
+		this.amount.innerHTML = SV.formatCurrency(this.data.amount);
+		this.balance.innerHTML = SV.formatCurrency(this.data.balance);
+	
+
+AppliedCreditEdit
+	#title:h1 'Credit Edit'	
+	#type:LabeledValue({ label: 'Type', prop: 'name' })$(update=data)
+	#code:LabeledValue({ label: 'Code', prop: 'creditKey' })$(update=data)
+	#note:LabeledValue({ label: 'Note', prop: 'note' })$(update=data)
+	#amount:LabeledValue({ label: 'Amount', prop: 'price', number: true })$(update=data)
+	#del[btn] 'Remove from Ticket'
+		events:
+			click:
+				Modal.confirm('Remove Credit', 'Are you sure you want to remove this credit?', () => {
+					var credit = sync.data.credits[this.data.creditKey];
+					if(!credit) {
+						Modal.showNotification('Cannot find credit code: ' + this.data.creditKey);
+						return;
+					}
+					var balance = RecUtils.computeCreditBalance(credit) 
+					balance -= this.data.price;	
+					var merge = {};
+					merge[this.data.creditKey] = {
+						balance: balance,	
+						history: { __remove: this.data.creditHistoryKey }
+					};
+					sync.data.credits.merge(merge);
+					ticketDetails.deleteOrderItem(this.data.key);
+					this.modal.hide();
+				});
+	#cancel[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
+	#edit:function(appliedCredit)
+		this.update(appliedCredit);
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+
+
 GiftCardAdd
 	#title:h1 'Buy Gift Card'	
 	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
@@ -281,7 +363,7 @@ RecList
 				this.addRec();
 			close:
 				window.selectRecModal.hide();
-	#list:SimpleList({ ctor: 'Rec' })
+	#list:SimpleList({ ctor: 'Rec', sort: 'added', direction: 'reverse' })
 		events:
 			selected(rec):
 				this.select(rec.key);
@@ -355,6 +437,10 @@ RecHub
 		if(RecUtils.isTicketPaid(newTicket) || oldTicket.key === newTicket.key) return;
 		var orderItem = oldTicket.orderItems[orderItemKey];
 		if(!orderItem) return;
+		if(orderItem.isPurchasedCredit) {
+			Modal.showNotification('Cannot Move Item', 'Credit purchases cannot be moved, but you can delete it and add another one manually.');
+			return;
+		}
 		var mergeOldTicket = { orderItems: { __remove: orderItem.key } };
 		var mergeNewTicket = { orderItems: {} };
 		mergeNewTicket.orderItems[orderItem.key] = orderItem;
@@ -734,6 +820,10 @@ TicketTotals[header dark row-flex]
 		events:
 			click:
 				this.sendToBar();
+	#applyCreditBtn[touch material-icons row-nofill] 'card_giftcard'
+		events:
+			click:
+				this.applyCredit();
 	#total:div[row-fill]
 		events:
 			click:
@@ -749,6 +839,9 @@ TicketTotals[header dark row-flex]
 		events:
 			click:
 				this.cyclePaymentStatus();
+	#applyCredit:function
+		this.applyCreditModal.ticket = this.data;
+		this.applyCreditModal.show();
 	#sendToKitchen:function
 		var merge = {};
 		var submittedAt = new Date().toISOString();
@@ -867,6 +960,7 @@ TicketTotals[header dark row-flex]
 		}
 		SV.printReceipt(ticket);
 	#init:function
+		this.applyCreditModal = buildComponent('ApplyCredit');
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
 		this.kitchenOrderPreviewModal = Modal.createModal(this.kitchenOrderPreview);
 		SV.el('div', { parent: this.kitchenOrderPreviewModal.mainView, className: 'btn', innerHTML: 'Submit Order',
@@ -949,8 +1043,12 @@ TicketDetails[col col-flex wide light shadow]
 	#close:function
 		this.update(null);
 	#editOrderItem:function(orderItem)
-		if(orderItem.name === 'Gift Card') {
+		if(orderItem.isPurchasedCredit) {
 			this.giftCardEdit.edit(orderItem.creditKey);
+			return;
+		}
+		if(orderItem.isAppliedCredit) {
+			this.appliedCreditEdit.edit(orderItem);
 			return;
 		}
 		hub.selectOrderItem(orderItem);
@@ -962,8 +1060,10 @@ TicketDetails[col col-flex wide light shadow]
 			addedAt: new Date().toISOString(),
 			addedBy: window.recSettings.currentUser,
 			name: credit.type,
+			isPurchasedCredit: true,
 			price: credit.amount,
 			quantity: 1,
+			disableDiscounts: true,
 			isAlcohol: false,
 			serveType: 'Server',
 			taxType: 'Included',
@@ -973,10 +1073,45 @@ TicketDetails[col col-flex wide light shadow]
 			modifiers: {}
 		};
 		this.addOrderItem(newItem);	
-		console.log('this.data', this.data);
 		credit.memberKey = this.data.memberKey;
 		credit.orderItemKey = newItem.key;
 		sync.data.credits.set(credit.key, credit);
+	#applyCredit:function(credit)
+		var amountUsed = credit.balance * -1;
+		var newItem = { 
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			name: 'Redeem ' + credit.type,
+			isAppliedCredit: true,
+			price: amountUsed, 
+			quantity: 1,
+			disableDiscounts: true,
+			isAlcohol: false,
+			serveType: 'Server',
+			taxType: 'Included',
+			note: '',
+			creditKey: credit.key,
+			options: {},
+			modifiers: {}
+		};
+		var historyItem = {
+			key: SyncNode.guidShort(),
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			amountUsed: amountUsed,
+			recKey: window.recSettings.selectedRecKey,
+			ticketKey: this.data.key	
+		};
+		newItem.creditHistoryKey = historyItem.key;
+		this.addOrderItem(newItem);	
+		var historyMerge = {};
+		historyMerge[credit.key] = {
+			balance: credit.balance + amountUsed,
+			history: {}	
+		};
+		historyMerge[credit.key].history[historyItem.key] = historyItem;
+		sync.data.credits.merge(historyMerge);
 	#add:function(menuItem)
 		if(!this.data) {
 			console.log('no ticket selected');
@@ -999,6 +1134,7 @@ TicketDetails[col col-flex wide light shadow]
 			name: menuItem.name,
 			price: menuItem.price,
 			quantity: 1,
+			disableDiscounts: menuItem.disableDiscounts,
 			isAlcohol: menuItem.isAlcohol,
 			serveType: menuItem.serveType,
 			taxType: menuItem.taxType,
@@ -1049,6 +1185,7 @@ TicketDetails[col col-flex wide light shadow]
 		this.orderItemDetails = buildComponent('OrderItemDetails');
 		this.giftCardAdd = buildComponent('GiftCardAdd');
 		this.giftCardEdit = buildComponent('GiftCardEdit');
+		this.appliedCreditEdit = buildComponent('AppliedCreditEdit');
 		this.selectOptionsView = buildComponent('SelectOptionsView');
 		this.selectOptionsView.on('selected', (value) => { 
 			var option = this.orderItemToAdd.options[this.selectOptionsView.data.key];
@@ -1247,6 +1384,10 @@ OrderItemGroup[item tight]
 		this.more.innerHTML = this.showMore ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
 	#repeatItem:function
 		var orderItem = this.model;
+		if(orderItem.isPurchasedCredit) {
+			Modal.showNotification('Cannot Repeat Item', 'Credit purchases cannot be repeated, but you can add another one manually.');
+			return;
+		}
 		var newItem = { 
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
@@ -1254,6 +1395,7 @@ OrderItemGroup[item tight]
 			name: orderItem.name,
 			price: orderItem.price,
 			quantity: 1,
+			disableDiscounts: orderItem.disableDiscounts,
 			isAlcohol: orderItem.isAlcohol,
 			serveType: orderItem.serveType,
 			taxType: orderItem.taxType,
@@ -1534,6 +1676,7 @@ SV.onLoad(() => {
 			menuHub.update(data.menu);
 			menuCategories.update(data.menu.categories);			
 			recList.update(data.reconciliations);
+			ticketDetails.totals.applyCreditModal.update(data.credits);
 			updateRec();
 		});
 
@@ -1561,6 +1704,13 @@ SV.onLoad(() => {
 
 
 class RecUtils {
+	static computeCreditBalance(credit) {
+		var applied = 0;
+		SV.forEach(credit.history, (history) => {
+			applied += history.amountUsed;
+		});
+		return applied + credit.amount;
+	}
 	static getLoyaltyPointsEarned(ticket) {
 		return ticket.totals.total;	
 	}
@@ -1610,7 +1760,7 @@ class RecUtils {
 			totals.alcoholSubtotal = amount;
 		}
 		var ticket = item.parent.parent;
-		if(ticket.modifiers.isEmployeeDiscount) {
+		if(!item.disableDiscounts && ticket.modifiers.isEmployeeDiscount) {
 			totals.foodDiscount = -1 * totals.foodSubtotal * 0.5;	
 			totals.taxDiscount = -1 * totals.taxSubtotal * 0.5;	
 			totals.alcoholDiscount = -1 * totals.alcoholSubtotal * 0.5;	

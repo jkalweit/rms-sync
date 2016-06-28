@@ -78,7 +78,6 @@ LabeledValue[label-set]
 		this.prop = options.prop;
 		this.isNumber = options.number
 	#render:function
-		console.log('render here', this.prop, this.data);
 		this.value.style.textAlign = this.isNumber ? 'right' : 'left';
 		if(this.prop && this.data) {
 			var val = SV.getProperty(this.data, this.prop);
