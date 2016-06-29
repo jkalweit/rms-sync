@@ -89,7 +89,7 @@ class SV {
 
 	static generateCode(length) {
 		var code = '';
-		var chars = 'abcdefghijkLmnopqrstuvwxyz1234567890';
+		var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 		for(var i = 0; i < length; i++) {
 			code += chars[Math.floor(Math.random() * chars.length)];
 		}
