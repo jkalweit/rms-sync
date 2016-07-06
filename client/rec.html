@@ -84,32 +84,41 @@ ApplyCreditItem[item tight row row-flex]
 	
 
 AppliedCreditEdit
-	#title:h1 'Credit Edit'	
-	#type:LabeledValue({ label: 'Type', prop: 'name' })$(update=data)
+	#title:h1 'Payment'	
+	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
 	#code:LabeledValue({ label: 'Code', prop: 'creditKey' })$(update=data)
 	#note:LabeledValue({ label: 'Note', prop: 'note' })$(update=data)
-	#amount:LabeledValue({ label: 'Amount', prop: 'price', number: true })$(update=data)
+	#amount:Input({ label: 'Amount', prop: 'amount', number: true })$(update=data)
+		events:
+			changed:
+				this.updateCreditBalance();	
 	#del[btn] 'Remove from Ticket'
 		events:
 			click:
 				Modal.confirm('Remove Credit', 'Are you sure you want to remove this credit?', () => {
 					var credit = sync.data.credits[this.data.creditKey];
 					if(!credit) {
-						Modal.showNotification('Cannot find credit code: ' + this.data.creditKey);
-						return;
+						Modal.showNotification('Cannot find credit Code: ' + this.data.creditKey);
+					} else {				
+						credit.history.remove(this.data.creditHistoryKey);
+						this.updateCreditBalance();
 					}
-					var balance = RecUtils.computeCreditBalance(credit) 
-					balance -= this.data.price;	
-					var merge = {};
-					merge[this.data.creditKey] = {
-						balance: balance,	
-						history: { __remove: this.data.creditHistoryKey }
-					};
-					sync.data.credits.merge(merge);
-					ticketDetails.deleteOrderItem(this.data.key);
+					var payments = this.data.parent;
+					var ticket = payments.parent;
+					payments.remove(this.data.key);
+					hub.emit('ticketTotalsChanged', ticket.key);	
 					this.modal.hide();
 				});
-	#cancel[btn] 'Cancel'
+	#updateCreditBalance:function
+		if(this.data.amount > 0) this.data.set('amount', this.data.amount * -1);
+		var credit = sync.data.credits[this.data.creditKey];
+		var historyItem = credit.history[this.data.creditHistoryKey];
+		if(historyItem) historyItem.set('amountUsed', this.data.amount);
+		var balance = RecUtils.computeCreditBalance(credit);
+		credit.set('balance', balance);
+		var ticket = this.data.parent.parent;
+		hub.emit('ticketTotalsChanged', ticket.key);	
+	#cancel[btn] 'Ok'
 		events:
 			click:
 				this.modal.hide();
@@ -415,8 +424,13 @@ RecHub
 	#init:function
 		this.ticketFilter = { showPaid: false, selectedTicket: null };
 		this.on('ticketTotalsChanged', (ticketKey) => {
+			console.log('totals changed', ticketKey);
 			var ticket = this.data.tickets[ticketKey];
-			if(ticket) ticket.merge({ totals: RecUtils.getTicketTotals(ticket) });
+			if(ticket) { 
+				var totals = RecUtils.getTicketTotals(ticket);
+				console.log('setting totals', totals.payments);
+				ticket.merge({ totals: totals });
+			}
 			this.data.merge({ totals: RecUtils.getRecTotals(this.data) });
 		});
 	#clearTicketSearch:function
@@ -686,6 +700,7 @@ TicketList[col-flex]
 			modifiers: {
 				isEmployeeDiscount: isStaff
 			},
+			payments: {},
 			paymentStatus: 'Unpaid',
 			totals: RecUtils.getBlankTotals()
 		};
@@ -733,7 +748,7 @@ TicketList[col-flex]
 		this.list.update(sorted);
 	#render:function 
 		this.sortGroups();
-		this.test = true;
+		//this.test = true;
 		if(this.test) return;
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
@@ -807,6 +822,31 @@ Ticket[item ticket tight row row-flex]
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		this.member.classList.toggle('invisible', !this.data.memberKey);
 
+
+TicketPayments[medium]
+	#list:List({ ctor: 'TicketPaymentItem', sort: 'addedAt' })[list tight]$(update=data.payments)
+	#totals:TicketPaymentTotals$(update=data)
+	#render:function
+		console.log('this.data', this.data);
+
+TicketPaymentTotals[tight bold row row-flex]
+	:div[row-fill margin1] 'Total Payments:'
+	#total:div[row-nofill right margin1]
+		style:
+			text-align: right;
+	#render:function
+		console.log('payments', this.data.totals);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.payments);
+		
+TicketPaymentItem[item tight row row-flex]
+	:events
+		click:
+			ticketDetails.appliedCreditEdit.edit(this.data);
+	#type[row-fill]$(data.type)
+	#amount[row-nofill right margin1]
+	#render:function
+		this.amount.innerHTML = SV.formatCurrency(this.data.amount);	
+
 TicketTotals[header dark row-flex]
 	:style
 		//border-top: 1px solid rgba(0,0,0,0.5);
@@ -835,11 +875,12 @@ TicketTotals[header dark row-flex]
 		events:
 			click:
 				this.printReceipt();
-	#payment[touch material-icons row-nofill]
+	#payment[touch material-icons row-nofill] 'credit_card'
 		events:
 			click:
 				this.cyclePaymentStatus();
 	#applyCredit:function
+		if(RecUtils.isTicketPaid(this.data)) return;
 		this.applyCreditModal.ticket = this.data;
 		this.applyCreditModal.show();
 	#sendToKitchen:function
@@ -903,18 +944,36 @@ TicketTotals[header dark row-flex]
 		this.barOrderPreview.update(ko);
 		this.barOrderPreviewModal.show();
 	#cyclePaymentStatus:function
-		var newStatus;
-		switch(this.data.paymentStatus) {
-			case 'Unpaid':
-				newStatus = 'Credit Card';
-				break;
+		//var newStatus;
+		//switch(this.data.paymentStatus) {
+		//	case 'Unpaid':
+		//		newStatus = 'Credit Card';
+		//		break;
 			//case 'Credit Card':
 			//	newStatus = 'Cash';
 			//	break;
-			default:
-				newStatus = 'Unpaid';
+		//	default:
+		//		newStatus = 'Unpaid';
+		//}
+		var existing = SV.findFirst(this.data.payments, (p) => { return p.type === 'Pay Remainder'; });	
+		if(existing) {
+			this.data.payments.remove(existing.key);
+			hub.emit('ticketTotalsChanged', this.data.key);
+		} else if(this.data.totals.balance < 0) {
+			SV.sendToAdmin('Ticket balance is negative: ' + this.data.name + ': ' + this.data.totals.balance);
+			Modal.showNotification('Cannot Close Ticket', 'The balance is negative. If you applied a gift card, try changing the amount to match the total.');
+			return;
+		} else {
+			var payment = {
+				key: SyncNode.guidShort(),
+				type: 'Pay Remainder',
+				addedAt: new Date().toISOString(),
+				addedBy: window.recSettings.currentUser,
+				amount: this.data.totals.balance * -1,
+			};
+			this.data.payments.set(payment.key, payment);		
+			hub.emit('ticketTotalsChanged', this.data.key);
 		}
-		this.data.set('paymentStatus', newStatus);
 		this.updateLoyalty();
 	#updateLoyalty:function
 		var member = membersSync.data[this.data.memberKey];	
@@ -997,17 +1056,17 @@ TicketTotals[header dark row-flex]
 				this.barOrderToSubmit = null;
 				this.barOrderPreviewModal.hide(); }}});
 	#render:function
-		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.balance);
 		this.payment.classList.toggle('highlight', RecUtils.isTicketPaid(this.data));
 		var icon;
-		switch(this.data.paymentStatus) {
-			case 'Cash':
-				icon = 'local_atm';
-				break;
-			default:
-				icon = 'credit_card';
-		}
-		this.payment.innerHTML = icon;
+		//switch(this.data.paymentStatus) {
+		//	case 'Cash':
+		//		icon = 'local_atm';
+		//		break;
+		//	default:
+		//		icon = 'credit_card';
+		//}
+		//this.payment.innerHTML = icon;
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
 		//this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendKitchen.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.kitchen));
@@ -1039,16 +1098,13 @@ TicketDetails[col col-flex wide light shadow]
 		events:
 			edit(orderItem):
 				this.editOrderItem(orderItem);
+	#payments:TicketPayments[col-nofill]
 	#totals:TicketTotals[col-nofill]
 	#close:function
 		this.update(null);
 	#editOrderItem:function(orderItem)
 		if(orderItem.isPurchasedCredit) {
 			this.giftCardEdit.edit(orderItem.creditKey);
-			return;
-		}
-		if(orderItem.isAppliedCredit) {
-			this.appliedCreditEdit.edit(orderItem);
 			return;
 		}
 		hub.selectOrderItem(orderItem);
@@ -1077,23 +1133,16 @@ TicketDetails[col col-flex wide light shadow]
 		credit.orderItemKey = newItem.key;
 		sync.data.credits.set(credit.key, credit);
 	#applyCredit:function(credit)
-		var amountUsed = credit.balance * -1;
-		var newItem = { 
+		var amountUsed = -1 * (credit.balance <= this.data.totals.balance ? credit.balance : this.data.totals.balance);
+		var payment = { 
 			key: SyncNode.guidShort(),
 			addedAt: new Date().toISOString(),
 			addedBy: window.recSettings.currentUser,
-			name: 'Redeem ' + credit.type,
-			isAppliedCredit: true,
-			price: amountUsed, 
-			quantity: 1,
-			disableDiscounts: true,
-			isAlcohol: false,
-			serveType: 'Server',
-			taxType: 'Included',
+			type: credit.type,
+			amount: amountUsed, 
 			note: '',
-			creditKey: credit.key,
-			options: {},
-			modifiers: {}
+			isAppliedCredit: true,
+			creditKey: credit.key
 		};
 		var historyItem = {
 			key: SyncNode.guidShort(),
@@ -1101,17 +1150,14 @@ TicketDetails[col col-flex wide light shadow]
 			addedBy: window.recSettings.currentUser,
 			amountUsed: amountUsed,
 			recKey: window.recSettings.selectedRecKey,
-			ticketKey: this.data.key	
+			ticketKey: this.data.key,
+			paymentKey: payment.key
 		};
-		newItem.creditHistoryKey = historyItem.key;
-		this.addOrderItem(newItem);	
-		var historyMerge = {};
-		historyMerge[credit.key] = {
-			balance: credit.balance + amountUsed,
-			history: {}	
-		};
-		historyMerge[credit.key].history[historyItem.key] = historyItem;
-		sync.data.credits.merge(historyMerge);
+		payment.creditHistoryKey = historyItem.key;
+		this.data.payments.set(payment.key, payment);
+		credit.history.set(historyItem.key, historyItem);
+		credit.set('balance', RecUtils.computeCreditBalance(credit));
+		hub.emit('ticketTotalsChanged', this.data.key);
 	#add:function(menuItem)
 		if(!this.data) {
 			console.log('no ticket selected');
@@ -1215,6 +1261,7 @@ TicketDetails[col col-flex wide light shadow]
 			this.details.update(this.data);
 			this.moreEdit.update(this.data);
 			this.moreEdit.server.select(this.data.servedBy);
+			this.payments.update(this.data);
 			this.totals.update(this.data);
 		}
 
@@ -1726,7 +1773,9 @@ class RecUtils {
 			alcoholDiscount: 0,
 			alcohol: 0,
 			discount: 0,
-			total: 0		
+			total: 0,
+			payments: 0,
+			balance: 0
 		};
 		return totals;
 	}
@@ -1749,7 +1798,11 @@ class RecUtils {
 		return lastOrderItem ? moment(lastOrderItem.addedAt).from(moment()) : 'no orders';
 	}
 	static isOrderItemSubmitted(item) { return item.submittedAt || item.serveType === 'Server' || item.serveType === 'Bar'; }
-	static isTicketPaid(ticket) { return ticket.paymentStatus !== 'Unpaid'; };
+	static isTicketPaid(ticket) { 
+		var paid = SV.findFirst(ticket.payments, (payment) => { return payment.type === 'Pay Remainder'; });
+		return paid !== null;
+		//return ticket.paymentStatus !== 'Unpaid'; 
+	}
 	static getOrderItemTotals(item) {
 		var totals = RecUtils.getBlankTotals(); 
 		var amount = parseFloat((item.price * item.quantity).toPrecision(3));
@@ -1788,6 +1841,14 @@ class RecUtils {
 			totals.discount += t.discount;
 			totals.total += t.total;
 		});
+
+		SV.toArray(ticket.payments).forEach((payment) => {
+			console.log('payment', payment.amount);
+			totals.payments += payment.amount;	
+		});
+		
+		totals.balance = totals.total + totals.payments;
+		console.log('totals', totals);
 
 		return totals;
 	}

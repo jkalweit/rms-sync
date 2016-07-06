@@ -176,6 +176,15 @@ class SV {
 		}
 	}
 
+	static findFirst(obj, func) {
+		var arr = SV.toArray(obj);
+		var curr;
+		for(var i = 0; i < arr.length; i++) {
+			curr = arr[i]; 
+			if(func(curr)) return curr;
+		}
+		return null;
+	}
 
 
 	// for debugging, receive reload signals from server when source files change
