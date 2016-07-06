@@ -21,6 +21,11 @@
 Hub
 	#init:function
 		this.filter = {};
+	#filterName:function(value)
+		this.filter.name = SV.normalize(value);
+		this.emit('filterChanged', this.filter);
+	#clearFilter:function()
+		this.filterName('');
 	#select:function(key)
 		this.filter.selected = this.data[key];
 		this.emit('filterChanged', this.filter);
@@ -37,11 +42,13 @@ Header[row dark]
 	#render:function
 
 MemberList[col col-left col-flex]
-	#list:SearchList({ text: 'Members', ctor: 'Member', searchBox: true, addBtn: true, sort: 'data.info.name', searchProp: 'name' })[col-fill]
+	#search:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
 		events:
+			searchChanged(value):
+				hub.filterName(value);	
 			add(value):
-				this.list.clearSearch();
 				this.add(value);
+	#list:List({ text: 'Members', ctor: 'Member', sort: 'data.info.name' })[col-fill list tight]
 	#add:function(name)
 		name = name || '';
 		name = name.trim();
@@ -84,6 +91,10 @@ Member[item tight]
 	#updateFilter:function
 		var isMatch = (hub.filter.selected || {}).key === this.data.key;
 		this.node.classList.toggle('selected', isMatch);
+		console.log('yay1');
+		var hide = SV.normalize(this.data.data.info.name).indexOf(hub.filter.name || '') === -1;
+		this.node.classList.toggle('hide', hide);	
+		console.log('yay2');
 	#init:function
 		hub.on('filterChanged', () => this.updateFilter());
 	#render:function

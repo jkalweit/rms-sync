@@ -40,6 +40,25 @@ MenuHub
 			this.selectCategory(this.filter.selectedCategory.key);
 		}
 
+Admin
+	:style
+		z-index: 1000;
+	#title:h1 'Admin'	
+	#delRec[btn] 'Delete Rec'
+		events:
+			click:
+				var rec = hub.data; 
+				window.recSettings.set('selectedRecKey', null);
+				updateRec();
+				rec.parent.remove(rec.key);
+				this.modal.hide();
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+
 ApplyCredit
 	#title:h1 'Apply Credit'	
 	#search:Input({ label: 'Code:' })
@@ -129,8 +148,6 @@ AppliedCreditEdit
 	#init:function
 		this.modal = Modal.createModal(this);
 	#render:function
-
-
 
 GiftCardAdd
 	#title:h1 'Buy Gift Card'	
@@ -425,11 +442,9 @@ RecHub
 	#init:function
 		this.ticketFilter = { showPaid: false, selectedTicket: null };
 		this.on('ticketTotalsChanged', (ticketKey) => {
-			console.log('totals changed', ticketKey);
 			var ticket = this.data.tickets[ticketKey];
 			if(ticket) { 
 				var totals = RecUtils.getTicketTotals(ticket);
-				console.log('setting totals', totals.payments);
 				ticket.merge({ totals: totals });
 			}
 			this.data.merge({ totals: RecUtils.getRecTotals(this.data) });
@@ -467,6 +482,20 @@ RecHub
 		newTicket = this.data.tickets[newTicket.key];
 		this.emit('ticketTotalsChanged', oldTicket.key);
 		this.emit('ticketTotalsChanged', newTicket.key);
+	#finalizeRec:function
+		var hasOpenTickets = false;
+		SV.forEach(this.data.tickets, (ticket) => { 
+			if(hasOpenTickets) return;
+			if(!RecUtils.isTicketPaid(ticket)) { 
+				hasOpenTickets = true;
+				Modal.showNotification('Cannot Finalize Rec', 'At least one ticket is open: ' + ticket.name + ' $' + SV.formatCurrency(ticket.totals.balance));
+			}
+		});
+		if(hasOpenTickets) return;
+		this.data.merge({ 
+			finalizedAt: new Date().toISOString(),
+			finalizedBy: window.recSettings.currentUser
+		});
 	#render:function	
 		if(this.ticketFilter.selectedTicket) {
 			var selectedOrderItem = this.ticketFilter.selectedOrderItem;
@@ -548,6 +577,12 @@ RecTotalsEdit
 		events:
 			click:
 				SV.printRec(this.getRecCalcs());
+	#finalize[btn] 'Finalize Rec'
+		events:
+			click:
+				Modal.confirm('Finalize Rec', 'Make sure you print the rec first! Are you sure you want to finalize this rec? No more changes can be made after finalizing.', () => {
+					hub.finalizeRec();	
+				});	
 	#getRecCalcs:function
 		if(!this.data) return {};
 		var sales = JSON.parse(JSON.stringify(this.data.parent.totals));
@@ -568,7 +603,6 @@ RecTotalsEdit
 			totalTake: totalTake,
 			difference: diff
 		};
-
 	#render:function
 		if(this.data) {
 			var calcs = this.getRecCalcs();
@@ -585,12 +619,14 @@ RecSettings
 		style:
 			width: 50%;
 			//float: left;
-	#close[btn] 'Close'
+	#close[btn] 'Ok'
 		events:
 			click:
 				this.emit('close');
 	#render:function
-		this.totals.update(this.data)
+		if(this.data) {
+			this.totals.update(this.data);
+		}
 
 RecTotals[header]
 	:style
@@ -639,6 +675,7 @@ Header[row row-flex black]
 		});
 
 	#render:function
+		if(!this.data) return;
 		this.totals.update(this.data.totals);
 		this.title.innerHTML = this.data.name;
 		this.recSettings.update(this.data.drawer);
@@ -702,7 +739,6 @@ TicketList[col-flex]
 				isEmployeeDiscount: isStaff
 			},
 			payments: {},
-			paymentStatus: 'Unpaid',
 			totals: RecUtils.getBlankTotals()
 		};
 		this.itemToAdd = newItem;
@@ -749,7 +785,7 @@ TicketList[col-flex]
 		this.list.update(sorted);
 	#render:function 
 		this.sortGroups();
-		//this.test = true;
+		this.test = true;
 		if(this.test) return;
 		this.test = true;
 		hub.ticketFilter.selectedTicket = SV.toArray(this.data)[0];
@@ -823,21 +859,25 @@ Ticket[item ticket tight row row-flex]
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		this.member.classList.toggle('invisible', !this.data.memberKey);
 
-
-TicketPayments[medium]
-	#list:List({ ctor: 'TicketPaymentItem', sort: 'addedAt' })[list tight]$(update=data.payments)
-	#totals:TicketPaymentTotals$(update=data)
-	#render:function
-		console.log('this.data', this.data);
-
-TicketPaymentTotals[tight bold row row-flex]
-	:div[row-fill margin1] 'Total Payments:'
+TicketSaleTotals[tight medium row row-flex]
+	:div[row-fill margin1] 'Total Sale:'
 	#total:div[row-nofill right margin1]
 		style:
 			text-align: right;
 	#render:function
-		console.log('payments', this.data.totals);
-		this.total.innerHTML = SV.formatCurrency(this.data.totals.payments);
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.total);
+
+TicketBalance[tight medium bold row row-flex]
+	:div[row-fill margin1] 'Balance:'
+	#total:div[row-nofill right margin1]
+		style:
+			text-align: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.balance);
+	
+TicketPayments[medium]
+	#list:List({ ctor: 'TicketPaymentItem', sort: 'addedAt' })[list tight]$(update=data.payments)
+	#render:function
 		
 TicketPaymentItem[item tight row row-flex]
 	:events
@@ -848,7 +888,7 @@ TicketPaymentItem[item tight row row-flex]
 	#render:function
 		this.amount.innerHTML = SV.formatCurrency(this.data.amount);	
 
-TicketTotals[header dark row-flex]
+TicketControls[header dark row-flex]
 	:style
 		//border-top: 1px solid rgba(0,0,0,0.5);
 		padding-left: 0;
@@ -865,13 +905,7 @@ TicketTotals[header dark row-flex]
 		events:
 			click:
 				this.applyCredit();
-	#total:div[row-fill]
-		events:
-			click:
-				window.salesDetails.update(this.data.totals);
-				window.salesDetails.show();
-		style:
-			text-align: right;
+	#filler[row-fill]
 	#print[touch material-icons row-nofill] 'print'
 		events:
 			click:
@@ -945,17 +979,6 @@ TicketTotals[header dark row-flex]
 		this.barOrderPreview.update(ko);
 		this.barOrderPreviewModal.show();
 	#cyclePaymentStatus:function
-		//var newStatus;
-		//switch(this.data.paymentStatus) {
-		//	case 'Unpaid':
-		//		newStatus = 'Credit Card';
-		//		break;
-			//case 'Credit Card':
-			//	newStatus = 'Cash';
-			//	break;
-		//	default:
-		//		newStatus = 'Unpaid';
-		//}
 		var existing = SV.findFirst(this.data.payments, (p) => { return p.type === 'Pay Remainder'; });	
 		if(existing) {
 			this.data.payments.remove(existing.key);
@@ -1057,23 +1080,10 @@ TicketTotals[header dark row-flex]
 				this.barOrderToSubmit = null;
 				this.barOrderPreviewModal.hide(); }}});
 	#render:function
-		this.total.innerHTML = SV.formatCurrency(this.data.totals.balance);
 		this.payment.classList.toggle('highlight', RecUtils.isTicketPaid(this.data));
 		var icon;
-		//switch(this.data.paymentStatus) {
-		//	case 'Cash':
-		//		icon = 'local_atm';
-		//		break;
-		//	default:
-		//		icon = 'credit_card';
-		//}
-		//this.payment.innerHTML = icon;
 		var unsubmitted = RecUtils.getUnsubmittedTicketOrderItems(this.data);
-		//this.sendKitchen.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.kitchen));
 		this.sendKitchen.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.kitchen));
-		//this.sendBar.classList.toggle('highlight', !SV.isEmptyObject(unsubmitted.bar));
-		//this.sendBar.classList.toggle('blink', !SV.isEmptyObject(unsubmitted.bar));
-
 
 
 TicketDetails[col col-flex wide light shadow]
@@ -1099,8 +1109,10 @@ TicketDetails[col col-flex wide light shadow]
 		events:
 			edit(orderItem):
 				this.editOrderItem(orderItem);
+	#totals:TicketSaleTotals[col-nofill]
 	#payments:TicketPayments[col-nofill]
-	#totals:TicketTotals[col-nofill]
+	#balance:TicketBalance[col-nofill]
+	#controls:TicketControls[col-nofill]
 	#close:function
 		this.update(null);
 	#editOrderItem:function(orderItem)
@@ -1262,8 +1274,10 @@ TicketDetails[col col-flex wide light shadow]
 			this.details.update(this.data);
 			this.moreEdit.update(this.data);
 			this.moreEdit.server.select(this.data.servedBy);
-			this.payments.update(this.data);
 			this.totals.update(this.data);
+			this.payments.update(this.data);
+			this.balance.update(this.data);
+			this.controls.update(this.data);
 		}
 
 SelectOptionsView[col-flex]
@@ -1678,6 +1692,32 @@ window.recSettings = new LocalSyncNode('recSettings');
 
 var rms = new RMS(sync);
 
+
+
+function updateRec() {
+	var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
+	hub.update(rec);
+	header.update(rec);			
+	if(!rec) {
+		recDisable.show('Select a Rec');
+	} else if(rec.finalizedAt) {
+		recDisable.show('Rec is Finalized');
+	} else if(!window.recSettings.currentUser) {
+		recDisable.show('Select a User');
+	} else {
+		recDisable.hide();
+	}
+	ticketList.node.classList.toggle('hide', !rec);
+	if(rec) {
+		ticketList.update(rec.tickets);
+		ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
+	}
+}
+
+
+
+
+
 SV.onLoad(() => { 
 
 		importCode('components.html'); 
@@ -1694,41 +1734,28 @@ SV.onLoad(() => {
 		window.creditCardDetailsModal = Modal.createModal(creditCardDetails);
 		window.creditCardDetailsModal.on('show', () => { creditCardDetails.input.focus(); });
 		//window.creditCardDetailsModal.show();
+
+		var admin = buildComponent('Admin');
+		document.addEventListener('keyup', (e) => {
+			if(e.ctrlKey && e.keyCode === 54) {
+				window.adminPin.verify(() => {
+					admin.show();
+				});
+			}
+		}, false);	
 		
 		window.adminPin = buildComponent('AdminPin');
 		window.deleteOrderItem = buildComponent('DeleteOrderItem');
-
-		function updateRec() {
-			var rec = sync.data.reconciliations[window.recSettings.selectedRecKey];
-			if(!rec.drawer) {
-				rec.set('drawer', {});
-			}
-			hub.update(rec);
-			header.update(rec);			
-			if(!rec) {
-				recDisable.show('Select a Rec');
-			} else if(!window.recSettings.currentUser) {
-				recDisable.show('Select a User');
-			} else {
-				recDisable.hide();
-			}
-			ticketList.node.classList.toggle('hide', !rec);
-			if(rec) {
-				ticketList.update(rec.tickets);
-				ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
-			}
-		}
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
 			menuHub.update(data.menu);
 			menuCategories.update(data.menu.categories);			
 			recList.update(data.reconciliations);
-			ticketDetails.totals.applyCreditModal.update(data.credits);
+			ticketDetails.controls.applyCreditModal.update(data.credits);
 			updateRec();
 		});
 
-		var test2 = false;
 		
 		window.membersSync.on('updated', (data) => {
 			window.loyaltyMemberSelect.update(data);
@@ -1800,9 +1827,11 @@ class RecUtils {
 	}
 	static isOrderItemSubmitted(item) { return item.submittedAt || item.serveType === 'Server' || item.serveType === 'Bar'; }
 	static isTicketPaid(ticket) { 
+		// Legacy method:
+		if(ticket.paymentStatus) return ticket.paymentStatus !== 'Unpaid'; 
+		// New method:
 		var paid = SV.findFirst(ticket.payments, (payment) => { return payment.type === 'Pay Remainder'; });
 		return paid !== null;
-		//return ticket.paymentStatus !== 'Unpaid'; 
 	}
 	static getOrderItemTotals(item) {
 		var totals = RecUtils.getBlankTotals(); 
@@ -1844,12 +1873,10 @@ class RecUtils {
 		});
 
 		SV.toArray(ticket.payments).forEach((payment) => {
-			console.log('payment', payment.amount);
 			totals.payments += payment.amount;	
 		});
 		
 		totals.balance = totals.total + totals.payments;
-		console.log('totals', totals);
 
 		return totals;
 	}
