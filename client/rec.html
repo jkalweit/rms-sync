@@ -81,17 +81,13 @@ ApplyCreditItem[item tight row row-flex]
 	#render:function
 		this.amount.innerHTML = SV.formatCurrency(this.data.amount);
 		this.balance.innerHTML = SV.formatCurrency(this.data.balance);
-	
 
 AppliedCreditEdit
 	#title:h1 'Payment'	
 	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
 	#code:LabeledValue({ label: 'Code', prop: 'creditKey' })$(update=data)
 	#note:LabeledValue({ label: 'Note', prop: 'note' })$(update=data)
-	#amount:Input({ label: 'Amount', prop: 'amount', number: true })$(update=data)
-		events:
-			changed:
-				this.updateCreditBalance();	
+	#amount:Input({ label: 'Amount', number: true })
 	#del[btn] 'Remove from Ticket'
 		events:
 			click:
@@ -118,7 +114,12 @@ AppliedCreditEdit
 		credit.set('balance', balance);
 		var ticket = this.data.parent.parent;
 		hub.emit('ticketTotalsChanged', ticket.key);	
-	#cancel[btn] 'Ok'
+	#ok[btn] 'Ok'
+		events:
+			click:
+				this.updateCreditBalance();
+				this.modal.hide();
+	#cancel[btn] 'Cancel'
 		events:
 			click:
 				this.modal.hide();
