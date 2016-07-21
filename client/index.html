@@ -52,6 +52,27 @@ Admin
 				updateRec();
 				rec.parent.remove(rec.key);
 				this.modal.hide();
+	#archive[btn] 'Archive Old'
+		events:
+			click:
+				var recs = hub.data.parent; 
+				var merge = {
+					__remove: []
+				};
+				var now = new Date();
+				var date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+				SV.forEach(recs, (rec) => { 
+					console.log('Date.parse', new Date(rec.added), date, new Date(rec.added) < date);
+					if(new Date(rec.added) < date) {
+						merge.__remove.push(rec.key);
+					} else {
+						console.log('!!!!!!!!!!!!!!!', new Date(rec.added), date, new Date(rec.added) < date);
+					}	
+				});
+				Modal.confirm('Archive Old Recs', 'Archive ' + merge.__remove.length + ' recs?', () => {
+					recs.merge(merge);
+					this.modal.hide();
+				});
 	#show:function
 		this.modal.show();
 	#init:function
