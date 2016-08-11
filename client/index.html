@@ -90,6 +90,14 @@ ApplyCredit
 					ticketDetails.applyCredit(credit);
 					this.modal.hide();
 				});
+	#title:h1 'Apply Discount'	
+	#discounts:List({ ctor: 'Discount' })[list tight]
+		events:
+			viewAdded:function(view)
+				view.on('selected', (discount) => {
+					ticketDetails.applyDiscount(discount);
+					this.modal.hide();
+				});
 	#cancel[btn] 'Cancel'
 		style:
 			margin-top: 1em;
@@ -106,7 +114,8 @@ ApplyCredit
 			SV.forEach(this.list.views, (view) => { view.updateFilter(code); });
 		});
 	#render:function
-		this.list.update(SV.filterMap(this.data, (credit) => { return credit.balance !== 0; }));
+		this.list.update(SV.filterMap(this.data.credits, (credit) => { return credit.balance !== 0; }));
+		this.discounts.update(this.data.discounts);
 
 ApplyCreditItem[item tight row row-flex]
 	:events
@@ -122,11 +131,22 @@ ApplyCreditItem[item tight row row-flex]
 		this.amount.innerHTML = SV.formatCurrency(this.data.amount);
 		this.balance.innerHTML = SV.formatCurrency(this.data.balance);
 
+Discount[item tight row row-flex]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#name[row-fill]$(data.name)
+	#amount[width1 row-nofill]
+	#type[width3 row-nofill]$(data.type)
+	#render:function
+		this.amount.innerHTML = this.data.type === '%' ? this.data.amount * 100 : SV.formatCurrency(this.data.amount);
+
 AppliedCreditEdit
 	#title:h1 'Payment'	
 	#type:LabeledValue({ label: 'Type', prop: 'type' })$(update=data)
 	#code:LabeledValue({ label: 'Code', prop: 'creditKey' })$(update=data)
 	#note:LabeledValue({ label: 'Note', prop: 'note' })$(update=data)
+	#availableBalance:LabeledValue({ label: 'Available', number: true })
 	#amount:Input({ label: 'Amount', number: true })
 	#del[btn] 'Remove from Ticket'
 		events:
@@ -146,19 +166,27 @@ AppliedCreditEdit
 					this.modal.hide();
 				});
 	#updateCreditBalance:function
-		if(this.data.amount > 0) this.data.set('amount', this.data.amount * -1);
-		var credit = sync.data.credits[this.data.creditKey];
+		var amount = this.amount.input.value * 1;
+		if(amount > 0) amount = amount * -1;
+		var credit = this.getCredit();
+		var balanceWithoutCurrent = RecUtils.computeCreditBalance(credit, this.data.creditHistoryKey);
+		console.log('Amount', amount, 'balance', balanceWithoutCurrent);
+		if((amount * -1) > balanceWithoutCurrent) {
+			Modal.showNotification('Insufficient Balance', 'There is not enough credit for this amount.');	
+			return false;
+		}
+		this.data.set('amount', amount);
 		var historyItem = credit.history[this.data.creditHistoryKey];
 		if(historyItem) historyItem.set('amountUsed', this.data.amount);
 		var balance = RecUtils.computeCreditBalance(credit);
 		credit.set('balance', balance);
 		var ticket = this.data.parent.parent;
 		hub.emit('ticketTotalsChanged', ticket.key);	
+		return true;
 	#ok[btn] 'Ok'
 		events:
 			click:
-				this.updateCreditBalance();
-				this.modal.hide();
+				if(this.updateCreditBalance()) this.modal.hide();
 	#cancel[btn] 'Cancel'
 		events:
 			click:
@@ -166,9 +194,15 @@ AppliedCreditEdit
 	#edit:function(appliedCredit)
 		this.update(appliedCredit);
 		this.modal.show();
+	#getCredit:function
+		return sync.data.credits[this.data.creditKey];
 	#init:function
 		this.modal = Modal.createModal(this);
 	#render:function
+		var credit = this.getCredit();
+		this.availableBalance.value.innerHTML = SV.formatCurrency(RecUtils.computeCreditBalance(credit, this.data.creditHistoryKey));
+		this.amount.input.value = SV.formatCurrency(this.data.amount);
+
 
 GiftCardAdd
 	#title:h1 'Buy Gift Card'	
@@ -759,6 +793,7 @@ TicketList[col-flex]
 			modifiers: {
 				isEmployeeDiscount: isStaff
 			},
+			discounts: {},
 			payments: {},
 			totals: RecUtils.getBlankTotals()
 		};
@@ -868,17 +903,73 @@ Ticket[item ticket tight row row-flex]
 		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 	#render:function
 		var totals = this.data.totals;
-		var total = SV.formatCurrency(totals.foodSubtotal + totals.alcoholSubtotal + totals.taxSubtotal);
+		console.log('asdf', totals, totals.subtotal);
+		var subtotal = SV.formatCurrency(totals.subtotal);
 		if(totals.discount !== 0) {
-			total += '<span style="color: #F00"> ' + SV.formatCurrency(totals.discount) + '</span>';	
+			subtotal += '<span style="color: #F00"> ' + SV.formatCurrency(totals.discount) + '</span>';	
 		}
-		this.total.innerHTML = total;
+		this.total.innerHTML = subtotal;
 		this.nameSpan.innerHTML = `<span style="display: inline-block; width: 3em;">${this.data.table}</span> <span style="font-weight: bold">${this.data.name}</span>`;
 		if(this.data.isTogo) this.nameSpan.innerHTML += ' <span class="highlight">[TOGO]</span>';
 		this.doFilter();
 		this.updateDisplay();
 		this.node.classList.toggle('disabled', RecUtils.isTicketPaid(this.data));
 		this.member.classList.toggle('invisible', !this.data.memberKey);
+
+TicketDiscountTotals[tight medium row row-flex]
+	#name:div[row-fill margin1] 'Discount:'
+	#total:div[row-nofill right margin1]
+		style:
+			text-align: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.discount);
+
+AppliedDiscount[tight medium row row-flex]
+	:events
+		click:
+			Modal.confirm('Remove Discount?', this.data.name, () => {
+				var ticket = this.data.parent.parent;
+				ticket.discounts.remove(this.data.key);
+				hub.emit('ticketTotalsChanged', ticket.key);
+			});
+	#name:div[row-fill margin1]$(data.name)
+		style:
+			color: #F00;
+	
+
+TicketSubtotals[tight medium row row-flex]
+	:div[row-nofill margin1] 'Food:'
+	#food:div[row-nofill margin1]
+		style:
+			text-align: right;
+	:div[row-nofill margin1] 'Tax:'
+	#tax:div[row-nofill margin1]
+		style:
+			text-align: right;
+	:div[row-nofill margin1] 'Bar:'
+	#alcohol:div[row-nofill margin1]
+		style:
+			text-align: right;
+	#render:function
+		this.food.innerHTML = SV.formatCurrency(this.data.totals.foodSubtotal);
+		this.tax.innerHTML = SV.formatCurrency(this.data.totals.taxSubtotal);
+		this.alcohol.innerHTML = SV.formatCurrency(this.data.totals.alcoholSubtotal);
+
+TicketSubtotal[tight medium row row-flex]
+	:div[row-fill margin1] 'Subtotal:'
+	#total:div[row-nofill right margin1]
+		style:
+			text-align: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.subtotal);
+
+TicketSubtotal[tight medium row row-flex]
+	:div[row-fill margin1] 'Subtotal:'
+	#total:div[row-nofill right margin1]
+		style:
+			text-align: right;
+	#render:function
+		this.total.innerHTML = SV.formatCurrency(this.data.totals.subtotal);
 
 TicketSaleTotals[tight medium row row-flex]
 	:div[row-fill margin1] 'Total Sale:'
@@ -1130,6 +1221,10 @@ TicketDetails[col col-flex wide light shadow]
 		events:
 			edit(orderItem):
 				this.editOrderItem(orderItem);
+	#subtotals:TicketSubtotals[col-nofill]
+	#subtotal:TicketSubtotal[col-nofill]
+	#list:List({ ctor: 'AppliedDiscount' })[col-nofill list tight]
+	#discounts:TicketDiscountTotals[col-nofill]
 	#totals:TicketSaleTotals[col-nofill]
 	#payments:TicketPayments[col-nofill]
 	#balance:TicketBalance[col-nofill]
@@ -1166,6 +1261,24 @@ TicketDetails[col col-flex wide light shadow]
 		credit.memberKey = this.data.memberKey;
 		credit.orderItemKey = newItem.key;
 		sync.data.credits.set(credit.key, credit);
+	#applyDiscount:function(discount)
+		if(SV.toArray(this.data.discounts).length > 0) {
+			Modal.showNotification('Only One Discount Allowed', 'This ticket already has a discount applied. You must remove the existing discount if you want to add another.');
+			return;
+		}
+		var appliedDiscount = {
+			key: SyncNode.guidShort(),
+			discountKey: discount.key,
+			addedAt: new Date().toISOString(),
+			addedBy: window.recSettings.currentUser,
+			name: discount.name,
+			type: discount.type,
+			amount: discount.amount,
+			appliesTo: discount.appliesTo,
+			appliedAmount: 0
+		};
+		this.data.discounts.set(appliedDiscount.key, appliedDiscount);	
+		hub.emit('ticketTotalsChanged', this.data.key);
 	#applyCredit:function(credit)
 		var amountUsed = -1 * (credit.balance <= this.data.totals.balance ? credit.balance : this.data.totals.balance);
 		var payment = { 
@@ -1295,6 +1408,10 @@ TicketDetails[col col-flex wide light shadow]
 			this.details.update(this.data);
 			this.moreEdit.update(this.data);
 			this.moreEdit.server.select(this.data.servedBy);
+			this.list.update(this.data.discounts);
+			this.subtotals.update(this.data);
+			this.subtotal.update(this.data);
+			this.discounts.update(this.data);
 			this.totals.update(this.data);
 			this.payments.update(this.data);
 			this.balance.update(this.data);
@@ -1773,7 +1890,7 @@ SV.onLoad(() => {
 			menuHub.update(data.menu);
 			menuCategories.update(data.menu.categories);			
 			recList.update(data.reconciliations);
-			ticketDetails.controls.applyCreditModal.update(data.credits);
+			ticketDetails.controls.applyCreditModal.update(data);
 			updateRec();
 		});
 
@@ -1800,10 +1917,12 @@ SV.onLoad(() => {
 
 
 class RecUtils {
-	static computeCreditBalance(credit) {
+	static computeCreditBalance(credit, excludeKey) {
 		var applied = 0;
 		SV.forEach(credit.history, (history) => {
-			applied += history.amountUsed;
+			if(history.key !== excludeKey) {
+				applied += history.amountUsed;
+			}
 		});
 		return applied + credit.amount;
 	}
@@ -1821,6 +1940,7 @@ class RecUtils {
 			alcoholSubtotal: 0,
 			alcoholDiscount: 0,
 			alcohol: 0,
+			subtotal: 0,
 			discount: 0,
 			total: 0,
 			payments: 0,
@@ -1854,24 +1974,40 @@ class RecUtils {
 		var paid = SV.findFirst(ticket.payments, (payment) => { return payment.type === 'Pay Remainder'; });
 		return paid !== null;
 	}
+	static applyDiscount(discount, totals) {
+		if(discount.type === '%') {
+			if(discount.appliesTo === 'Food Only') {
+				totals.foodDiscount = -1 * totals.foodSubtotal * discount.amount;
+				totals.taxDiscount = totals.foodDiscount * .09;
+			}
+		}
+	}
 	static getOrderItemTotals(item) {
 		var totals = RecUtils.getBlankTotals(); 
-		var amount = parseFloat((item.price * item.quantity).toPrecision(3));
+		var amount = SV.round(item.price * item.quantity, 2);
 		if(item.taxType === '9%') {
 			totals.foodSubtotal = amount;
-			totals.taxSubtotal = parseFloat((totals.foodSubtotal * .09).toPrecision(2));
+			totals.taxSubtotal = SV.round(totals.foodSubtotal * .09, 2);
 		} else {
 			totals.alcoholSubtotal = amount;
 		}
 		var ticket = item.parent.parent;
-		if(!item.disableDiscounts && ticket.modifiers.isEmployeeDiscount) {
-			totals.foodDiscount = -1 * totals.foodSubtotal * 0.5;	
-			totals.taxDiscount = -1 * totals.taxSubtotal * 0.5;	
-			totals.alcoholDiscount = -1 * totals.alcoholSubtotal * 0.5;	
+		if(!item.disableDiscounts) {
+			if(ticket.modifiers.isEmployeeDiscount) {
+				totals.foodDiscount = -1 * totals.foodSubtotal * 0.5;	
+				totals.taxDiscount = -1 * totals.taxSubtotal * 0.5;	
+				totals.alcoholDiscount = -1 * totals.alcoholSubtotal * 0.5;	
+			} else {
+				var discounts = SV.toArray(ticket.discounts);
+				if(discounts.length > 0) {
+					RecUtils.applyDiscount(discounts[0], totals);
+				}
+			}
 		}
 		totals.food = totals.foodSubtotal + totals.foodDiscount;
-		totals.tax = parseFloat((totals.food * .09).toPrecision(2));
+		totals.tax = totals.taxSubtotal + totals.taxDiscount;
 		totals.alcohol = totals.alcoholSubtotal + totals.alcoholDiscount;
+		totals.subtotal = totals.foodSubtotal + totals.taxSubtotal + totals.alcoholSubtotal;
 		totals.discount = totals.alcoholDiscount + totals.foodDiscount + totals.taxDiscount;
 		totals.total = totals.food + totals.tax + totals.alcohol;
 		return totals;
@@ -1889,6 +2025,7 @@ class RecUtils {
 			totals.alcoholSubtotal += t.alcoholSubtotal;
 			totals.alcoholDiscount += t.alcoholDiscount;
 			totals.alcohol += t.alcohol;
+			totals.subtotal += t.subtotal;
 			totals.discount += t.discount;
 			totals.total += t.total;
 		});
@@ -1925,6 +2062,7 @@ class RecUtils {
 			totals.alcoholSubtotal += t.alcoholSubtotal;
 			totals.alcoholDiscount += t.alcoholDiscount;
 			totals.alcohol += t.alcohol;
+			totals.subtotal += t.subtotal;
 			totals.discount += t.discount;
 			totals.total += t.total;
 		});

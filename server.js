@@ -356,6 +356,8 @@ function sendToPrinter(type, doc) {
 	var data = JSON.stringify({ type: type, document: doc });
 	console.log('Sending to printer: ', data);
 
+	console.log('length: ' + Buffer.byteLength(data) + ' ' + Buffer.byteLength(data, 'utf8'));
+
 	var req = http.request({
 		port: 1338,
 		host: '192.168.6.4',
@@ -363,7 +365,7 @@ function sendToPrinter(type, doc) {
 	    	method: 'POST',
     		headers: {
 	          'Content-Type': 'application/json',
-        	  'Content-Length': Buffer.byteLength(data)
+		  'Content-Length': Buffer.byteLength(data, 'utf8')
 	      	}	
 	}, (response) => {
 		response.on('data', (chunk) => {
@@ -379,7 +381,8 @@ function sendToPrinter(type, doc) {
 	req.write(data);
 	req.end();
 	
-	console.log('Send to Printer');}
+	console.log('Send to Printer');
+}
 
 function printReceipt(receipt) {
 	sendToPrinter('ticket receipt', receipt);

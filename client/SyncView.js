@@ -35,6 +35,7 @@ class RMS {
 
 	createCredit(type) {
 		var code = SV.generateCode(4);
+		if(!this.data.credits) this.data.set('credits', {});
 		while(this.data.credits[code]) code = SV.generateCode(4);  // Make sure code is unique
 		var credit = {
 			key: code,
@@ -313,8 +314,26 @@ class SV {
 		setTimeout(() => { elem.classList.remove('flash'); }, 500);
 	}
 
+	static removeCrap(doc) {
+		if(typeof doc !== 'object') return doc;
+		console.log('doc', doc);
+		Object.keys(doc).forEach((key) => {
+			console.log('key', key);
+			if(key === 'version' || key === 'key' || key === 'serveType' || key === 'modifiers' || key === 'addedAt' || key === 'addedBy' || key === 'isAlcohol' || key === 'taxType' || key === 'options') {
+				console.log('deleting', key);
+				delete doc[key];
+			} else {
+				console.log('continuuing', key);
+				doc[key] = SV.removeCrap(doc[key]);
+			}
+		});
+		return doc;
+	}
+
 	static printReceipt(receipt) {
-		io().emit('print receipt', receipt);
+		var small = SV.removeCrap(receipt);
+		console.log('Small', small);
+		io().emit('print receipt', small);
 	}
 	
 	static printKitchen(kitchenOrder) {
@@ -366,6 +385,10 @@ class SV {
 	static numberWithCommas(n) {
 	    var parts=n.toString().split(".");
 	    return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
+	}
+
+	static round(value, precision) {
+		return parseFloat(value.toFixed(precision || 2));
 	}
 
 	static iconButton(icon, options) {

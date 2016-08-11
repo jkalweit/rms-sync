@@ -1,0 +1,157 @@
+<html>
+<head>
+<link rel="import" id="components.html" href="components.html">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#hub:Hub
+#header:Header
+#discountsList:DiscountsList[col]
+#discountDetails:DiscountDetails[col]
+
+
+Hub
+	#init:function
+		this.filter = {};
+	#select:function(key)
+		this.filter.selected = (this.data.discounts || {})[key];
+		hub.emit('filterChanged', this.filter);
+	#render:function	
+		if(this.filter.selected) {
+			this.select(this.filter.selected.key);
+		}
+
+
+Header[row row-flex dark]
+	:style
+		height: 56px;
+	#title[margin1 row-fill] 'Discounts'
+	#init:function
+	#render:function
+
+DiscountsList[col col-left col-flex]
+	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
+		events:
+			add(value):
+				this.header.clear();
+				this.add(value);
+	#list:List({ ctor: 'Discount', sort: 'name' })[col-fill list scroll-y]
+	#add:function(name)
+		var name = name || '';
+		name = name.trim();
+		if(!name) return;
+		var newItem = { 
+			key: SyncNode.guidShort(), 
+			addedAt: new Date().toISOString(), 
+			name: name,
+			note: '',
+			type: '%',
+			amount: 0,
+			appliesTo: 'Food Only',
+			isDisabled: false };
+		this.data.set(newItem.key, newItem);
+		hub.select(newItem.key);
+	#init:function
+	#render:function 
+		this.list.update(this.data);
+		if(!this.test) {
+			this.test = true;
+			hub.select((SV.toArray(this.data)[0] || {}).key);
+		}
+		
+
+Discount[item tight]
+	:events
+		click:
+			hub.select(this.data.key);
+	#nameSpan$(data.name)[name]
+	#updateFilter:function
+		this.node.classList.toggle('selected', (hub.filter.selected || {}).key === this.data.key);
+	#init:function
+		hub.on('filterChanged', () => this.updateFilter());
+	#render:function
+		this.updateFilter();
+		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
+
+
+DiscountDetails[col col-left col-flex wide]
+	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
+		events:
+			close:
+				this.close();
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+					this.close();
+				});
+	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
+	#type:Select({ values: ['%'] })
+		events:
+			selected(value):
+				this.data.set('type', value);	
+	#amountInput:Input({ prop: 'amount', label: 'Amount', number: true })$(update=data)
+	#appliesTo:Select({ values: ['Food Only'] })
+		events:
+			selected(value):
+				this.data.set('appliesTo', value);
+	#close:function
+			itemDetails.close();
+			this.update(null);
+	#updateFilter:function	
+		this.node.classList.toggle('hide', !this.data);	
+	#init:function
+		this.updateFilter();
+		hub.on('filterChanged', () => { this.update(hub.filter.selected); });
+	#render:function
+		this.updateFilter();
+		if(this.data) { 
+			this.type.select(this.data.type);
+			this.appliesTo.select(this.data.appliesTo);
+		}
+
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+
+SV.onLoad(() => { 
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+
+		sync.on('updated', (data) => {
+			if(!data.discounts) {
+				data.set('discounts', { 
+				});
+			} else { 
+				console.log('discounts', data.discounts);
+				hub.update(data);
+				discountsList.update(data.discounts);
+			}
+		});
+});
+
+</script>
+</body>
+</html>
