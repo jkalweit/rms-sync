@@ -352,15 +352,15 @@ function sendTextToAdmin(body) {
 	sendText(membersServer.data.admin.data.info.phone, body);
 }
 
-function sendToPrinter(type, doc) {
+function sendToPrinter(type, doc, printer) {
 	var data = JSON.stringify({ type: type, document: doc });
-	console.log('Sending to printer: ', data);
+	console.log('Sending to printer: ', printer, data);
 
 	console.log('length: ' + Buffer.byteLength(data) + ' ' + Buffer.byteLength(data, 'utf8'));
 
 	var req = http.request({
 		port: 1338,
-		host: '192.168.6.4',
+		host: printer,
 		path: '',
 	    	method: 'POST',
     		headers: {
@@ -384,14 +384,14 @@ function sendToPrinter(type, doc) {
 	console.log('Send to Printer');
 }
 
-function printReceipt(receipt) {
-	sendToPrinter('ticket receipt', receipt);
+function printReceipt(receipt, printer) {
+	sendToPrinter('ticket receipt', receipt, printer);
 }
 function printKitchen(kitchenOrder) {
-	sendToPrinter('kitchen order', kitchenOrder);
+	sendToPrinter('kitchen order', kitchenOrder, printer);
 }
 function printRec(rec) {
-	sendToPrinter('reconciliation receipt', rec);
+	sendToPrinter('reconciliation receipt', rec, printer);
 }
 
 function chargeCreditCard(values) {
@@ -443,14 +443,14 @@ io.on('connection', (socket) => {
 	socket.on('send text to admin', (body) => {	
 		sendTextToAdmin(body);
 	});
-	socket.on('print receipt', (receipt) => {
-		printReceipt(receipt);
+	socket.on('print receipt', (receipt, printer) => {
+		printReceipt(receipt, printer);
 	});
-	socket.on('print kitchen', (kitchenOrder) => {
-		printKitchen(kitchenOrder);
+	socket.on('print kitchen', (kitchenOrder, printer) => {
+		printKitchen(kitchenOrder, printer);
 	});
-	socket.on('print reconciliation receipt', (rec) => {
-		printRec(rec);
+	socket.on('print reconciliation receipt', (rec, printer) => {
+		printRec(rec, printer);
 	});
 	socket.on('play kitchen bell', () => {
 		eventsServer.ioNamespace.emit('play kitchen bell');

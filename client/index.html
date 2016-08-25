@@ -641,7 +641,7 @@ RecTotalsEdit
 	#print[btn] 'Print'
 		events:
 			click:
-				SV.printRec(this.getRecCalcs());
+				SV.printRec(this.getRecCalcs(), window.recSettings.currentPrinter);
 	#finalize[btn] 'Finalize Rec'
 		events:
 			click:
@@ -715,6 +715,12 @@ Header[row row-flex black]
 		events:
 			selected(name):
 				window.recSettings.set('currentUser', name);
+	#printerSelect:Select({ values: ['192.168.6.4', '192.168.6.6'] })[row-nofill]
+		style:
+			width: 350px;
+		events:
+			selected(name):
+				window.recSettings.set('currentPrinter', name);
 	#title[row-nofill bold]
 	#status[row-fill margin1 bold]
 	#totals:RecTotals[row-nofill]
@@ -913,7 +919,6 @@ Ticket[item ticket tight row row-flex]
 		this.nameSpan.classList.toggle('blink', hasUnsubmitted);
 	#render:function
 		var totals = this.data.totals;
-		console.log('asdf', totals, totals.subtotal);
 		var subtotal = SV.formatCurrency(totals.subtotal);
 		if(totals.discount !== 0) {
 			subtotal += '<span style="color: #F00"> ' + SV.formatCurrency(totals.discount) + '</span>';	
@@ -1163,7 +1168,7 @@ TicketControls[header dark row-flex]
 			ticket.loyalty = { previousPoints: previousPoints, pointsEarned: pointsEarned, pointsTotal: previousPoints + pointsEarned };
 			console.log('receipt', ticket, member);
 		}
-		SV.printReceipt(ticket);
+		SV.printReceipt(ticket, window.recSettings.currentPrinter);
 	#init:function
 		this.applyCreditModal = buildComponent('ApplyCredit');
 		this.kitchenOrderPreview = buildComponent('KitchenOrderPreview');
@@ -1852,6 +1857,8 @@ function updateRec() {
 		recDisable.show('Rec is Finalized');
 	} else if(!window.recSettings.currentUser) {
 		recDisable.show('Select a User');
+	} else if(!window.recSettings.currentPrinter) {
+		recDisable.show('Select a Printer');
 	} else {
 		recDisable.hide();
 	}
@@ -1919,6 +1926,9 @@ SV.onLoad(() => {
 			ticketList.ticketList.sortGroups();	
 			updateRec();
 		});
+			
+		console.log('selecting printer', window.recSettings.currentPrinter);
+		header.printerSelect.select(window.recSettings.currentPrinter);
 });
 
 

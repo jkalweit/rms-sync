@@ -330,18 +330,18 @@ class SV {
 		return doc;
 	}
 
-	static printReceipt(receipt) {
+	static printReceipt(receipt, printer) {
 		var small = SV.removeCrap(receipt);
-		console.log('Small', small);
-		io().emit('print receipt', small);
+		console.log('Small', printer, small);
+		io().emit('print receipt', small, printer);
 	}
 	
-	static printKitchen(kitchenOrder) {
-		io().emit('print kitchen', kitchenOrder);
+	static printKitchen(kitchenOrder, printer) {
+		io().emit('print kitchen', kitchenOrder, printer);
 	}
 
-	static printRec(rec) {
-		io().emit('print reconciliation receipt', rec);
+	static printRec(rec, printer) {
+		io().emit('print reconciliation receipt', rec, printer);
 		var f = SV.formatCurrency;
 		var message = `${name}\nFood: ${f(rec.sales.food)}\nTax: ${f(rec.sales.tax)}\nAlcohol: ${f(rec.sales.alcohol)}\nTotal: ${f(rec.sales.total)}\nDiff: ${f(rec.difference)}`;
 		console.log('message', message);
