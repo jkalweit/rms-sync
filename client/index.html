@@ -44,6 +44,16 @@ Admin
 	:style
 		z-index: 1000;
 	#title:h1 'Admin'	
+	#unfinalizeRec[btn] 'Unfinalize Rec'
+		events:
+			click:
+				var rec = hub.data; 
+				rec.merge({ 
+					finalizedAt: null,
+					finalizedBy: null 
+				});
+				updateRec();
+				this.modal.hide();
 	#delRec[btn] 'Delete Rec'
 		events:
 			click:
