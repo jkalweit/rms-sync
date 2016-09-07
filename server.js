@@ -387,10 +387,10 @@ function sendToPrinter(type, doc, printer) {
 function printReceipt(receipt, printer) {
 	sendToPrinter('ticket receipt', receipt, printer);
 }
-function printKitchen(kitchenOrder) {
+function printKitchen(kitchenOrder, printer) {
 	sendToPrinter('kitchen order', kitchenOrder, printer);
 }
-function printRec(rec) {
+function printRec(rec, printer) {
 	sendToPrinter('reconciliation receipt', rec, printer);
 }
 

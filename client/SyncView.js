@@ -341,6 +341,7 @@ class SV {
 	}
 
 	static printRec(rec, printer) {
+		console.log('printing rec', printer);
 		io().emit('print reconciliation receipt', rec, printer);
 		var f = SV.formatCurrency;
 		var message = `${name}\nFood: ${f(rec.sales.food)}\nTax: ${f(rec.sales.tax)}\nAlcohol: ${f(rec.sales.alcohol)}\nTotal: ${f(rec.sales.total)}\nDiff: ${f(rec.difference)}`;
