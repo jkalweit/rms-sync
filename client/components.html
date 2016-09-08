@@ -74,14 +74,20 @@ LabeledValue[label-set]
 	#label[label]
 	#value[value]
 	#init:function(options)
-		this.label.innerHTML = options.label;
-		this.prop = options.prop;
-		this.isNumber = options.number
+		this.options = options || {};
+		console.log('Options here', this.options.prop, this.options);
+		this.label.innerHTML = this.options.label;
 	#render:function
-		this.value.style.textAlign = this.isNumber ? 'right' : 'left';
-		if(this.prop && this.data) {
-			var val = SV.getProperty(this.data, this.prop);
-			this.value.innerHTML = this.isNumber ? SV.formatCurrency(val) : val;
+		console.log('Options', this.options.prop, this.options);
+		this.value.style.textAlign = this.options.number ? 'right' : 'left';
+		if(this.options.prop && this.data) {
+			var val = SV.getProperty(this.data, this.options.prop);
+			console.log('Options', this.options.prop, this.options);
+			if(this.options.number) {
+				this.value.innerHTML = SV.formatCurrency(val);
+			} else {
+				this.value.innerHTML = this.options.formatter ? this.options.formatter(val) : val;
+			}
 		}
 
 ToggleButton[btn]

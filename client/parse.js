@@ -16,9 +16,9 @@ class Input extends SyncView {
 		}
 
 		if(options.number) {
-			this.options.validator = Input.NumberValidator;
-			this.options.parser = Input.NumberParser;
-			this.options.formatter = SV.formatCurrency;
+			this.options.validator = this.options.validator || Input.NumberValidator;
+			this.options.parser = this.options.parser || Input.NumberParser;
+			this.options.formatter = this.options.formatter || SV.formatCurrency;
 		}
 
 		var elem = this.options.isTextArea ? 'textarea' : 'input';

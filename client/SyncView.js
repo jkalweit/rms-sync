@@ -383,6 +383,17 @@ class SV {
 		return SV.numberWithCommas(number.toFixed(precision).toString());
 	}
 
+	static formatTime(value) {
+		if(!value) return '';
+		return moment(value).format('h:mma');
+	}
+	
+	static durationAsHours(start, stop) {
+		if(!start || !stop) return '';
+		var dur = moment.duration(moment(stop).diff(moment(start)));
+		return Math.round(dur.asHours() * 100) / 100;
+	}
+
 	static numberWithCommas(n) {
 	    var parts=n.toString().split(".");
 	    return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] ? "." + parts[1] : "");
