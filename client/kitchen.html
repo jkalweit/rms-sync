@@ -16,12 +16,71 @@
 
 <script id="view" type="text/other">
 
-#header:Header
+#header:KitchenHeader
 #kitchenOrders:KitchenOrders
 
 
+CoolerTempBar[row-fill]
+	:style
+		background-color: #0F0;
+		opacity: 0.75;
+		align-self: flex-end;
+	#bar
+		style:
+			
+	#init:function
+		console.log('####### create');
+	#render:function
+		this.node.style.height = (this.data.temp -22) + 'px';
+		console.log('Height', this.data.temp, this.node.style.height);
 	
-Header[row row-flex dark]
+
+CoolerTemp[row row-flex]
+	:style
+		height: 100%;
+		width: 50px;
+		position: relative;
+		background-color: #FFF;
+		border-right: 1px solid #000;
+	#name$(data.key)
+		style:
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			color: #333;
+			line-height: 1em;
+			text-align: center;
+	#notok
+		style:
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 28px;
+			height: 1px;
+			background-color: #F00;
+			z-index: 1;
+	#freezing
+		style:
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 9px;
+			height: 1px;
+			background-color: #00F;
+			z-index: 1;
+	#list:List({ ctor: 'CoolerTempBar', sort: 'key' })[row-fill row row-flex]
+	#render:function
+		console.log('this.data', this.data);
+		this.list.update(this.data);
+			
+
+CoolerTemperatures[row row-flex]
+	#list:List({ ctor: 'CoolerTemp' })[row row-flex row-fill]
+	#render:function
+		this.list.update(this.data);
+	
+KitchenHeader[row row-flex dark]
 	:style
 		z-index: 1;
 		height: 56px;
@@ -36,6 +95,7 @@ Header[row row-flex dark]
 			selected(station):
 				window.recSettings.set('kitchenStation', station);
 	:div[row-fill margin1] 'Kitchen'
+	#temps:CoolerTemperatures
 	:div[row-nofill touch material-icons] 'settings'
 		events:
 			click:
@@ -44,6 +104,13 @@ Header[row row-flex dark]
 					this.data.kitchen.remove('orders');
 				});
 	#init:function
+		io().on('get temperatures result', (temperatures) => {
+			this.temps.update(temperatures);
+		});
+		io().emit('get temperatures');
+		this.temperatureInterval = setInterval(() => {
+			io().emit('get temperatures');
+		}, 5000);
 	#render:function
 		if(window.recSettings.kitchenStation === 'Server') {
 			var isOrderUp = false;
