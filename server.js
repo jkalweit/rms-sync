@@ -323,26 +323,43 @@ app.use('/', express.static('client/'));
 
 var temperatures = {};
 var start = new Date();
-var histogramSize = 60000;  //1800000; // 30 mins in milliseconds
+var histogramSize = 600000;  //1800000; // 30 mins in milliseconds
 
 app.use('/temp', function (req, res) {
-    if(!temperatures[data.query.sensorID]) {
-        temperatures[data.query.sensorID] = {};
+	var key = req.query.sensorID;
+	if(!key) {
+		console.log('/temp received with no key.', res.query);
+		return;
+	}
+    if(!temperatures[key]) {
+        temperatures[key] = { key: key };
     }
-    var t = temperatures[data.query.sensorID];
+    var t = temperatures[key];
     var f = parseFloat(req.query.temp);
-    if(!t.curr) t.curr = f;
-    t.curr = (t.curr + f)/2;
+    if(!t.curr) {
+		t.curr = {
+			key: 'curr',
+			temp: f
+		};
+	}
+    t.curr.temp = (t.curr.temp + f)/2;
   
     var end = new Date();
     var elapsed = end - start;
+	console.log('Elapsed:', elapsed);
     if(elapsed >= histogramSize) {
-        for(var i = 0; i < 48; i++) {
-            if(t.hasOwnProperty(i)) t[i + 1] = t[i];
+		console.log('Doing histogram...', elapsed);
+        for(var i = 48; i > 0; i--) {
+            if(t.hasOwnProperty(i-1)) {
+				t[i] = t[i-1];
+				t[i-1].key = i.toString();
+			}
         }
         t[0] = t.curr;
+		t[0].key = '0';
         delete t.curr;
         start = end;
+		console.log('Did histogram.', t);
     }
 
 
@@ -521,8 +538,8 @@ io.on('connection', (socket) => {
 				4: { key: 4, temp:  30}
 			}
 		};
-        console.log('sending temperatures', testing); // temperatures);
-        socket.emit('get temperatures result', testing); // temperatures);
+        console.log('sending temperatures', temperatures);
+        socket.emit('get temperatures result', temperatures);
     });
 });
 
