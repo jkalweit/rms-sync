@@ -1,0 +1,299 @@
+<html>
+<head>
+<link rel="import" id="components.html" href="components.html">
+<link rel="stylesheet" type="text/css" href="/css/app.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="/bower_components/moment/moment.js"></script>
+<script type="text/javascript" src="/SyncNode.js"></script>
+<script type="text/javascript" src="/SyncNodeSocket.js"></script>
+<script type="text/javascript" src="/SyncView.js"></script>
+<script type="text/javascript" src="/parse.js"></script>
+
+</head>
+<body>
+
+
+<script id="view" type="text/other">
+
+#hub:Hub
+#header:Header
+#weeksList:WeeksList
+#weekDetails:WeekDetails
+
+Hub
+	#init:function
+		this.filter = {};
+	#search:function(value)
+		//this.filter.search = SV.normalize(value);
+		//hub.emit('filterChanged', this.filter);
+	#select:function(key)
+		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[key] : null;
+		hub.emit('filterChanged', this.filter);
+	#render:function	
+		weeksList.update(this.data.schedules.weeks);
+		this.select((this.filter.selectedWeek || {}).key);	
+		if(!this.test) {
+			this.test = true;
+			this.select(SV.toArray(this.data.schedules.weeks)[0].key);
+		}
+
+
+Header[row row-flex dark]
+	:style
+		height: 56px;
+	#title[margin1 row-nofill] 'Timeclock'
+	#init:function
+	#render:function
+
+WeeksList[col col-left]
+	#add[btn] 'Add Week'
+		events:
+			click:
+				this.addWeek();
+	#addWeek:function
+		var startDate = SV.getDayOfWeek(0); 
+		var startDateStr = startDate.toISOString();
+		SV.forEach(this.data, (week) => {
+			console.log('Here', startDateStr, week.startDate);
+			if(startDateStr <= week.startDate) {
+				startDate.add(1, 'weeks');
+				startDateStr = startDate.toISOString();
+			}
+		});
+		var week = {
+			key: SyncNode.guidShort(),
+			startDate: startDateStr,
+			note: '',
+			days: {}
+		};	
+		this.data.set(week.key, week);
+	#list:List({ ctor: 'Week', sort: 'startDate' })[list]$(update=data)
+		
+Week[item]
+	:events
+		click:
+			hub.select(this.data.key);
+	#date$(data.startDate)	
+	#updateFilter:function(code)
+		var isSelected = this.data.key === (hub.filter.selectedWeek || {}).key;
+		this.node.classList.toggle('selected', isSelected);
+	#init:function
+		hub.on('filterChanged', () => { this.updateFilter(); });
+	#render:function
+		this.date.innerHTML = moment(this.data.startDate).format('MMM Do, YYYY');
+
+WeekDetails[col col-flex]
+	:style
+		display: none;
+		margin: 1em;
+		height: auto;
+		width: 75%;
+		min-height: 50%;
+	#header:SimpleHeader({ text: '', del: true, add: true})[light]
+		events:
+			close:
+				this.emit('close');
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+				});
+			add:
+				this.addDay();
+	#list:List({ ctor: 'Day', sort: 'startTime' })$(update=data.days)
+	#addShift:function(day, sortOrder, shift, area, position, name)
+		var shift = {
+			key: SyncNode.guidShort(),
+			sortOrder: sortOrder,
+			shift: shift,
+			area: area,
+			position: position,
+			name: name || '',
+			note: ''
+		};
+		day.shifts.set(shift.key, shift);	
+	#addDay:function
+		var startDate = SV.getDayOfWeek(0, moment(this.data.startDate));
+		var startDateStr = startDate.toISOString();
+		SV.forEach(this.data.days, (day) => {
+			if(day.startDate >= startDateStr) {
+				startDate = moment(day.startDate).add(1, 'days');
+				startDateStr = startDate.toISOString();
+			}
+		});
+		var day = {
+			key: SyncNode.guidShort(),
+			startDate: startDateStr,
+			name: '',
+			shifts: {}
+		};
+		this.data.days.set(day.key, day);
+		day = this.data.days[day.key];
+		var sortOrder = 0;
+		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Grill', 'Matt');
+		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Fryer', 'Jeremy');
+		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Line', 'Sarah');
+		this.addShift(day, sortOrder++, 'Lunch', 'Front', 'Server 1');
+		this.addShift(day, sortOrder++, 'Lunch', 'Front', 'Server 2');
+		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Grill', 'Matt');
+		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Fryer', 'Jeremy');
+		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Line', 'Sarah');
+		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Dishes');
+		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Server 1');
+		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Server 2');
+		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Runner');
+		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Bartender');
+	#init:function
+		hub.on('filterChanged', () => this.update(hub.filter.selectedWeek));
+	#render:function
+		this.node.style.display = this.data ? 'flex' : 'none';
+		if(!this.data) {
+			return;
+		}
+		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(1, 'weeks').format('MMM Do, YYYY');
+
+Day
+	:style
+		float: left;
+	:events
+		click:
+			//this.data.parent.remove(this.data.key);
+	#header:SimpleHeader({ text: '', del: true, add: true})
+		events:
+			close:
+				this.emit('close');
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+				});
+			add:
+				this.addShift();
+	#list:List({ ctor: 'Shift', sort: 'sortOrder' })[list]$(update=data.shifts)
+	#addShift:function
+		var shift = {
+			key: SyncNode.guidShort(),
+			shift: 'Dinner',
+			area: 'Kitchen',
+			position: '',
+			name: '',
+			note: ''
+		};
+		this.data.shifts.set(shift.key, shift);
+		window.shiftDetails.update(this.data.shifts[shift.key]);
+		window.shiftDetails.show();
+	#duplicateDay:function
+		var day = JSON.parse(JSON.stringify(this.data));
+		day.key = SyncNode.guidShort();
+		SV.forEach(day.shifts, (shift) => {
+			shift.clockIn = null;
+			shift.clockOut = null;
+		});
+		day.startDate = moment(day.startDate).add(1, 'days').toISOString();
+		this.data.parent.set(day.key, day);
+	#init:function
+		this.copyBtn = SV.el('div', {
+				className: 'touch material-icons', innerHTML: 'repeat', 
+				events: {
+					click: () => {
+						this.duplicateDay();
+				}}});
+		this.header.node.insertBefore(this.copyBtn, this.header.del);
+	#render:function
+		this.header.text.innerHTML = moment(this.data.startDate).format('M/D dddd') + ' ' + this.data.name;
+
+
+Shift[item tight row row-flex]
+	:style
+		borderRight: 1px solid #000;
+	:events
+		click:
+			window.shiftDetails.update(this.data);
+			window.shiftDetails.show();
+	#note[row-nofill]
+		style:
+			width: 5em;
+	#name[row-nofill]$(data.name)
+		style:
+			width: 5em;
+	#time[row-fill margin1 right]
+	#render:function
+		this.note.innerHTML = this.data.position + ' ' + this.data.note;
+		var time = '';
+		if(this.data.clockIn) time += moment(this.data.clockIn).format('h:mm') + '-';
+		if(this.data.clockOut) time += moment(this.data.clockOut).format('h:mm');
+		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut);
+		this.time.innerHTML = time;
+		this.node.style.backgroundColor = this.data.shift === 'Lunch' ? '#DDD' : '#FFF';
+		this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
+
+
+
+
+ShiftDetails
+	#header:SimpleHeader({ text: 'Shift Details', close: true, del: true})
+		events:
+			close:
+				this.emit('close');
+			delete:
+				Modal.confirm('Delete?', '', () => {
+					this.data.parent.remove(this.data.key);
+					this.emit('close');
+				});
+	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
+	#PositionInput:Input({ label: 'Position', prop: 'position' })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
+	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
+	#clockInBtn[btn] 'Clock In'
+		events:
+			click:
+				this.data.set('clockIn', new Date().toISOString());
+				this.emit('close');
+	#clockOutBtn[btn] 'Clock Out'
+		events:
+			click:
+				this.data.set('clockOut', new Date().toISOString());
+				this.emit('close');
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+
+		
+
+
+</script>
+
+
+
+
+<script>
+"use strict"
+
+window.Input = Input
+
+SV.startReloader();
+
+var sync = new SyncNodeSocket('/data', {});
+
+SV.onLoad(() => { 
+		importCode('components.html'); 
+		parse(SV.id('view').innerHTML); 
+		
+		window.shiftDetails = buildComponent('ShiftDetails');
+
+		sync.on('updated', (data) => {
+			console.log('data', data);
+			if(!data.schedules) {
+				data.set('schedules', {
+					key: SyncNode.guidShort(),
+					weeks: {}
+				});
+			}
+			hub.update(data);
+		});
+});
+
+</script>
+</body>
+</html>
