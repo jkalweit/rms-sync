@@ -317,7 +317,45 @@ app.use(sass({
 	debug: true
 }));
 
+
+
 app.use('/', express.static('client/'));
+
+var temperatures = {};
+var start = new Date();
+var histogramSize = 60000;  //1800000; // 30 mins in milliseconds
+
+app.use('/temp', function (req, res) {
+    if(!temperatures[data.query.sensorID]) {
+        temperatures[data.query.sensorID] = {};
+    }
+    var t = temperatures[data.query.sensorID];
+    var f = parseFloat(req.query.temp);
+    if(!t.curr) t.curr = f;
+    t.curr = (t.curr + f)/2;
+  
+    var end = new Date();
+    var elapsed = end - start;
+    if(elapsed >= histogramSize) {
+        for(var i = 0; i < 48; i++) {
+            if(t.hasOwnProperty(i)) t[i + 1] = t[i];
+        }
+        t[0] = t.curr;
+        delete t.curr;
+        start = end;
+    }
+
+
+    var log_entry = new Date().toISOString() + ',' + req.query.sensorID + ',' + req.query.temp + '\n';
+    console.log('Received Temp', log_entry);
+    fs.appendFile('temps.csv', log_entry, function(err) {
+        if (err) {
+            console.log('FAILED TO WRITE: ', err);
+        }
+    });
+});
+
+
 
 // using this for debugging...
 app.get('/data/reset', function (req, res) {
@@ -456,12 +494,36 @@ io.on('connection', (socket) => {
 		eventsServer.ioNamespace.emit('play kitchen bell');
 	});
 	socket.on('charge credit card', (values) => {	
-			chargeCreditCard(values);
+		chargeCreditCard(values);
 	});
 	socket.on('verify admin pin', (pin, guid) => {	
-			console.log('verifying pin', pin, guid, pin == config.admin.pin);
-			socket.emit('verify admin pin result', guid, pin == config.admin.pin);
+		console.log('verifying pin', pin, guid, pin == config.admin.pin);
+		socket.emit('verify admin pin result', guid, pin == config.admin.pin);
 	});
+    socket.on('get temperatures', () => {
+		var testing = {
+			C1: {
+				key: 'C1',
+				curr: { key: 'curr', temp: 39},
+				0: { key: 0, temp:  38},
+				1: { key: 1, temp:  37},
+				2: { key: 2, temp:  37},
+				3: { key: 3, temp:  35},
+				4: { key: 4, temp:  35}
+			},
+			F2: {
+				key: 'F2',
+				curr: { key: 'curr', temp: 31},
+				0: { key: 0, temp:  29},
+				1: { key: 1, temp:  29},
+				2: { key: 2, temp:  30},
+				3: { key: 3, temp:  31},
+				4: { key: 4, temp:  30}
+			}
+		};
+        console.log('sending temperatures', testing); // temperatures);
+        socket.emit('get temperatures result', testing); // temperatures);
+    });
 });
 
 

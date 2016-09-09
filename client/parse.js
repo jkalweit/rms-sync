@@ -318,7 +318,7 @@ function buildComponent(componentName, options) {
 				var tag = getTag(trimmed) || 'div';
 				var classes = getClasses(trimmed);
 				var inner = getText(trimmed);
-				var displayName = `#{componentName}:#{id}:#{tag}`; // for debugger	
+				var displayName = componentName + ':' + id + ':' + tag; // for debugger	
 				if(binding) { 
 					var split = binding.split('=');
 					var prop = 'innerHTML';
@@ -346,6 +346,7 @@ function buildComponent(componentName, options) {
 						code += lines[i] + '\n';
 					}
 					el = new Function(args2, code).bind(componentInstance);
+                    Object.defineProperty(el, 'name', { value: displayName });
 					el.displayName = displayName;
 					//if(id === 'init') console.log('code', id, args, code);
 				} else if(tag === 'events') {
@@ -412,6 +413,9 @@ function buildComponent(componentName, options) {
 		}
 	}
 
+    if(componentName === 'KitchenHeader') {
+        console.log('KitchenHeader', componentInstance.init, componentInstance);
+    }
 	if(componentInstance.init) componentInstance.init.call(componentInstance, options);
 
 	return componentInstance;
@@ -434,6 +438,7 @@ function parseEvents(code, el, context, tabsBase, displayName) {
 						code += lines[i] + '\n';
 					}
 				var fn = new Function(args, code).bind(context);
+                Object.defineProperty(fn, 'name', { value: displayName });
 				fn.displayName = displayName;
 				if(el.on) {
 					el.on(name, fn);
