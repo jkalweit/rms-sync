@@ -17,8 +17,7 @@
 
 #hub:Hub
 #header:Header
-#weeksList:WeeksList
-#weekDetails:WeekDetails
+#weeksList:WeeksList[col-flex]
 
 Hub
 	#init:function
@@ -26,80 +25,62 @@ Hub
 	#search:function(value)
 		//this.filter.search = SV.normalize(value);
 		//hub.emit('filterChanged', this.filter);
-	#select:function(key)
-		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[key] : null;
+	#selectShift:function(weekKey, dayKey, shiftKey)	
+		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[weekKey] : null;
+		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
+		this.filter.selectedShift = this.filter.selectedDay ? this.filter.selectedDay.shifts[shiftKey] : null;
 		hub.emit('filterChanged', this.filter);
+	#setUser:function(name)
+		this.filter.user = name;
+		hub.emit('filterChanged', this.filter); 
+	#setUser2:function(name)
+		this.filter.user2 = name;
+		hub.emit('filterChanged', this.filter); 
+	#userDataList:datalist
+	#updateNameDataList:function(users)
+		this.userDataList.innerHTML = '';
+		SV.forEach(users, (user) => {
+			var option = SV.el('option', { value: user.data.info.name, parent: this.userDataList });
+		});
 	#render:function	
 		weeksList.update(this.data.schedules.weeks);
-		this.select((this.filter.selectedWeek || {}).key);	
-		if(!this.test) {
-			this.test = true;
-			this.select(SV.toArray(this.data.schedules.weeks)[0].key);
-		}
+		this.selectShift((this.filter.selectedWeek || {}).key, (this.filter.selectedDay || {}).key, (this.filter.selectedShift || {}).key);	
 
 
 Header[row row-flex dark]
 	:style
 		height: 56px;
 	#title[margin1 row-nofill] 'Timeclock'
-	#init:function
-	#render:function
-
-WeeksList[col col-left]
-	#add[btn] 'Add Week'
+	#userSelect:input[row-nofill]
+		attributes:
+			list: userDataList;	
+		style:
+			width: 239px;
 		events:
-			click:
-				this.addWeek();
-	#addWeek:function
-		var startDate = SV.getDayOfWeek(0); 
-		var startDateStr = startDate.toISOString();
-		SV.forEach(this.data, (week) => {
-			console.log('Here', startDateStr, week.startDate);
-			if(startDateStr <= week.startDate) {
-				startDate.add(1, 'weeks');
-				startDateStr = startDate.toISOString();
-			}
-		});
-		var week = {
-			key: SyncNode.guidShort(),
-			startDate: startDateStr,
-			note: '',
-			days: {}
-		};	
-		this.data.set(week.key, week);
-	#list:List({ ctor: 'Week', sort: 'startDate' })[list]$(update=data)
-		
-Week[item]
-	:events
-		click:
-			hub.select(this.data.key);
-	#date$(data.startDate)	
-	#updateFilter:function(code)
-		var isSelected = this.data.key === (hub.filter.selectedWeek || {}).key;
-		this.node.classList.toggle('selected', isSelected);
+			input(e):
+				hub.setUser(e.target.value);
 	#init:function
-		hub.on('filterChanged', () => { this.updateFilter(); });
 	#render:function
-		this.date.innerHTML = moment(this.data.startDate).format('MMM Do, YYYY');
 
-WeekDetails[col col-flex]
+
+WeeksList
+	#list:List({ ctor: 'WeekDetails', sort: 'startDate' })$(update=data)
+		
+WeekDetails[col-flex]
 	:style
 		display: none;
-		margin: 1em;
 		height: auto;
-		width: 75%;
-		min-height: 50%;
-	#header:SimpleHeader({ text: '', del: true, add: true})[light]
+		width: 100%;
+		background-color: #FFF;
+	#header:SimpleHeader({ text: '', repeat: true, del: true })[light tight]
 		events:
-			close:
-				this.emit('close');
+			repeat:
+				this.duplicateWeek();
 			delete:
 				Modal.confirm('Delete?', '', () => {
 					this.data.parent.remove(this.data.key);
 				});
-			add:
-				this.addDay();
-	#list:List({ ctor: 'Day', sort: 'startTime' })$(update=data.days)
+	#list:List({ ctor: 'Day', sort: 'startTime' })[row-flex]$(update=data.days)
 	#addShift:function(day, sortOrder, shift, area, position, name)
 		var shift = {
 			key: SyncNode.guidShort(),
@@ -142,79 +123,107 @@ WeekDetails[col col-flex]
 		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Server 2');
 		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Runner');
 		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Bartender');
-	#init:function
-		hub.on('filterChanged', () => this.update(hub.filter.selectedWeek));
+	#duplicateWeek:function
+		var week = ClockUtils.duplicateWeek(this.data); 
+		this.data.parent.set(week.key, week);
 	#render:function
 		this.node.style.display = this.data ? 'flex' : 'none';
 		if(!this.data) {
 			return;
 		}
-		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(1, 'weeks').format('MMM Do, YYYY');
+		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(6, 'days').format('MMM Do, YYYY');
 
-Day
-	:style
-		float: left;
+Day[row-fill]
 	:events
 		click:
 			//this.data.parent.remove(this.data.key);
-	#header:SimpleHeader({ text: '', del: true, add: true})
+	#header:SimpleHeader({ text: '', add: true})[tight]
 		events:
-			close:
-				this.emit('close');
-			delete:
-				Modal.confirm('Delete?', '', () => {
-					this.data.parent.remove(this.data.key);
-				});
 			add:
 				this.addShift();
 	#list:List({ ctor: 'Shift', sort: 'sortOrder' })[list]$(update=data.shifts)
 	#addShift:function
+		var sortOrder = 0;
+		SV.forEach(this.data.shifts, (shift) => { if (shift.sortOrder >= sortOrder) sortOrder = shift.sortOrder + 1; });
 		var shift = {
 			key: SyncNode.guidShort(),
 			shift: 'Dinner',
 			area: 'Kitchen',
+			sortOrder: sortOrder,
 			position: '',
 			name: '',
 			note: ''
 		};
 		this.data.shifts.set(shift.key, shift);
-		window.shiftDetails.update(this.data.shifts[shift.key]);
+		shift = this.data.shifts[shift.key];
+		var day = shift.parent.parent;
+		var week = day.parent.parent;
+		hub.selectShift(week.key, day.key, shift.key);
 		window.shiftDetails.show();
-	#duplicateDay:function
-		var day = JSON.parse(JSON.stringify(this.data));
-		day.key = SyncNode.guidShort();
-		SV.forEach(day.shifts, (shift) => {
-			shift.clockIn = null;
-			shift.clockOut = null;
-		});
-		day.startDate = moment(day.startDate).add(1, 'days').toISOString();
-		this.data.parent.set(day.key, day);
-	#init:function
-		this.copyBtn = SV.el('div', {
-				className: 'touch material-icons', innerHTML: 'repeat', 
-				events: {
-					click: () => {
-						this.duplicateDay();
-				}}});
-		this.header.node.insertBefore(this.copyBtn, this.header.del);
 	#render:function
-		this.header.text.innerHTML = moment(this.data.startDate).format('M/D dddd') + ' ' + this.data.name;
+		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
 
 
-Shift[item tight row row-flex]
+Shift[item super-tight row row-flex]
 	:style
 		borderRight: 1px solid #000;
+		font-size: 12px;
+		padding-left: 8px;
 	:events
 		click:
-			window.shiftDetails.update(this.data);
+			var shift = this.data;
+			var day = shift.parent.parent;
+			var week = day.parent.parent;
+			hub.selectShift(week.key, day.key, shift.key);
 			window.shiftDetails.show();
+		mouseover:
+			this.mouseoverTimeout = setTimeout(() => {
+				this.mouseoverTimeout = null;
+				hub.setUser2(this.data.name);	
+			}, 200);
+		mouseout:
+			if(this.mouseoverTimeout) {
+				clearTimeout(this.mouseoverTimeout);
+				this.mouseoverTimeout = null;
+			} else {
+				hub.setUser2('');	
+			}
 	#note[row-nofill]
 		style:
 			width: 5em;
-	#name[row-nofill]$(data.name)
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+	#nameLabel[row-nofill]$(data.name)
 		style:
 			width: 5em;
-	#time[row-fill margin1 right]
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+	#time[row-fill]
+		style:
+			width: 5em;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			text-align: right;
+			padding-right: 8px;
+	#updateFilter:function
+		var name = hub.filter.user;
+		var isSelected = name && SV.normalize(this.data.name).includes(SV.normalize(name));
+		var name2 = hub.filter.user2;
+		var isSelected2 = name2 && SV.normalize(this.data.name).includes(SV.normalize(name2));
+		this.node.style.backgroundColor = 'transparent';
+		if(isSelected || isSelected2) {
+			if(isSelected) this.node.style.backgroundColor = '#FF0';
+			if(isSelected2) this.node.style.backgroundColor = '#0F0';
+		} else {
+			this.node.style.backgroundColor = this.data.shift === 'Lunch' ? '#DDD' : '#FFF';
+			this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
+			if(this.data.isDisabled) this.node.style.color = '#CCC';
+		}
+	#init:function
+		hub.on('filterChanged', this.updateFilter);
 	#render:function
 		this.note.innerHTML = this.data.position + ' ' + this.data.note;
 		var time = '';
@@ -222,9 +231,7 @@ Shift[item tight row row-flex]
 		if(this.data.clockOut) time += moment(this.data.clockOut).format('h:mm');
 		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut);
 		this.time.innerHTML = time;
-		this.node.style.backgroundColor = this.data.shift === 'Lunch' ? '#DDD' : '#FFF';
-		this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
-
+		this.updateFilter();
 
 
 
@@ -238,9 +245,10 @@ ShiftDetails
 					this.data.parent.remove(this.data.key);
 					this.emit('close');
 				});
-	#nameInput:Input({ label: 'Name', prop: 'name'  })$(update=data)
-	#PositionInput:Input({ label: 'Position', prop: 'position' })$(update=data)
+	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
+	#positionInput:Input({ label: 'Position', prop: 'position' })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
 	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
 	#clockInBtn[btn] 'Clock In'
@@ -257,7 +265,9 @@ ShiftDetails
 		this.modal.show();
 	#init:function
 		this.modal = Modal.createModal(this);
+		hub.on('filterChanged', () => { this.update(hub.filter.selectedShift); });
 	#render:function
+		if(!this.data) this.modal.hide();
 
 		
 
@@ -270,17 +280,22 @@ ShiftDetails
 <script>
 "use strict"
 
-window.Input = Input
 
 SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
+window.membersSync = new SyncNodeSocket('/members', {});
 
 SV.onLoad(() => { 
 		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
 		
 		window.shiftDetails = buildComponent('ShiftDetails');
+		
+		window.membersSync.on('updated', (data) => {
+			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
+			hub.updateNameDataList(users);
+		});
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
@@ -293,6 +308,33 @@ SV.onLoad(() => {
 			hub.update(data);
 		});
 });
+
+class ClockUtils {
+		static duplicateDay(day) {
+			var copy = JSON.parse(JSON.stringify(day));
+			copy.key = SyncNode.guidShort();
+			SV.forEach(copy.shifts, (shift) => {
+				shift.clockIn = null;
+				shift.clockOut = null;
+			});
+			copy.startDate = moment(copy.startDate).add(1, 'days').toISOString();
+			return copy;
+		}
+		static duplicateWeek(week) {
+			var copy = JSON.parse(JSON.stringify(week));
+			copy.key = SyncNode.guidShort();
+			copy.startDate = moment(copy.startDate).add(1, 'weeks').toISOString();
+			SV.forEach(copy.days, (day) => {
+				day.startDate = moment(day.startDate).add(1, 'weeks').toISOString();
+				SV.forEach(day.shifts, (shift) => {
+					shift.clockIn = null;
+					shift.clockOut = null;
+					if(shift.area === 'Front') shift.name = '';
+				});
+			});
+			return copy;
+		}
+}
 
 </script>
 </body>

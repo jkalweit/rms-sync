@@ -42,7 +42,7 @@ body {
   line-height: 56px;
   text-align: center;
   transition: all 0.2s; }
-  .touch.tight {
+  .tight .touch {
     width: 28px;
     height: 28px;
     line-height: 28px;
@@ -75,6 +75,10 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none; }
+  .header.tight {
+    min-height: 28px;
+    height: auto;
+    line-height: 28px; }
 
 .footer {
   flex: 1 1 auto;
@@ -131,6 +135,9 @@ body {
     .list .item.tight {
       min-height: 28px;
       line-height: 28px; }
+    .list .item.super-tight {
+      min-height: 14px;
+      line-height: 14px; }
 
 h1 {
   font-size: 32px;
