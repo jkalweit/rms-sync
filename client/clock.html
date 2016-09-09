@@ -134,6 +134,8 @@ WeekDetails[col-flex]
 		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(6, 'days').format('MMM Do, YYYY');
 
 Day[row-fill]
+	:style
+		border-right: 1px solid #000;
 	:events
 		click:
 			//this.data.parent.remove(this.data.key);
@@ -166,7 +168,6 @@ Day[row-fill]
 
 Shift[item super-tight row row-flex]
 	:style
-		borderRight: 1px solid #000;
 		font-size: 12px;
 		padding-left: 8px;
 	:events
@@ -229,7 +230,7 @@ Shift[item super-tight row row-flex]
 		var time = '';
 		if(this.data.clockIn) time += moment(this.data.clockIn).format('h:mm') + '-';
 		if(this.data.clockOut) time += moment(this.data.clockOut).format('h:mm');
-		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut);
+		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut).toFixed(2);
 		this.time.innerHTML = time;
 		this.updateFilter();
 
