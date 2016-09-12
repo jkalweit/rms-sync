@@ -31,7 +31,7 @@ CoolerTempBar[row-fill]
 	#init:function
 		console.log('####### create');
 	#render:function
-		this.node.style.height = (this.data.temp -22) + 'px';
+		this.node.style.height = (this.data.temp -12) + 'px';
 		console.log('Height', this.data.temp, this.node.style.height);
 	
 
@@ -69,10 +69,17 @@ CoolerTemp[row row-flex]
 			height: 1px;
 			background-color: #00F;
 			z-index: 1;
-	#list:List({ ctor: 'CoolerTempBar', sort: 'key' })[row-fill row row-flex]
+	#list:List({ ctor: 'CoolerTempBar', sort: 'key', direction: 'reverse' })[row-fill row row-flex]
 	#render:function
 		console.log('this.data', this.data);
-		this.list.update(this.data);
+		var sortable = {};
+		SV.forEach(this.data, (histogram) => {
+			var h = JSON.parse(JSON.stringify(histogram));
+			if(h.key === 'curr') h.key = '-1';
+			h.key = parseInt(h.key);
+			sortable[h.key] = h;
+		});
+		this.list.update(sortable);
 			
 
 CoolerTemperatures[row row-flex]
@@ -110,7 +117,7 @@ KitchenHeader[row row-flex dark]
 		io().emit('get temperatures');
 		this.temperatureInterval = setInterval(() => {
 			io().emit('get temperatures');
-		}, 5000);
+		}, 30000);
 	#render:function
 		if(window.recSettings.kitchenStation === 'Server') {
 			var isOrderUp = false;
