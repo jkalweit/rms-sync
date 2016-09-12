@@ -233,7 +233,7 @@ class SV {
 		opts = opts || {};
 		var elem = document.createElement(name);
 		Object.keys(opts).forEach((key) => {
-			if(key !== 'events' && key !== 'style') {
+			if(key !== 'events' && key !== 'style' && key !== 'attributes') {
 				elem[key] = opts[key];
 			}
 		});
@@ -245,6 +245,11 @@ class SV {
 		if(opts.style) {
 			Object.keys(opts.style).forEach((key) => {
 				elem.style[key] = opts.style[key];
+			});
+		}
+		if(opts.attributes) {
+			Object.keys(opts.attributes).forEach((key) => {
+				elem.setAttribute(key) = opts.attributes[key];
 			});
 		}
 		if(opts.parent) opts.parent.appendChild(elem);

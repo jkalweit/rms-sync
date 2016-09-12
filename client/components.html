@@ -75,14 +75,11 @@ LabeledValue[label-set]
 	#value[value]
 	#init:function(options)
 		this.options = options || {};
-		console.log('Options here', this.options.prop, this.options);
 		this.label.innerHTML = this.options.label;
 	#render:function
-		console.log('Options', this.options.prop, this.options);
 		this.value.style.textAlign = this.options.number ? 'right' : 'left';
 		if(this.options.prop && this.data) {
 			var val = SV.getProperty(this.data, this.options.prop);
-			console.log('Options', this.options.prop, this.options);
 			if(this.options.number) {
 				this.value.innerHTML = SV.formatCurrency(val);
 			} else {
@@ -110,6 +107,10 @@ SimpleHeader[header col-nofill row row-flex]
 		events:
 			click: 
 				this.emit('add');
+	#repeat[row-nofill touch material-icons] 'repeat'
+		events:
+			click: 
+				this.emit('repeat');
 	#del[row-nofill touch material-icons] 'delete'
 		events:
 			click: 
@@ -128,6 +129,8 @@ SimpleHeader[header col-nofill row row-flex]
 		this.setTitle(options.text);
 		if(!options.add)
 			this.add.style.display = 'none';	
+		if(!options.repeat)
+			this.repeat.style.display = 'none';	
 		if(!options.close)
 			this.close.style.display = 'none';	
 		if(!options.more)

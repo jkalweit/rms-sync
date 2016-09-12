@@ -50,6 +50,7 @@ class Input extends SyncView {
 				}
 			}});
 		if(options.number) this.input.style.textAlign = 'right';
+		if(options.datalist) this.input.setAttribute('list', options.datalist);
 	}
 	focus() {
 		this.input.focus();
@@ -114,6 +115,7 @@ class List extends SyncView {
 }
 
 
+window.Input = Input;
 window.List = List;
 
 
@@ -371,7 +373,6 @@ function buildComponent(componentName, options) {
 						pair = pair.map((s) => s.trim());
 						componentInstance.node.style[pair[0]] = pair[1];
 					});
-
 				} else {
 
 					el = SV.el(tag, { 
@@ -408,6 +409,20 @@ function buildComponent(componentName, options) {
 						code += lines[i] + '\n';
 					}
 					parseEvents(code, el, componentInstance, 2, displayName);	
+				} else if(prop === 'attributes') {
+					var attr = getCode(trimmed);
+					while(i+1 < lines.length && numTabs(lines[i+1]) > 2) {
+						i = i+1;
+						attr += lines[i] + '\n';
+					}
+					attr.replace('\n', ' ');
+					var attrArr = attr.split(';');
+					attrArr.forEach((item) => {
+						if(item.trim() === '') return;
+						var pair = item.split(':');
+						pair = pair.map((s) => s.trim());
+						el.setAttribute(pair[0], pair[1]);
+					});
 				}
 			}			
 		}
