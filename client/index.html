@@ -54,6 +54,22 @@ Admin
 				});
 				updateRec();
 				this.modal.hide();
+	#testing[btn] 'Do test'
+		events:
+			click:
+				Modal.confirm('Doing Test', 'Only do test on a copy of real data!', () => {
+					var rec = hub.data;
+					var total = 1800;
+					var test = [];
+					SV.forEach(rec.tickets, (ticket) => {
+						if(total > 0) {
+							total -= ticket.totals.total;
+							test.push(ticket.key);		
+						}
+					});
+					console.log('remove ', test.length, test);
+					rec.tickets.merge({ '__remove': test });
+				});
 	#delRec[btn] 'Delete Rec'
 		events:
 			click:
