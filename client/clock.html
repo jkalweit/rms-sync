@@ -80,7 +80,7 @@ WeekDetails[col-flex]
 				Modal.confirm('Delete?', '', () => {
 					this.data.parent.remove(this.data.key);
 				});
-	#list:List({ ctor: 'Day', sort: 'startTime' })[row-flex]$(update=data.days)
+	#list:List({ ctor: 'Day', sort: 'startDate' })[row-flex]$(update=data.days)
 	#addShift:function(day, sortOrder, shift, area, position, name)
 		var shift = {
 			key: SyncNode.guidShort(),
@@ -126,6 +126,58 @@ WeekDetails[col-flex]
 	#duplicateWeek:function
 		var week = ClockUtils.duplicateWeek(this.data); 
 		this.data.parent.set(week.key, week);
+	#sendSMS:function
+		var employees = {};
+		SV.forEach(this.data.days, (day) => {
+			SV.forEach(day.shifts, (shift) => {
+				if(shift.name) {
+					if(!employees[shift.name]) {
+						employees[shift.name] = { name: shift.name, shifts: [] };
+					}
+					var emp = employees[shift.name];
+					emp.shifts.push(shift);
+				}
+			});
+		});
+		var smsHeader = this.header.text.innerHTML.trim();
+		SV.forEach(employees, (emp) => {
+			var member = SV.findFirst(window.membersSync.data, (member) => { 
+				return member.data.info.name.trim().toLowerCase() === emp.name.trim().toLowerCase();
+			});
+			console.log('member', emp.name, member);
+			if(!member) {
+				console.log('WARNING: member not found: ' + emp.name);
+			} else if (!member.data.info.mobilePhone) {
+				console.log('WARNING: no mobile phone for member: ' + emp.name, member);
+			} else {
+				var msg = emp.name + '\n' + smsHeader + '\n';
+				SV.forEach(emp.shifts, (shift) => {
+					msg += moment(shift.parent.parent.startDate).format('M/D ddd') + ' ';
+					msg += shift.shift + ': ' + shift.position + '\n';
+				});
+				console.log('Sending schedule:\n' + member.data.info.mobilePhone + '\n' + msg);
+				SV.sendText({ phone: member.data.info.mobilePhone, body: msg }); 
+			}
+		});
+	#init:function
+		this.sendSMSBtn = SV.el('div', {
+				className: 'touch material-icons', innerHTML: 'mail_outline', 
+				events: {
+					click: () => {
+						Modal.confirm('Send Schedules', 
+							'Send schedules for week ' + this.header.text.innerHTML  + '?', () => {
+							this.sendSMS();
+						});
+				}}});
+		this.header.node.insertBefore(this.sendSMSBtn, this.header.repeat);
+		this.totalsBtn = SV.el('div', {
+				className: 'touch material-icons', innerHTML: 'settings', 
+				events: {
+					click: () => {
+						window.weekTotals.update(this.data);
+						window.weekTotals.show();
+				}}});
+		this.header.node.insertBefore(this.totalsBtn, this.sendSMSBtn);
 	#render:function
 		this.node.style.display = this.data ? 'flex' : 'none';
 		if(!this.data) {
@@ -223,6 +275,9 @@ Shift[item super-tight row row-flex]
 			this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
 			if(this.data.isDisabled) this.node.style.color = '#CCC';
 		}
+		if(!this.data.isDisabled && !this.data.name.trim()) {
+			this.node.style.backgroundColor = '#F88'; // border = '1px solid #F00';
+		}
 	#init:function
 		hub.on('filterChanged', this.updateFilter);
 	#render:function
@@ -233,6 +288,10 @@ Shift[item super-tight row row-flex]
 		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut).toFixed(2);
 		this.time.innerHTML = time;
 		this.updateFilter();
+		if(!this.test) {
+			this.test = true;
+			if(this.data.name === 'Sarah') this.data.set('name', 'Sarah Cantrell');
+		}
 
 
 
@@ -270,7 +329,50 @@ ShiftDetails
 	#render:function
 		if(!this.data) this.modal.hide();
 
+
+
 		
+
+WeekTotals
+	#header:SimpleHeader({ text: 'Week Totals', close: true })
+		events:
+			close:
+				this.emit('close');
+	#list:List({ ctor: 'WeekTotalsEmployee', sort: 'key' })[list tight]
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+		if(!this.data) {
+			this.modal.hide()
+			return;			
+		};
+		var employees = {};
+		SV.forEach(this.data.days, (day) => {
+			SV.forEach(day.shifts, (shift) => {
+				if(shift.name) {
+					if(!employees[shift.name]) {
+						employees[shift.name] = { key: shift.name, hours: 0, tips: 0 };
+					}
+					var emp = employees[shift.name];
+					var clockIn;
+					var clockOut;
+					var hours = 0;
+					if(shift.clockIn) clockIn = moment(shift.clockIn);
+					if(shift.clockOut) clockOut = moment(shift.clockOut);
+					if(clockIn && clockOut) {
+						hours = parseFloat(SV.durationAsHours(clockIn, clockOut).toFixed(2));
+						emp.hours += hours;
+					};
+				}
+			});
+		});
+		this.list.update(employees);
+
+WeekTotalsEmployee
+	#nameSpan$(data.key)
+	#hours$(data.hours)
 
 
 </script>
@@ -292,6 +394,7 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 		
 		window.shiftDetails = buildComponent('ShiftDetails');
+		window.weekTotals = buildComponent('WeekTotals');
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
@@ -330,7 +433,7 @@ class ClockUtils {
 				SV.forEach(day.shifts, (shift) => {
 					shift.clockIn = null;
 					shift.clockOut = null;
-					if(shift.area === 'Front') shift.name = '';
+					if(shift.shift === 'Dinner' && shift.area === 'Front'  && shift.position !== 'Bartender') shift.name = '';
 				});
 			});
 			return copy;
