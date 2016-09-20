@@ -340,7 +340,7 @@ ShiftDetails
 				var diff = SV.durationAsHours(day, now);
 				diff = diff < 0 ? diff * -1 : diff;
 				console.log('now', now.format('M/D yyyy h:mma'), diff);	
-				if(diff >= 6) {
+				if(diff >= 5) {
 					Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
 				} else {
 					this.data.set('clockIn', new Date().toISOString());
