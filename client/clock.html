@@ -20,8 +20,6 @@
 #weeksList:WeeksList[col-flex]
 
 Hub
-	#init:function
-		this.filter = {};
 	#search:function(value)
 		//this.filter.search = SV.normalize(value);
 		//hub.emit('filterChanged', this.filter);
@@ -41,6 +39,14 @@ Hub
 		this.userDataList.innerHTML = '';
 		SV.forEach(users, (user) => {
 			var option = SV.el('option', { value: user.data.info.name, parent: this.userDataList });
+		});
+	#init:function
+		this.filter = {};
+		document.addEventListener('keypress', e => {
+			if(e.keyCode === 94) { // 94 = '^'
+				this.filter.adminMode = !this.filter.adminMode;
+				hub.emit('filterChanged', this.filter); 
+			}
 		});
 	#render:function	
 		weeksList.update(this.data.schedules.weeks);
@@ -159,7 +165,13 @@ WeekDetails[col-flex]
 				SV.sendText({ phone: member.data.info.mobilePhone, body: msg }); 
 			}
 		});
+	#updateFilter:function
+		this.sendSMSBtn.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.totalsBtn.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.header.repeat.style.display = hub.filter.adminMode ? 'block' : 'none';
 	#init:function
+		hub.on('filterChanged', () => { this.updateFilter(); });
 		this.sendSMSBtn = SV.el('div', {
 				className: 'touch material-icons', innerHTML: 'mail_outline', 
 				events: {
@@ -183,6 +195,7 @@ WeekDetails[col-flex]
 		if(!this.data) {
 			return;
 		}
+		this.updateFilter();
 		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(6, 'days').format('MMM Do, YYYY');
 
 Day[row-fill]
@@ -214,6 +227,10 @@ Day[row-fill]
 		var week = day.parent.parent;
 		hub.selectShift(week.key, day.key, shift.key);
 		window.shiftDetails.show();
+	#updateFilter:function
+		this.header.add.style.display = hub.filter.adminMode ? 'block' : 'none';
+	#init:function
+		hub.on('filterChanged', () => { this.updateFilter(); });
 	#render:function
 		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
 
@@ -314,20 +331,44 @@ ShiftDetails
 	#clockInBtn[btn] 'Clock In'
 		events:
 			click:
-				this.data.set('clockIn', new Date().toISOString());
-				this.emit('close');
+				if(this.data.clockIn) return;
+				var day = moment(this.data.parent.parent.startDate);
+				var now = moment();
+				if(this.data.shift === 'Lunch') day.add('10', 'hours');
+				else if(this.data.shift === 'Dinner') day.add('17', 'hours');
+				console.log('day', day.format('M/D yyyy h:mma'));	
+				var diff = SV.durationAsHours(day, now);
+				diff = diff < 0 ? diff * -1 : diff;
+				console.log('now', now.format('M/D yyyy h:mma'), diff);	
+				if(diff >= 6) {
+					Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
+				} else {
+					this.data.set('clockIn', new Date().toISOString());
+					this.emit('close');
+				}
 	#clockOutBtn[btn] 'Clock Out'
 		events:
 			click:
+				if(!this.data.clockIn || this.data.clockOut) return;
 				this.data.set('clockOut', new Date().toISOString());
 				this.emit('close');
 	#show:function
 		this.modal.show();
+	#updateFilter:function
+		this.disabled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
 	#init:function
+		hub.on('filterChanged', () => {  });
 		this.modal = Modal.createModal(this);
-		hub.on('filterChanged', () => { this.update(hub.filter.selectedShift); });
+		hub.on('filterChanged', () => { 
+			this.update(hub.filter.selectedShift); 
+			this.updateFilter();	
+		});
 	#render:function
-		if(!this.data) this.modal.hide();
+		if(!this.data) { this.modal.hide(); return; }
+		this.clockInBtn.classList.toggle('disabled', this.data.clockIn);
+		this.clockOutBtn.classList.toggle('disabled', !this.data.clockIn || this.data.clockOut);
+		
 
 
 
