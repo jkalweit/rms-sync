@@ -336,7 +336,12 @@ app.use('/temp', function (req, res) {
     }
     var t = temperatures[key];
     var f = parseFloat(req.query.temp);
-    if(!t.curr) {
+    
+	if(f >= 185) {
+		console.log('Ignoring invalid reading:', f);
+		return;
+	}
+	if(!t.curr) {
 		t.curr = {
 			key: 'curr',
 			temp: f

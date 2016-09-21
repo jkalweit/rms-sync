@@ -251,6 +251,9 @@ $footer-height: $increment;
 	margin: $typeGrid $margin $typeGrid $margin;
 	text-align: center;
 	@include no-select;
+	&.disabled {
+			background-color: #999;
+	}
 }
 
 
