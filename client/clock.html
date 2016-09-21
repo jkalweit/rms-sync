@@ -25,6 +25,11 @@ Hub
 	#search:function(value)
 		//this.filter.search = SV.normalize(value);
 		//hub.emit('filterChanged', this.filter);
+	#selectDay:function(weekKey, dayKey)	
+		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[weekKey] : null;
+		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
+		this.filter.selectedShift = null;
+		hub.emit('filterChanged', this.filter);
 	#selectShift:function(weekKey, dayKey, shiftKey)	
 		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[weekKey] : null;
 		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
@@ -72,8 +77,11 @@ WeekDetails[col-flex]
 		height: auto;
 		width: 100%;
 		background-color: #FFF;
-	#header:SimpleHeader({ text: '', repeat: true, del: true })[light tight]
+	#header:SimpleHeader({ text: '', settings: true, repeat: true, del: true })[light tight]
 		events:
+			settings:
+				window.weekTotals.update(this.data);
+				window.weekTotals.show();
 			repeat:
 				this.duplicateWeek();
 			delete:
@@ -170,14 +178,6 @@ WeekDetails[col-flex]
 						});
 				}}});
 		this.header.node.insertBefore(this.sendSMSBtn, this.header.repeat);
-		this.totalsBtn = SV.el('div', {
-				className: 'touch material-icons', innerHTML: 'settings', 
-				events: {
-					click: () => {
-						window.weekTotals.update(this.data);
-						window.weekTotals.show();
-				}}});
-		this.header.node.insertBefore(this.totalsBtn, this.sendSMSBtn);
 	#render:function
 		this.node.style.display = this.data ? 'flex' : 'none';
 		if(!this.data) {
@@ -191,11 +191,33 @@ Day[row-fill]
 	:events
 		click:
 			//this.data.parent.remove(this.data.key);
-	#header:SimpleHeader({ text: '', add: true})[tight]
+	#header:SimpleHeader({ text: '', settings: true, add: true })[tight]
 		events:
+			settings:
+				this.editDetails();
 			add:
 				this.addShift();
+	#daily$(data.daily)
+		style:
+			padding: 8px;
+			min-height: 1em;
+		events:
+			click:
+				this.editDetails();
+	#note$(data.note)
+		style:
+			padding: 8px;
+			color: #FFF;
+			min-height: 1em;
+		events:
+			click:
+				this.editDetails();
 	#list:List({ ctor: 'Shift', sort: 'sortOrder' })[list]$(update=data.shifts)
+	#editDetails:function
+		var day = this.data;
+		var week = day.parent.parent;
+		hub.selectDay(week.key, day.key);
+		dayDetails.show();
 	#addShift:function
 		var sortOrder = 0;
 		SV.forEach(this.data.shifts, (shift) => { if (shift.sortOrder >= sortOrder) sortOrder = shift.sortOrder + 1; });
@@ -216,6 +238,7 @@ Day[row-fill]
 		window.shiftDetails.show();
 	#render:function
 		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
+		this.note.style.backgroundColor = (this.data.note && this.data.note.trim() !== '') ? '#0A0' : 'transparent';
 
 
 Shift[item super-tight row row-flex]
@@ -292,6 +315,24 @@ Shift[item super-tight row row-flex]
 			this.test = true;
 			if(this.data.name === 'Sarah') this.data.set('name', 'Sarah Cantrell');
 		}
+
+
+
+DayDetails
+	#header:SimpleHeader({ text: 'Day Details', close: true })
+		events:
+			close:
+				this.emit('close');
+	#dailyInput:Input({ label: 'Daily', prop: 'daily' })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
+	#show:function()
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+		hub.on('filterChanged', () => { this.update(hub.filter.selectedDay); });
+	#render:function
+		if(!this.data) this.modal.hide();
 
 
 
@@ -394,6 +435,7 @@ SV.onLoad(() => {
 		parse(SV.id('view').innerHTML); 
 		
 		window.shiftDetails = buildComponent('ShiftDetails');
+		window.dayDetails = buildComponent('DayDetails');
 		window.weekTotals = buildComponent('WeekTotals');
 		
 		window.membersSync.on('updated', (data) => {
@@ -430,6 +472,8 @@ class ClockUtils {
 			copy.startDate = moment(copy.startDate).add(1, 'weeks').toISOString();
 			SV.forEach(copy.days, (day) => {
 				day.startDate = moment(day.startDate).add(1, 'weeks').toISOString();
+				day.daily = '';
+				day.note = '';
 				SV.forEach(day.shifts, (shift) => {
 					shift.clockIn = null;
 					shift.clockOut = null;

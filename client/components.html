@@ -103,6 +103,10 @@ ToggleButton[btn]
 
 SimpleHeader[header col-nofill row row-flex]
 	#text:span[row-fill]
+	#settings[row-nofill touch material-icons] 'settings'
+		events:
+			click: 
+				this.emit('settings');
 	#add[row-nofill touch material-icons] 'add'
 		events:
 			click: 
@@ -127,6 +131,8 @@ SimpleHeader[header col-nofill row row-flex]
 				this.emit('close');
 	#init:function(options) 
 		this.setTitle(options.text);
+		if(!options.settings)
+			this.settings.style.display = 'none';	
 		if(!options.add)
 			this.add.style.display = 'none';	
 		if(!options.repeat)
