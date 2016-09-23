@@ -75,6 +75,16 @@ class Input extends SyncView {
 		val = val.replace('$', '');
 		return parseFloat(val);
 	}
+
+	static DateValidator(val) {
+		if(val.trim() == '') return true;
+		return moment(val, 'MM/DD/YYYY hh:mma').isValid(); 
+	}
+	static DateParser(val) {
+		if(val.trim() == '') return null;
+		console.log('value here', val);
+		return moment(val, 'MM/DD/YYYY hh:mma').toISOString();
+	}
 }
 
 class List extends SyncView {

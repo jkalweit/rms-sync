@@ -158,7 +158,6 @@ WeekDetails[col-flex]
 			var member = SV.findFirst(window.membersSync.data, (member) => { 
 				return member.data.info.name.trim().toLowerCase() === emp.name.trim().toLowerCase();
 			});
-			console.log('member', emp.name, member);
 			if(!member) {
 				console.log('WARNING: member not found: ' + emp.name);
 			} else if (!member.data.info.mobilePhone) {
@@ -251,9 +250,21 @@ Day[row-fill]
 		window.shiftDetails.show();
 	#updateFilter:function
 		this.header.add.style.display = hub.filter.adminMode ? 'block' : 'none';
+	#updateHighlight:function
+		var dayStart = moment(this.data.startDate).add(4, 'hours'); // start day at 4am
+		var dayEnd = moment(this.data.startDate).add(28, 'hours'); // end day at 4am the next day
+		var now = moment();
+		var isToday = (SV.durationAsHours(dayStart, now) > 0) && (SV.durationAsHours(now, dayEnd) >= 0);
+		this.node.style.border = isToday ? '3px solid #FF0' : '1px solid #000';
+		this.node.style.backgroundColor = (SV.durationAsHours(dayEnd, now) < 0) ? '#FFF' : '#BBB';
+		if(SV.durationAsHours(dayStart, now) <= 0) { 
+			this.node.style.backgroundColor = '#FFF';
+		}
 	#init:function
 		hub.on('filterChanged', () => { this.updateFilter(); });
+		setInterval(() => { this.updateHighlight(); }, 60000 );
 	#render:function
+		this.updateHighlight();
 		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
 		this.note.style.backgroundColor = (this.data.note && this.data.note.trim() !== '') ? '#0A0' : 'transparent';
 
@@ -307,26 +318,35 @@ Shift[item super-tight row row-flex]
 		var name2 = hub.filter.user2;
 		var isSelected2 = name2 && SV.normalize(this.data.name).includes(SV.normalize(name2));
 		this.node.style.backgroundColor = 'transparent';
+		this.node.style.backgroundColor = this.data.shift === 'Lunch' ? 'rgba(0,0,0,.15)' : 'transparent';
+		this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
+		if(this.data.isDisabled) this.node.style.color = '#CCC';
+		
+		if(!this.data.isDisabled && !this.data.name.trim()) {
+			this.node.style.backgroundColor = '#F88'; // border = '1px solid #F00';
+		}
+		var time = '';
+		if(this.data.clockIn) {
+			time += moment(this.data.clockIn).format('h:mm') + '-';
+			this.node.style.backgroundColor = '#0FF';
+		}
+		if(this.data.clockOut) {
+			time += moment(this.data.clockOut).format('h:mm');
+			this.node.style.backgroundColor = '#D00';
+		}
+		if(this.data.clockIn && this.data.clockOut) {
+			time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut).toFixed(2);
+			this.node.style.backgroundColor = '#0CC';
+		}
+		this.time.innerHTML = time;
 		if(isSelected || isSelected2) {
 			if(isSelected) this.node.style.backgroundColor = '#FF0';
 			if(isSelected2) this.node.style.backgroundColor = '#0F0';
-		} else {
-			this.node.style.backgroundColor = this.data.shift === 'Lunch' ? '#DDD' : '#FFF';
-			this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
-			if(this.data.isDisabled) this.node.style.color = '#CCC';
-		}
-		if(!this.data.isDisabled && !this.data.name.trim()) {
-			this.node.style.backgroundColor = '#F88'; // border = '1px solid #F00';
 		}
 	#init:function
 		hub.on('filterChanged', this.updateFilter);
 	#render:function
 		this.note.innerHTML = this.data.position + ' ' + this.data.note;
-		var time = '';
-		if(this.data.clockIn) time += moment(this.data.clockIn).format('h:mm') + '-';
-		if(this.data.clockOut) time += moment(this.data.clockOut).format('h:mm');
-		if(this.data.clockIn && this.data.clockOut) time += ' ' + SV.durationAsHours(this.data.clockIn, this.data.clockOut).toFixed(2);
-		this.time.innerHTML = time;
 		this.updateFilter();
 		if(!this.test) {
 			this.test = true;
@@ -368,7 +388,9 @@ ShiftDetails
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
+	#clockInEdit:Input({ label: 'Clock In', prop: 'clockIn', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
 	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
+	#clockOutEdit:Input({ label: 'Clock Out', prop: 'clockOut', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
 	#clockInBtn[btn] 'Clock In'
 		events:
 			click:
@@ -377,10 +399,8 @@ ShiftDetails
 				var now = moment();
 				if(this.data.shift === 'Lunch') day.add('10', 'hours');
 				else if(this.data.shift === 'Dinner') day.add('17', 'hours');
-				console.log('day', day.format('M/D yyyy h:mma'));	
 				var diff = SV.durationAsHours(day, now);
 				diff = diff < 0 ? diff * -1 : diff;
-				console.log('now', now.format('M/D yyyy h:mma'), diff);	
 				if(diff >= 5) {
 					Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
 				} else {
@@ -398,6 +418,8 @@ ShiftDetails
 	#updateFilter:function
 		this.disabled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.clockInEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
+		this.clockOutEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 	#init:function
 		hub.on('filterChanged', () => {  });
 		this.modal = Modal.createModal(this);

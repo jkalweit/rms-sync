@@ -393,6 +393,11 @@ class SV {
 		return moment(value).format('h:mma');
 	}
 	
+	static formatDate(value) {
+		if(!value) return '';
+		return moment(value).format('MM/DD/YYYY hh:mma');
+	}
+	
 	static durationAsHours(start, stop) {
 		if(!start || !stop) return '';
 		var dur = moment.duration(moment(stop).diff(moment(start)));
