@@ -406,6 +406,7 @@ function buildComponent(componentName, options) {
 					style.replace('\n', ' ');
 					var styleArr = style.split(';');
 					var styleObj = SyncView.isSyncView(el) ? el.node.style : el.style;
+					if(!styleObj && el.node) styleObj = el.node.style;
 					styleArr.forEach((item) => {
 						if(item === '') return;
 						var pair = item.split(':');

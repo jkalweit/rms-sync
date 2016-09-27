@@ -343,15 +343,15 @@ Shift[item super-tight row row-flex]
 			if(isSelected) this.node.style.backgroundColor = '#FF0';
 			if(isSelected2) this.node.style.backgroundColor = '#0F0';
 		}
+		this.node.style.border = 
+			hub.filter.adminMode && this.data.note.trim() !== '' &&
+			!this.data.isNoteHandled ?
+			'1px solid #F00' : 'none';
 	#init:function
 		hub.on('filterChanged', this.updateFilter);
 	#render:function
 		this.note.innerHTML = this.data.position + ' ' + this.data.note;
 		this.updateFilter();
-		if(!this.test) {
-			this.test = true;
-			if(this.data.name === 'Sarah') this.data.set('name', 'Sarah Cantrell');
-		}
 
 
 
@@ -386,6 +386,8 @@ ShiftDetails
 	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
 	#positionInput:Input({ label: 'Position', prop: 'position' })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#noteHandled:ToggleButton({ prop: 'isNoteHandled', trueText: 'Note Handled', falseText: 'NOTE NOT HANDLED' })$(update=data)
+	#tipsInput:Input({ label: 'Tips', prop: 'tips', number: true })$(update=data)
 	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
 	#clockInEdit:Input({ label: 'Clock In', prop: 'clockIn', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
@@ -443,6 +445,11 @@ WeekTotals
 			close:
 				this.emit('close');
 	#list:List({ ctor: 'WeekTotalsEmployee', sort: 'key' })[list tight]
+		style:
+			-webkit-user-select: auto;
+			-moz-user-select: auto;
+			-ms-user-select: auto;
+			user-select: auto;
 	#show:function
 		this.modal.show();
 	#init:function
@@ -457,17 +464,19 @@ WeekTotals
 			SV.forEach(day.shifts, (shift) => {
 				if(shift.name) {
 					if(!employees[shift.name]) {
-						employees[shift.name] = { key: shift.name, hours: 0, tips: 0 };
+						employees[shift.name] = { key: shift.name, hours: 0, tips: 0, shouldReportTips: false };
 					}
 					var emp = employees[shift.name];
 					var clockIn;
 					var clockOut;
 					var hours = 0;
+					if(shift.area === 'Front') emp.shouldReportTips = true;
 					if(shift.clockIn) clockIn = moment(shift.clockIn);
 					if(shift.clockOut) clockOut = moment(shift.clockOut);
 					if(clockIn && clockOut) {
 						hours = parseFloat(SV.durationAsHours(clockIn, clockOut).toFixed(2));
 						emp.hours += hours;
+						if(shift.tips) emp.tips += shift.tips;
 					};
 				}
 			});
@@ -475,8 +484,25 @@ WeekTotals
 		this.list.update(employees);
 
 WeekTotalsEmployee
+	:style
+		clear: both;
 	#nameSpan$(data.key)
-	#hours$(data.hours)
+		style:
+			width: 20em;
+			float: left;
+	#hours
+		style:
+			width: 5em;
+			float: left;
+	#tips
+		style:
+			width: 5em;
+			float: left;
+	#render:function
+		this.hours.innerHTML = SV.formatCurrency(this.data.hours);
+		this.tips.innerHTML = SV.formatCurrency(this.data.tips);
+		this.tips.style.color =  this.data.shouldReportTips ? '#000' : '#CCC';
+	
 
 
 </script>
