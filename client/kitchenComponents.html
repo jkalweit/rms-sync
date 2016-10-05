@@ -13,6 +13,11 @@ KitchenOrder[left]
 				this.data.completedAt.set('Bar', new Date().toISOString());
 			}
 			else if(!this.data.completedAt[window.recSettings.kitchenStation]) {
+				if(window.recSettings.kitchenStation === 'Server') {
+					if(!this.data.completedAt.Grill || !this.data.completedAt.Line) {
+						return;
+					}
+				}
 				this.data.completedAt.set(window.recSettings.kitchenStation, new Date().toISOString());
 			}
 	#progressGrill
@@ -39,6 +44,14 @@ KitchenOrder[left]
 	#orderTime[row tight right padding1]
 		style:
 			position: relative;
+	#serverTime[row tight right padding1]
+		style:
+			color: #00F;
+			position: relative;
+	#kitchenTime[row tight right padding1]
+		style:
+			color: #00F;
+			position: relative;
 	#header[row tight padding1 border-bottom]
 		style:
 			position: relative;
@@ -48,21 +61,51 @@ KitchenOrder[left]
 			position: absolute;
 			top: 0; bottom: 0; left: 0; right: 0;
 			background-color: rgba(0,0,0,0.4);
-	#updateOrderTimeHelper:function(completedAt, el)
-		var now = completedAt ? moment(completedAt) : moment();
-		var submitted = moment(this.data.submittedAt);
-		var d = moment.duration(now.diff(submitted));
-		var m = d.asMilliseconds();
-		this.orderTime.innerHTML = moment(m).format('m:ss');
+	#getDuration:function(start, end)
+		var d = moment.duration(end.diff(start));
+		return d.asMilliseconds();	
+	#getProgress:function(start, end)
+		var m = this.getDuration(start, end);
 		var target = 20 * 60 * 1000;
 		var progress = m/target;
 		if(progress > 1) progress = 1;
+		return progress;
+	#getWidth:function(progress)
+		return (progress * 100).toPrecision(1) + '%';
+	#updateOrderTimeHelper:function(completedAt, el)
+		var now = completedAt ? moment(completedAt) : moment();
+		var submitted = moment(this.data.submittedAt);
+		var progress = this.getProgress(submitted, now);
 		if(completedAt) {	
 			el.style.backgroundColor = (progress === 1) ? '#800' : '#080';
 		} else {
 			el.style.backgroundColor = (progress === 1) ? '#F00' : '#0F0';
 		}
-		el.style.width = (progress * 100).toPrecision(1) + '%';
+		el.style.width = this.getWidth(progress); 
+	#updateOrderTimeServer:function(completedAt, el)
+		var grill = this.data.completedAt['Grill'];
+		var line = this.data.completedAt['Line'];
+		if(!grill || !line ) {
+			this.serverTime.innerHTML = '0:00';
+			return;
+		}
+		grill = new Date(grill);
+		line = new Date(line);
+		var ready = moment(grill > line ? grill : line);
+		var now = completedAt ? moment(completedAt) : moment();
+		var submitted = moment(this.data.submittedAt);
+		this.serverTime.innerHTML = moment(this.getDuration(ready, now)).format('m:ss');
+		var kitchenProgress = this.getProgress(submitted, ready);
+		var progress = this.getProgress(ready, now);
+		var totalProgress = kitchenProgress + progress;
+		if(completedAt) {	
+			el.style.backgroundColor = (progress >= 0.25) ? '#800' : '#080';
+		} else {
+			el.style.backgroundColor = (progress >= 0.25) ? '#F00' : '#0F0';
+		}
+		el.style.left = this.getWidth(kitchenProgress);
+		if(totalProgress > 1) progress = 1 - kitchenProgress; // to stay within bounds
+		el.style.width = this.getWidth(progress);
 	#updateOrderTime:function
 		if(this.data.serveType === 'Bar') {
 			this.updateOrderTimeHelper(this.data.completedAt['Bar'], this.progressGrill);
@@ -72,9 +115,27 @@ KitchenOrder[left]
 		} else {
 			this.updateOrderTimeHelper(this.data.completedAt['Grill'], this.progressGrill);
 			this.updateOrderTimeHelper(this.data.completedAt['Line'], this.progressLine);
-			this.updateOrderTimeHelper(this.data.completedAt['Server'], this.progressServer);
+			this.updateOrderTimeServer(this.data.completedAt['Server'], this.progressServer);
 			this.dimmer.classList.toggle('hide', !this.data.completedAt[window.recSettings.kitchenStation]);
 		}
+		var now = completedAt ? moment(completedAt) : moment();
+		var submitted = moment(this.data.submittedAt);
+		var grill = this.data.completedAt['Grill'];
+		var line = this.data.completedAt['Line'];
+		var completedAt = this.data.completedAt['Server'];
+		var ready;
+		if(!grill || !line) {
+			ready = moment();	
+		} else {
+			grill = new Date(grill);
+			line = new Date(line);
+			ready = moment(grill > line ? grill : line);
+		}
+		this.kitchenTime.innerHTML = moment(this.getDuration(submitted, ready)).format('m:ss');
+		this.orderTime.innerHTML = moment(this.getDuration(submitted, now)).format('m:ss');
+		var isOrderUp =	!this.data.completedAt.Server && !!this.data.completedAt.Grill && !!this.data.completedAt.Line;
+		console.log('isOrderUp', isOrderUp, !this.data.completedAt.Server, this.data.completedAt.Bar, this.data.completedAt.Line);
+		this.node.classList.toggle('blink', isOrderUp);
 	#render:function
 		this.header.innerHTML = this.data.table + ' ' + this.data.name;
 		this.list.update(this.data.orderItems);

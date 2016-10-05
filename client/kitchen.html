@@ -120,7 +120,7 @@ KitchenHeader[row row-flex dark]
 		}, 30000);
 	#render:function
 		if(window.recSettings.kitchenStation === 'Server') {
-			var isOrderUp = false;
+			/* var isOrderUp = false;
 			SV.forEach(this.data.kitchen.orders, (order) => {
 				if(!order.completedAt.Server && order.completedAt.Grill && order.completedAt.Line) {
 					isOrderUp = true;
@@ -128,7 +128,7 @@ KitchenHeader[row row-flex dark]
 			});
 			console.log('isOrderUp', isOrderUp);
 			this.node.style.backgroundColor = isOrderUp ? '#F0F' : '';
-			this.node.classList.toggle('blink', isOrderUp);
+			this.node.classList.toggle('blink', isOrderUp); */
 		}
 		
 KitchenOrders
@@ -137,6 +137,7 @@ KitchenOrders
 	#list:List({ ctor: 'KitchenOrder', sort: 'submittedAt' })
 	#render:function
 		this.list.update(this.data)
+		console.log('data', this.data);
 
 
 </script>

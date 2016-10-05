@@ -439,9 +439,6 @@ function buildComponent(componentName, options) {
 		}
 	}
 
-    if(componentName === 'KitchenHeader') {
-        console.log('KitchenHeader', componentInstance.init, componentInstance);
-    }
 	if(componentInstance.init) componentInstance.init.call(componentInstance, options);
 
 	return componentInstance;
