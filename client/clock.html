@@ -33,6 +33,9 @@ Hub
 		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
 		this.filter.selectedShift = this.filter.selectedDay ? this.filter.selectedDay.shifts[shiftKey] : null;
 		hub.emit('filterChanged', this.filter);
+	#setMinDate:function(min)
+		this.filter.minDate = min;
+		hub.emit('filterChanged', this.filter);
 	#setUser:function(name)
 		this.filter.user = name;
 		hub.emit('filterChanged', this.filter); 
@@ -58,6 +61,7 @@ Hub
 		this.selectShift((this.filter.selectedWeek || {}).key, (this.filter.selectedDay || {}).key, (this.filter.selectedShift || {}).key);	
 
 
+
 Header[row row-flex dark]
 	:style
 		height: 56px;
@@ -70,12 +74,48 @@ Header[row row-flex dark]
 		events:
 			input(e):
 				hub.setUser(e.target.value);
+	#dateSelect:input
+		events:
+			change:
+				hub.setMinDate(this.dateSelect.value);
+	#goBack:a '<-- Back 1 week'
+		style:
+			margin-left: 16px;
+		events:
+			click:
+				var newMin = moment(hub.filter.minDate).add(-1, 'weeks').format('YYYY-MM-DD');
+				this.dateSelect.value = newMin;
+				hub.setMinDate(newMin);
+	#forwardBack:a 'Forward 1 week -->'
+		style:
+			margin-left: 32px;
+		events:
+			click:
+				var newMin = moment(hub.filter.minDate).add(1, 'weeks').format('YYYY-MM-DD');
+				this.dateSelect.value = newMin;
+				hub.setMinDate(newMin);
 	#init:function
+		var curr = SV.getDayOfWeek(0).format('YYYY-MM-DD');
+		this.dateSelect.type = 'date';
+		this.dateSelect.value = curr;
+		hub.setMinDate(curr);
 	#render:function
+		
+		
 
 
 WeeksList
-	#list:List({ ctor: 'WeekDetails', sort: 'startDate' })$(update=data)
+	#list:List({ ctor: 'WeekDetails', sort: 'startDate' })
+	#updateFilter:function
+		var min = moment(hub.filter.minDate);
+		var filtered = SV.filterMap(this.data, (week) => {
+			return min.isBefore(week.startDate) || min.isSame(week.startDate);	
+		});
+		this.list.update(filtered);	
+	#init:function
+		hub.on('filterChanged', () => { this.updateFilter() });
+	#render:function
+		this.updateFilter();
 		
 WeekDetails[col-flex]
 	:style
@@ -389,6 +429,12 @@ ShiftDetails
 	#noteHandled:ToggleButton({ prop: 'isNoteHandled', trueText: 'Note Handled', falseText: 'NOTE NOT HANDLED' })$(update=data)
 	#tipsInput:Input({ label: 'Tips', prop: 'tips', number: true })$(update=data)
 	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
+	#checklistsCount:LabeledValue({ label: 'Checklists' })
+	#checklists:List({ ctor: 'ShiftChecklist' })
+	#addChecklistBtn[btn] 'Add Checklist'
+		events:
+			click:
+				checklists.show();
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
 	#clockInEdit:Input({ label: 'Clock In', prop: 'clockIn', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
 	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
@@ -420,6 +466,7 @@ ShiftDetails
 	#updateFilter:function
 		this.disabled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.noteHandled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.clockInEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.clockOutEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 	#init:function
@@ -433,9 +480,38 @@ ShiftDetails
 		if(!this.data) { this.modal.hide(); return; }
 		this.clockInBtn.classList.toggle('disabled', this.data.clockIn);
 		this.clockOutBtn.classList.toggle('disabled', !this.data.clockIn || this.data.clockOut);
-		
+		if(this.data.checklists) this.checklists.update(this.data.checklists);
+	
+	
+ShiftChecklist[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan$(data.name)
+	#render:function
+		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 
 
+
+Checklists
+	#header:SimpleHeader({ text: 'Checklists', close: true })
+		events:
+			close:
+				this.emit('close');
+	#checklists:List({ ctor: 'ShiftChecklist' })
+		events:
+			viewAdded:function(view)
+				view.on('selected', (item) => {
+					this.emit('selected', item);
+				});
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+		if(!this.data) { this.modal.hide(); return; }
+		if(this.data) this.checklists.update(this.data);
+	
 
 		
 
@@ -526,6 +602,14 @@ SV.onLoad(() => {
 		window.shiftDetails = buildComponent('ShiftDetails');
 		window.dayDetails = buildComponent('DayDetails');
 		window.weekTotals = buildComponent('WeekTotals');
+		window.checklists = buildComponent('Checklists');
+		window.checklists.on('selected', (checklist) => {
+			var shift = shiftDetails.data;
+			if(!shift) return;
+			var copy = JSON.parse(JSON.stringify(checklist));
+			if(!shift.checklists) shift.set('checklists', {});
+			shift.checklists.set(copy.key, copy);
+		});
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
@@ -541,6 +625,7 @@ SV.onLoad(() => {
 				});
 			}
 			hub.update(data);
+			checklists.update(data.checklists || {});
 		});
 });
 
