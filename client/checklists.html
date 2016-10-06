@@ -44,7 +44,7 @@ Checklists[col col-left col-flex]
 			add(value):
 				this.header.clear();
 				this.add(value);
-	#list:List({ ctor: 'CheckList', sort: 'name' })[col-fill list scroll-y]
+	#list:List({ ctor: 'Checklist', sort: 'name' })[col-fill list scroll-y]
 	#add:function(name)
 		var name = name || '';
 		name = name.trim();
@@ -66,7 +66,7 @@ Checklists[col col-left col-flex]
 		}
 		
 
-CheckList[item tight]
+Checklist[item tight]
 	:events
 		click:
 			hub.select(this.data.key);
@@ -126,6 +126,9 @@ ChecklistItems[col-fill col-flex]
 
 ChecklistItem[item row row-flex]
 	#nameInput:input[row-fill]
+		events:
+			change:
+				this.data.set('name', this.nameInput.value);
 	#remove[row-nofill touch material-icons] 'delete'
 		events:
 			click:

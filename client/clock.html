@@ -42,6 +42,10 @@ Hub
 	#setUser2:function(name)
 		this.filter.user2 = name;
 		hub.emit('filterChanged', this.filter); 
+	#toggleKitchen:function
+		this.filter.hideKitchen = !this.filter.hideKitchen;
+		console.log('hideKitchen', this.filter.hideKitchen);
+		hub.emit('filterChanged'); 
 	#userDataList:datalist
 	#updateNameDataList:function(users)
 		this.userDataList.innerHTML = '';
@@ -94,6 +98,12 @@ Header[row row-flex dark]
 				var newMin = moment(hub.filter.minDate).add(1, 'weeks').format('YYYY-MM-DD');
 				this.dateSelect.value = newMin;
 				hub.setMinDate(newMin);
+	#toggleKitchen:a 'Toggle Kitchen'
+		style:
+			margin-left: 16px;
+		events:
+			click:
+				hub.toggleKitchen();
 	#init:function
 		var curr = SV.getDayOfWeek(0).format('YYYY-MM-DD');
 		this.dateSelect.type = 'date';
@@ -387,6 +397,9 @@ Shift[item super-tight row row-flex]
 			hub.filter.adminMode && this.data.note.trim() !== '' &&
 			!this.data.isNoteHandled ?
 			'1px solid #F00' : 'none';
+		if(this.data.area === 'Kitchen') {
+			this.node.style.display = hub.filter.hideKitchen ? 'none' : 'flex';
+		}
 	#init:function
 		hub.on('filterChanged', this.updateFilter);
 	#render:function
