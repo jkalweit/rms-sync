@@ -129,6 +129,10 @@ ChecklistItem[item row row-flex]
 		events:
 			change:
 				this.data.set('name', this.nameInput.value);
+	#noteInput:textarea[row-fill]
+		events:
+			change:
+				this.data.set('note', this.noteInput.value);
 	#remove[row-nofill touch material-icons] 'delete'
 		events:
 			click:
@@ -136,6 +140,7 @@ ChecklistItem[item row row-flex]
 	#init:function
 	#render:function
 		this.nameInput.value = this.data.name;	
+		this.noteInput.value = this.data.note || '';	
 
 </script>
 
