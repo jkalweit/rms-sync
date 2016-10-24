@@ -42,7 +42,7 @@ CoolerTemp[row row-flex]
 		position: relative;
 		background-color: #FFF;
 		border-right: 1px solid #000;
-	#name$(data.key)
+	#name
 		style:
 			position: absolute;
 			top: 0;
@@ -80,6 +80,15 @@ CoolerTemp[row row-flex]
 			sortable[h.key] = h;
 		});
 		this.list.update(sortable);
+		if(this.data.key === 'DDD') {
+			this.name.innerHTML = 'Silver Fridge';
+		} else if(this.data.key === '123E') {
+			this.name.innerHTML = '2-Door Fridge';
+		} else if(this.data.key === 'DAC') {
+			this.name.innerHTML = 'White Freez1';
+		} else if(this.data.key === '124F') {
+			this.name.innerHTML = 'White Freez2';
+		} 
 			
 
 CoolerTemperatures[row row-flex]

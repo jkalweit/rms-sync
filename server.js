@@ -368,9 +368,9 @@ app.use('/temp', function (req, res) {
     }
 
 
-    var log_entry = new Date().toISOString() + ',' + req.query.sensorID + ',' + req.query.temp + '\n';
+    var log_entry = new Date().toISOString() + ',' + key + ',' + req.query.temp + '\n';
     console.log('Received Temp', log_entry);
-    fs.appendFile('temps.csv', log_entry, function(err) {
+    fs.appendFile('temps_' + key + '.csv', log_entry, function(err) {
         if (err) {
             console.log('FAILED TO WRITE: ', err);
         }
