@@ -371,7 +371,6 @@ Shift[item super-tight row row-flex]
 		this.node.style.backgroundColor = this.data.shift === 'Lunch' ? 'rgba(0,0,0,.15)' : 'transparent';
 		this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
 		if(this.data.isDisabled) this.node.style.color = '#CCC';
-		
 		if(!this.data.isDisabled && !this.data.name.trim()) {
 			this.node.style.backgroundColor = '#F88'; // border = '1px solid #F00';
 		}
@@ -444,10 +443,16 @@ ShiftDetails
 	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
 	#checklistsCount:LabeledValue({ label: 'Checklists' })
 	#checklists:List({ ctor: 'ShiftChecklist' })
+		events:
+			viewAdded:function(view)
+				view.on('selected', (checklist) => {
+					window.checklistDetails.update(checklist);
+					window.checklistDetails.show();
+				});	
 	#addChecklistBtn[btn] 'Add Checklist'
 		events:
 			click:
-				checklists.show();
+				window.checklists.show();
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
 	#clockInEdit:Input({ label: 'Clock In', prop: 'clockIn', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
 	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
@@ -471,9 +476,27 @@ ShiftDetails
 	#clockOutBtn[btn] 'Clock Out'
 		events:
 			click:
-				if(!this.data.clockIn || this.data.clockOut) return;
-				this.data.set('clockOut', new Date().toISOString());
-				this.emit('close');
+				if(!this.data.clockIn || this.data.clockOut) return;				
+				var allComplete = true;
+				SV.forEach(this.data.checklists, (checklist) => {
+					SV.forEach(checklist.items, (item) => {
+						if(!item.isComplete) {
+							allComplete = false;
+						}
+					});
+				});
+				if(!allComplete) {
+					Modal.confirm('Unfinished Checklists', 'You have unfinished checklists, clock out anyway?', () => {
+						this.doClockOut();
+						console.log('Clocked out with unfinished checklist(s): ' + this.data.name);
+						SV.sendToAdmin('Clocked out with unfinished checklist(s): ' + this.data.name);
+					});
+				} else {
+					this.doClockOut();
+				}
+	#doClockOut:function
+			this.data.set('clockOut', new Date().toISOString());
+			this.emit('close');
 	#show:function
 		this.modal.show();
 	#updateFilter:function
@@ -482,6 +505,7 @@ ShiftDetails
 		this.noteHandled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.clockInEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.clockOutEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
+		this.addChecklistBtn.style.display = hub.filter.adminMode ? 'block' : 'none';
 	#init:function
 		hub.on('filterChanged', () => {  });
 		this.modal = Modal.createModal(this);
@@ -494,16 +518,26 @@ ShiftDetails
 		this.clockInBtn.classList.toggle('disabled', this.data.clockIn);
 		this.clockOutBtn.classList.toggle('disabled', !this.data.clockIn || this.data.clockOut);
 		if(this.data.checklists) this.checklists.update(this.data.checklists);
+		if(window.checklistDetails.modal.isShown) {
+			window.checklistDetails.update(this.data.checklists[window.checklistDetails.data.key]);
+		}
 	
 	
 ShiftChecklist[item tight]
+	:style
+		margin-left: 32px;
 	:events
 		click:
 			this.emit('selected', this.data);
 	#nameSpan$(data.name)
 	#render:function
-		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
-
+		var allComplete = true;
+		SV.forEach(this.data.items, (item) => {
+			if(!item.isComplete) {
+				allComplete = false;
+			}
+		});
+		this.node.style.color = allComplete ? '#0C0' : '#C00';
 
 
 Checklists
@@ -511,7 +545,7 @@ Checklists
 		events:
 			close:
 				this.emit('close');
-	#checklists:List({ ctor: 'ShiftChecklist' })
+	#checklists:List({ ctor: 'Checklist' })
 		events:
 			viewAdded:function(view)
 				view.on('selected', (item) => {
@@ -524,9 +558,48 @@ Checklists
 	#render:function
 		if(!this.data) { this.modal.hide(); return; }
 		if(this.data) this.checklists.update(this.data);
-	
 
-		
+Checklist[item tight]
+	:events
+		click:
+			this.emit('selected', this.data);
+	#nameSpan$(data.name)
+	#render:function
+		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
+	
+ChecklistDetails
+	#header:SimpleHeader({ text: '', close: true })
+		events:
+			close:
+				this.modal.hide();
+	#note:p$(data.note)
+	#list:List({ ctor: 'ChecklistItem', sort: 'name'})[col-fill list scroll-y]
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+	#render:function
+		this.header.text.innerHTML = this.data.name;
+		this.list.update(this.data.items);
+
+ChecklistItem[item tight row row-flex]
+	:events
+		click:
+			this.data.set('isComplete', !this.data.isComplete);
+			this.data.set('completedAt', this.data.isComplete ? new Date().toISOString() : null);
+	#nameSpan[row-fill]$(data.name)
+	#noteSpan[row-fill]$(data.note)
+		style:
+			white-space: pre-wrap;
+	#completedAt[row-nofill]
+		style:
+			width: 5em;
+	#init:function
+	#render:function
+		this.completedAt.innerHTML = this.data.completedAt ? moment(this.data.completedAt).format('h:mma') : '';	
+		this.node.style.textDecoration = this.data.isComplete ? 'line-through' : 'none';
+
+
 
 WeekTotals
 	#header:SimpleHeader({ text: 'Week Totals', close: true })
@@ -623,6 +696,7 @@ SV.onLoad(() => {
 			if(!shift.checklists) shift.set('checklists', {});
 			shift.checklists.set(copy.key, copy);
 		});
+		window.checklistDetails = buildComponent('ChecklistDetails');
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
