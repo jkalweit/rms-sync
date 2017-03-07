@@ -47,6 +47,11 @@ body {
     height: 28px;
     line-height: 28px;
     font-size: 16px; }
+  .super-tight .touch {
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    font-size: 14px; }
 
 .touch:hover {
   color: rgba(0, 0, 0, 0.5); }
@@ -114,9 +119,7 @@ body {
     padding-left: 4px;
     padding-right: 4px;
     width: 100%; }
-  .label-set.number input,
-  .label-set.number select,
-  .label-set.number .value {
+  .label-set.number input, .label-set.number select, .label-set.number .value {
     text-align: right; }
 
 .list {
@@ -526,7 +529,6 @@ h6 {
 @keyframes blinker {
   50% {
     opacity: 0.0; } }
-
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
@@ -534,7 +536,6 @@ h6 {
   src: url(/imgs/fonts/MaterialIcons-Regular.eot);
   /* For IE6-8 */
   src: local("Material Icons"), local("MaterialIcons-Regular"), url(/imgs/fonts/MaterialIcons-Regular.woff2) format("woff2"), url(/imgs/fonts/MaterialIcons-Regular.woff) format("woff"), url(/imgs/fonts/MMaterialIcons-Regular.ttf) format("truetype"); }
-
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;

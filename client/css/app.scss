@@ -79,6 +79,14 @@ body {
 		line-height: $increment/2;
 		font-size: 16px;
 	}
+
+	.super-tight & {
+		width: $increment/4;
+		height: $increment/4;
+		line-height: $increment/4;
+		font-size: $increment/4;
+	}
+
 }	
 .touch:hover {
 	color: rgba(0,0,0,0.5);

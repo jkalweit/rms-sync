@@ -119,6 +119,7 @@ MemberDetails[col col-left col-flex wide]
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data.data.info)
 	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data.data.info)
 	#isStaffToggle:ToggleButton({ prop: 'isStaff', trueText: 'Staff', falseText: 'Not Staff' })$(update=data.data.info)
+	#isPayrollToggle:ToggleButton({ prop: 'isNotHourly', trueText: 'Not Hourly', falseText: 'Hourly' })$(update=data.data.info)
 	#close:function
 		this.update(null);
 	#updateFilter:function	

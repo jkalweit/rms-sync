@@ -49,6 +49,7 @@ class Input extends SyncView {
 					}
 				}
 			}});
+		if(options.isTextArea) this.input.style.whiteSpace = 'pre-wrap';
 		if(options.number) this.input.style.textAlign = 'right';
 		if(options.datalist) this.input.setAttribute('list', options.datalist);
 	}

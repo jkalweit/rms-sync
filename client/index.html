@@ -44,6 +44,17 @@ Admin
 	:style
 		z-index: 1000;
 	#title:h1 'Admin'	
+	#temp[btn] 'Do thing'
+		events:
+			click:
+				var rec = hub.data;
+				var otherRec = SV.toArray(hub.data.parent)[21];
+				console.log('asdf', otherRec);
+				SV.forEach(otherRec.tickets, (ticket) => {
+					rec.tickets.set(ticket.key, ticket);
+					otherRec.tickets.remove(ticket.key);
+					console.log('moved', ticket.name);
+				});
 	#unfinalizeRec[btn] 'Unfinalize Rec'
 		events:
 			click:
@@ -81,7 +92,8 @@ Admin
 	#archive[btn] 'Archive Old'
 		events:
 			click:
-				var recs = hub.data.parent; 
+				console.log('hereerere', sync.data);
+				var recs = sync.data.reconciliations; 
 				var merge = {
 					__remove: []
 				};
@@ -1852,7 +1864,7 @@ MenuItem[item tight secondary-dark]
 
 window.Input = Input
 
-SV.startReloader();
+//SV.startReloader();
 
 
 var sync = new SyncNodeSocket('/data', {});

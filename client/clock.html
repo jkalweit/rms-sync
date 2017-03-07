@@ -262,15 +262,9 @@ Day[row-fill]
 	#daily$(data.daily)
 		style:
 			padding: 8px;
-			min-height: 1em;
-		events:
-			click:
-				this.editDetails();
-	#note$(data.note)
-		style:
-			padding: 8px;
-			color: #FFF;
-			min-height: 1em;
+			font-size: 12px;
+			height: 4em;
+			white-space: pre-wrap;
 		events:
 			click:
 				this.editDetails();
@@ -316,13 +310,13 @@ Day[row-fill]
 	#render:function
 		this.updateHighlight();
 		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
-		this.note.style.backgroundColor = (this.data.note && this.data.note.trim() !== '') ? '#0A0' : 'transparent';
+		//this.note.style.backgroundColor = (this.data.note && this.data.note.trim() !== '') ? '#0A0' : 'transparent';
 
 
 Shift[item super-tight row row-flex]
 	:style
 		font-size: 12px;
-		padding-left: 8px;
+		padding-left: 0px;
 	:events
 		click:
 			var shift = this.data;
@@ -331,17 +325,69 @@ Shift[item super-tight row row-flex]
 			hub.selectShift(week.key, day.key, shift.key);
 			window.shiftDetails.show();
 		mouseover:
+			/*
 			this.mouseoverTimeout = setTimeout(() => {
 				this.mouseoverTimeout = null;
 				hub.setUser2(this.data.name);	
 			}, 200);
+			*/
 		mouseout:
+			/*
 			if(this.mouseoverTimeout) {
 				clearTimeout(this.mouseoverTimeout);
 				this.mouseoverTimeout = null;
 			} else {
 				hub.setUser2('');	
 			}
+			*/
+	#handle[row-nofill super-tight touch material-icons] 'reorder'
+		style:
+			width: 1em;
+			height: 1em;
+			display: none;
+		events:
+			click(e):
+				e.stopPropagation();
+			dragstart(e):
+				let transfer = { parent: this.data.parent.version, source: this.data.key };
+				e.dataTransfer.setData('text/plain', JSON.stringify(transfer));
+			dragover(e):
+				e.preventDefault();
+				e.dataTransfer.dropEffect = 'move';
+			drop(e):
+				e.preventDefault();
+				let source = JSON.parse(e.dataTransfer.getData('text'));
+				if(source.parent == this.data.parent.version) {
+					let sourceItem;
+					let destinationItem = this.data;
+					SV.forEach(this.data.parent, (item) => {
+						if(item.key == source.source) {
+							sourceItem =  item;
+						}	
+					});
+					let destinationSortOrder = destinationItem.sortOrder;
+					let newOrder = SV.toArray(this.data.parent, 'sortOrder');
+					let i;
+					for(i = 0; i < newOrder.length; i++) {
+						if(newOrder[i].key === sourceItem.key) break;	
+					}
+					newOrder.splice(i, 1); //remove source item
+					for(i = 0; i < newOrder.length; i++) {
+						if(newOrder[i].key === destinationItem.key) break;	
+					}
+					newOrder.splice(i, 0, sourceItem); // re-insert source item	
+					for(i = 0; i < newOrder.length; i++) {
+						console.log('so', newOrder[i].sortOrder);
+					}	
+					let merge = {};
+					let newSortOrder = 1;
+					for(i = 0; i < newOrder.length; i++) {
+						merge[newOrder[i].key] = { sortOrder: newSortOrder++ };
+					}
+					this.data.parent.merge(merge);
+					console.log('merge', merge);
+					console.log('Source sortOrder', i, sourceItem.sortOrder, destinationItem.sortOrder);
+				}
 	#note[row-nofill]
 		style:
 			width: 5em;
@@ -369,7 +415,7 @@ Shift[item super-tight row row-flex]
 		var isSelected2 = name2 && SV.normalize(this.data.name).includes(SV.normalize(name2));
 		this.node.style.backgroundColor = 'transparent';
 		this.node.style.backgroundColor = this.data.shift === 'Lunch' ? 'rgba(0,0,0,.15)' : 'transparent';
-		this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
+		//this.node.style.color = this.data.area === 'Front' ? '#00F' : '#000';
 		if(this.data.isDisabled) this.node.style.color = '#CCC';
 		if(!this.data.isDisabled && !this.data.name.trim()) {
 			this.node.style.backgroundColor = '#F88'; // border = '1px solid #F00';
@@ -396,11 +442,13 @@ Shift[item super-tight row row-flex]
 			hub.filter.adminMode && this.data.note.trim() !== '' &&
 			!this.data.isNoteHandled ?
 			'1px solid #F00' : 'none';
+		this.handle.style.display = hub.filter.adminMode ? 'block' : 'none';
 		if(this.data.area === 'Kitchen') {
 			this.node.style.display = hub.filter.hideKitchen ? 'none' : 'flex';
 		}
 	#init:function
 		hub.on('filterChanged', this.updateFilter);
+		this.handle.draggable = true;
 	#render:function
 		this.note.innerHTML = this.data.position + ' ' + this.data.note;
 		this.updateFilter();
@@ -412,14 +460,16 @@ DayDetails
 		events:
 			close:
 				this.emit('close');
-	#dailyInput:Input({ label: 'Daily', prop: 'daily' })$(update=data)
-	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#dailyInput:Input({ label: 'Daily', prop: 'daily', isTextArea: true })$(update=data)
+	//#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
 	#show:function()
 		this.modal.show();
 	#init:function
 		this.modal = Modal.createModal(this);
 		hub.on('filterChanged', () => { this.update(hub.filter.selectedDay); });
+		this.dailyInput.input.style.height = '3em';
+		this.dailyInput.input.style.fontSize = '12px';
 	#render:function
 		if(!this.data) this.modal.hide();
 
@@ -676,7 +726,7 @@ WeekTotalsEmployee
 "use strict"
 
 
-SV.startReloader();
+//SV.startReloader();
 
 var sync = new SyncNodeSocket('/data', {});
 window.membersSync = new SyncNodeSocket('/members', {});
@@ -721,6 +771,7 @@ class ClockUtils {
 			var copy = JSON.parse(JSON.stringify(day));
 			copy.key = SyncNode.guidShort();
 			SV.forEach(copy.shifts, (shift) => {
+				shift.note = '';
 				shift.clockIn = null;
 				shift.clockOut = null;
 			});
@@ -738,6 +789,7 @@ class ClockUtils {
 				SV.forEach(day.shifts, (shift) => {
 					shift.clockIn = null;
 					shift.clockOut = null;
+					shift.note = '';
 					if(shift.shift === 'Dinner' && shift.area === 'Front'  && shift.position !== 'Bartender') shift.name = '';
 				});
 			});
