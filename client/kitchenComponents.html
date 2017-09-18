@@ -175,5 +175,55 @@ KitchenOrderItem[row tight]
 		this.options.innerHTML = optionsText;
 
 
+SpillSheetItem[item tight row row-flex]
+	:events
+		click:
+			this.emit('selected', this.data);
+			//this.data.parent.remove(this.data.key);
+	#date[width3 row-nofill]
+	#name[width3 row-nofill]$(data.name)
+	#reason[row-fill]$(data.reason)
+	#render:function
+		var submitted = moment(this.data.submittedAt);
+		this.date.innerHTML = submitted.format('YYYY-MM-DD hh:mma');
+
+SpillSheet
+	#header:SimpleHeader({ text: 'Spill Sheet', close: true})
+		events:
+			close:
+				this.emit('close');
+	#name:Input({ label: 'Product/Quantity' })
+	#reason:Input({ label: 'Reason' })
+	#add[btn] 'Add'
+		style:
+			margin-bottom: 1em;	
+		events:
+			click:
+				var name = this.name.input.value.trim();
+				var reason = this.reason.input.value.trim();
+				if(name === '' || reason === '') {
+					Modal.showNotification('Cannot add Item', 'Product and Reason are required.');
+					return;
+				}
+				var item = {
+					key: SyncNode.guidShort(),
+					submittedAt: new Date().toISOString(),
+					name: name,
+					reason: reason
+				};
+				this.data.items.set(item.key, item);
+				this.name.input.value = '';
+				this.reason.input.value = '';
+	#list:List({ ctor: 'SpillSheetItem' })[col-nofill list tight]
+	#init:function
+		this.modal = Modal.createModal(this);
+	#show:function
+		this.modal.show();
+	#render:function
+		if(this.data) {
+			console.log('spillSheet', this.data);
+			this.list.update(this.data.items);
+		}
+
 		
 </script>

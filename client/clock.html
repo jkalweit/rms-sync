@@ -47,6 +47,7 @@ Hub
 		console.log('hideKitchen', this.filter.hideKitchen);
 		hub.emit('filterChanged'); 
 	#userDataList:datalist
+	#areaList:datalist
 	#updateNameDataList:function(users)
 		this.userDataList.innerHTML = '';
 		SV.forEach(users, (user) => {
@@ -486,7 +487,8 @@ ShiftDetails
 					this.emit('close');
 				});
 	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
-	#positionInput:Input({ label: 'Position', prop: 'position' })$(update=data)
+	#positionInput:Input({ label: 'Position', prop: 'position', datalist: 'areaList' })$(update=data)
+	#areaInput:Input({ label: 'Area', prop: 'area' })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#noteHandled:ToggleButton({ prop: 'isNoteHandled', trueText: 'Note Handled', falseText: 'NOTE NOT HANDLED' })$(update=data)
 	#tipsInput:Input({ label: 'Tips', prop: 'tips', number: true })$(update=data)
@@ -517,12 +519,12 @@ ShiftDetails
 				else if(this.data.shift === 'Dinner') day.add('17', 'hours');
 				var diff = SV.durationAsHours(day, now);
 				diff = diff < 0 ? diff * -1 : diff;
-				if(diff >= 5) {
-					Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
-				} else {
+				//if(diff >= 5) {
+				//	Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
+				//} else {
 					this.data.set('clockIn', new Date().toISOString());
 					this.emit('close');
-				}
+				//}
 	#clockOutBtn[btn] 'Clock Out'
 		events:
 			click:
@@ -530,6 +532,7 @@ ShiftDetails
 				var allComplete = true;
 				SV.forEach(this.data.checklists, (checklist) => {
 					SV.forEach(checklist.items, (item) => {
+						console.log('item', item)
 						if(!item.isComplete) {
 							allComplete = false;
 						}
@@ -552,6 +555,7 @@ ShiftDetails
 	#updateFilter:function
 		this.disabled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.areaInput.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.noteHandled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.clockInEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.clockOutEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
@@ -567,7 +571,7 @@ ShiftDetails
 		if(!this.data) { this.modal.hide(); return; }
 		this.clockInBtn.classList.toggle('disabled', this.data.clockIn);
 		this.clockOutBtn.classList.toggle('disabled', !this.data.clockIn || this.data.clockOut);
-		if(this.data.checklists) this.checklists.update(this.data.checklists);
+		this.checklists.update(this.data.checklists || {});
 		if(window.checklistDetails.modal.isShown) {
 			window.checklistDetails.update(this.data.checklists[window.checklistDetails.data.key]);
 		}
@@ -618,10 +622,13 @@ Checklist[item tight]
 		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
 	
 ChecklistDetails
-	#header:SimpleHeader({ text: '', close: true })
+	#header:SimpleHeader({ text: '', close: true, del: false })
 		events:
 			close:
 				this.modal.hide();
+			delete:
+				console.log('del');
+				this.data.parent.remove(this.data.key);
 	#note:p$(data.note)
 	#list:List({ ctor: 'ChecklistItem', sort: 'name'})[col-fill list scroll-y]
 	#show:function

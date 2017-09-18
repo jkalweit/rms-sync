@@ -751,6 +751,10 @@ Header[row row-flex black]
 				window.recSettings.set('currentPrinter', name);
 	#title[row-nofill bold]
 	#status[row-fill margin1 bold]
+	:div[row-nofill touch material-icons] 'list'
+		events:
+			click:
+				window.spillSheetModal.show();
 	#totals:RecTotals[row-nofill]
 	:div[row-nofill touch material-icons] 'settings'
 		events:
@@ -778,10 +782,6 @@ Header[row row-flex black]
 		this.totals.update(this.data.totals);
 		this.title.innerHTML = this.data.name;
 		this.recSettings.update(this.data.drawer);
-		this.test = true;
-		if(this.test) return;
-		this.test = true;
-		this.recSettingsModal.show();
 		
 
 TicketListMain[col col-flex col-left]
@@ -1916,7 +1916,9 @@ SV.onLoad(() => {
 		var creditCardDetails = buildComponent('CreditCardDetails');
 		window.creditCardDetailsModal = Modal.createModal(creditCardDetails);
 		window.creditCardDetailsModal.on('show', () => { creditCardDetails.input.focus(); });
-		//window.creditCardDetailsModal.show();
+
+		var spillSheet = buildComponent('SpillSheet');
+		window.spillSheetModal = Modal.createModal(spillSheet);
 
 		var admin = buildComponent('Admin');
 		document.addEventListener('keyup', (e) => {
@@ -1936,6 +1938,7 @@ SV.onLoad(() => {
 			menuCategories.update(data.menu.categories);			
 			recList.update(data.reconciliations);
 			ticketDetails.controls.applyCreditModal.update(data);
+			spillSheet.update(data.spillSheet);
 			updateRec();
 		});
 
