@@ -11,7 +11,6 @@ var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
 var fetch = require('node-fetch');
-var sass = require('node-sass-middleware');
 var MemberServer = require('./server/MemberServer.js').MemberServer;
 
 var pdf = require('html-pdf');
@@ -129,6 +128,7 @@ app.use('/images', express.static(imagesPath));
 var syncServer = new Sync.SyncNodeServer('data', io, {});
 var eventsServer = new Sync.SyncNodeServer('events', io, {});
 var progressServer = new Sync.SyncNodeServer('progress', io, {});
+var checklistsServer = new Sync.SyncNodeServer('checklists', io, {});
 var membersServer = new MemberServer(io);
 
 
@@ -311,12 +311,13 @@ app.all('/member/*', (req, res, next) => {
 });
 
 
+/*
 app.use(sass({
 	src: __dirname + '/client',
 	dest: __dirname + '/client',
 	debug: true
 }));
-
+*/
 
 
 app.use('/', express.static('client/'));
@@ -410,6 +411,9 @@ function sendText(phone, body) {
 }
 function sendTextToAdmin(body) {
 	sendText(membersServer.data.admin.data.info.phone, body);
+	sendText('8035265996', body);
+	sendText('6073427924', body);
+	sendText('8035261118', body);
 }
 
 function sendToPrinter(type, doc, printer) {

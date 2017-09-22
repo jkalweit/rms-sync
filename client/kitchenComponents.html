@@ -134,8 +134,7 @@ KitchenOrder[left]
 		this.kitchenTime.innerHTML = moment(this.getDuration(submitted, ready)).format('m:ss');
 		this.orderTime.innerHTML = moment(this.getDuration(submitted, now)).format('m:ss');
 		var isOrderUp =	!this.data.completedAt.Server && !!this.data.completedAt.Grill && !!this.data.completedAt.Line;
-		console.log('isOrderUp', isOrderUp, !this.data.completedAt.Server, this.data.completedAt.Bar, this.data.completedAt.Line);
-		this.node.style.backgroundColor = isOrderUp ? '#FF0' : '#FFF';
+		uhis.node.style.backgroundColor = isOrderUp ? '#FF0' : '#FFF';
 	#render:function
 		this.header.innerHTML = this.data.table + ' ' + this.data.name;
 		this.list.update(this.data.orderItems);
@@ -152,26 +151,28 @@ KitchenOrder[left]
 KitchenOrderItem[row tight]
 	:style
 		line-height: 20px;
-	#temp[margin1]
+	#temp[margin1]$(data.temp)
 		style:
 			display: inline-block;
 			width: 2em;
 	#nameSpan
 		style:
 			display: inline-block;
-	#side[right margin1]
+	#side[right margin1]$(data.side)
 	#options[margin4 whitespace-pre]
 	#noteSpan$(data.note)[italic margin4 whitespace-pre]
 	#render:function
 		var quantity = this.data.quantity != 1 ? this.data.quantity + 'x' : '';
 		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; display: inline-block;">${quantity}</span><span class="bold">${this.data.name}</span>`
 		var optionsText = '';
+		/*
 		SV.forEach(this.data.options, (option) => { 
 			if(option.name === 'Temp' ) { this.temp.innerHTML = option.value; }
 			else if(option.name === 'Side') { this.side.innerHTML = option.value; }
 			else if(option.name === 'Dressing') {  }
 			else { optionsText += option.value + '\n'; }
 		});
+		*/
 		this.options.innerHTML = optionsText;
 
 

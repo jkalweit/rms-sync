@@ -10,78 +10,53 @@
 </head>
 <body>
 
-
 <script id="view" type="text/other">
 
 #hub:Hub
 #header:Header
-#checklists:Checklists[col]
-#checklistDetails:ChecklistDetails[col]
-
+#checkLists:Checklists
+#checklistDetails:ChecklistDetails
 
 Hub
 	#init:function
 		this.filter = {};
 	#select:function(key)
-		this.filter.selected = (this.data.checklists || {})[key];
-		hub.emit('filterChanged');
+		this.filter.selected = this.data[key];
+		this.emit('filterChanged', this.filter);
 	#render:function	
 		if(this.filter.selected) {
 			this.select(this.filter.selected.key);
 		}
 
-
-Header[row row-flex dark]
+Header[row dark]
 	:style
 		height: 56px;
-	#title[margin1 row-fill] 'Checklists'
+	#title[margin1] 'Checklists'
 	#init:function
-	#render:function
 
 Checklists[col col-left col-flex]
-	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
-		events:
-			add(value):
-				this.header.clear();
-				this.add(value);
-	#list:List({ ctor: 'Checklist', sort: 'name' })[col-fill list scroll-y]
-	#add:function(name)
-		var name = name || '';
-		name = name.trim();
-		if(!name) return;
-		var newItem = { 
-			key: SyncNode.guidShort(), 
-			addedAt: new Date().toISOString(), 
-			name: name,
-			isDisabled: false,
-			items: {} };
-		this.data.set(newItem.key, newItem);
-		hub.select(newItem.key);
-	#init:function
-	#render:function 
+	#list:List({ text: 'Checklists', ctor: 'ChecklistItem', sort: 'name' })[col-fill list tight]
+	#render:function
+		console.log('dataaaarrrr', this.data);
 		this.list.update(this.data);
-		if(!this.test && SV.toArray(this.data)[0]) {
-			this.test = true;
-			hub.select((SV.toArray(this.data)[0] || {}).key);
-		}
-		
 
-Checklist[item tight]
+ChecklistItem[item tight]
 	:events
 		click:
 			hub.select(this.data.key);
 	#nameSpan$(data.name)[name]
 	#updateFilter:function
-		this.node.classList.toggle('selected', (hub.filter.selected || {}).key === this.data.key);
+		var isMatch = (hub.filter.selected || {}).key === this.data.key;
+		this.node.classList.toggle('selected', isMatch);
+		var hide = SV.normalize(this.data.name).indexOf(hub.filter.name || '') === -1;
+		this.node.classList.toggle('hide', hide);	
 	#init:function
 		hub.on('filterChanged', () => this.updateFilter());
 	#render:function
 		this.updateFilter();
-		this.node.style.color = this.data.isDisabled ? '#777' : '#000';
-
 
 ChecklistDetails[col col-left col-flex wide]
-	#header:SimpleHeader({ "text": "Details", "close": true, 'del': true})
+	#header:SimpleHeader({ text: 'Details', close: true, del: true})
 		events:
 			close:
 				this.close();
@@ -92,11 +67,9 @@ ChecklistDetails[col col-left col-flex wide]
 				});
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
-	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data)
-	#items:ChecklistItems
+	#list:List({ ctor: 'ChecklistGroup' })[col-fill list tight scroll-y]
 	#close:function
-			//itemDetails.close();
-			this.update(null);
+		this.update(null);
 	#updateFilter:function	
 		this.node.classList.toggle('hide', !this.data);	
 	#init:function
@@ -104,46 +77,21 @@ ChecklistDetails[col col-left col-flex wide]
 		hub.on('filterChanged', () => { this.update(hub.filter.selected); });
 	#render:function
 		this.updateFilter();
-		if(this.data) this.items.update(this.data.items);
+		if(this.data) { this.list.update(this.data.groups); }
 
-ChecklistItems[col-fill col-flex]
-	#header:SearchHeader({ searchBox: true, addBtn: true })[col-nofill]
-		events:
-			add(value):
-				this.header.clear();
-				this.add(value);
-	#list:List({ ctor: 'ChecklistItem', sort: 'name'})[col-fill list scroll-y]
-	#add:function(name)
-		var newItem = { 
-			key: SyncNode.guidShort(),
-			addedAt: new Date().toISOString(), 
-			name: name
-		};
-		this.data.set(newItem.key, newItem);
-		//hub.selectValue(newItem.key);
-	#render:function 
-		this.list.update(this.data);
-
-ChecklistItem[item row row-flex]
-	#nameInput:input[row-fill]
-		events:
-			change:
-				this.data.set('name', this.nameInput.value);
-	#noteInput:textarea[row-fill]
-		events:
-			change:
-				this.data.set('note', this.noteInput.value);
-	#remove[row-nofill touch material-icons] 'delete'
-		events:
-			click:
-				this.data.parent.remove(this.data.key);
-	#init:function
+ChecklistGroup
+	#nameInput:Input({ prop: 'name', label: 'Group' })$(update=data)
+		style:
+			background-color: #BBB;
+	#list:List({ ctor: 'ChecklistGroupItem' })[col-fill list tight]
 	#render:function
-		this.nameInput.value = this.data.name;	
-		this.noteInput.value = this.data.note || '';	
+		this.list.update(this.data.items);
+
+
+ChecklistGroupItem
+	#nameInput:Input({ prop: 'name', label: '' })$(update=data)
 
 </script>
-
 
 
 
@@ -154,22 +102,18 @@ window.Input = Input
 
 SV.startReloader();
 
-var sync = new SyncNodeSocket('/data', {});
+var sync = new SyncNodeSocket('/checklists', {});
 
 
 SV.onLoad(() => { 
 		importCode('components.html'); 
 		parse(SV.id('view').innerHTML); 
 
+		var test2 = false;
 		sync.on('updated', (data) => {
-			if(!data.checklists) {
-				data.set('checklists', { 
-				});
-			} else { 
-				console.log('checklists', data.checklists);
-				hub.update(data);
-				checklists.update(data.checklists);
-			}
+			hub.update(data.checklists);
+			if(!test2) { test2 = true; hub.select(SV.toArray(data.checklists)[0].key); }
+			checkLists.update(data.checklists);
 		});
 });
 

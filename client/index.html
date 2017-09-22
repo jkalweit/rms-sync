@@ -627,9 +627,10 @@ TableSelect
 				this.emit('close');
 	#init:function
 		var tables1 = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', 'Bar'];
-		var tables2 = ['2-1', '2-2', '2-3', '2-4', '2-5', 'Deck', 'TOGO'];
+		var tables2 = ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', 'TOGO'];
+		var tables3 = ['D-W1', 'D-W2', 'D-W3', 'D-S1', 'D-S2', 'D-S3', 'Deck'];
 		this.list1 = SV.el('div', { parent: this.lists, className: 'col-left list',
-			style: { width: '50%' }});
+			style: { width: '33%' }});
 		tables1.forEach((table) => {
 			var item = buildComponent('Table');
 			item.on('selected', (name) => { this.emit('selected', name); });
@@ -637,12 +638,20 @@ TableSelect
 			this.list1.appendChild(item.node);
 		});
 		this.list2 = SV.el('div', { parent: this.lists, className: 'col-left list',
-			style: { width: '50%' }});
+			style: { width: '33%' }});
 		tables2.forEach((table) => {
 			var item = buildComponent('Table');
 			item.on('selected', (name) => { this.emit('selected', name); });
 			item.update({ name: table });
 			this.list2.appendChild(item.node);
+		});
+		this.list3 = SV.el('div', { parent: this.lists, className: 'col-left list',
+			style: { width: '34%' }});
+		tables3.forEach((table) => {
+			var item = buildComponent('Table');
+			item.on('selected', (name) => { this.emit('selected', name); });
+			item.update({ name: table });
+			this.list3.appendChild(item.node);
 		});
 
 Table[item]
@@ -1094,7 +1103,10 @@ TicketControls[header dark row-flex]
 				key: item.key,
 				name: item.name,
 				quantity: item.quantity,
+				temp: item.temp || '',
+				side: item.side || '',
 				note: item.note,
+				serverNote: item.serverNote || '',
 				options: JSON.parse(JSON.stringify(item.options))
 			};
 			ko.orderItems[orderItem.key] = orderItem;
@@ -1281,7 +1293,7 @@ TicketDetails[col col-flex wide light shadow]
 		}
 		hub.selectOrderItem(orderItem);
 		this.orderItemDetails.show();	
-		this.orderItemDetails.noteInput.focus();
+		this.orderItemDetails.left.tempInput.focus();
 	#buyCredit:function(credit)
 		var newItem = { 
 			key: SyncNode.guidShort(),
@@ -1578,7 +1590,7 @@ OrderItemList[col-flex]
 		this.list.on('viewAdded', (view) => { view.on('edit', (orderItem) => { this.emit('edit', orderItem); }); });
 	#render:function 
 		var groups = SV.group(this.data, (item) => { 
-			var diff = item.name + ' ' + item.note + ' ' + item.price;
+			var diff = item.name + ' ' + item.temp + ' ' + item.side + ' ' + item.note + ' ' + item.serverNote + ' ' + item.price;
 			SV.forEach(item.options, (option) => { diff += ' ' + option.name + ' ' + option.value });
 			return diff;
 		});  
@@ -1642,7 +1654,10 @@ OrderItemGroup[item tight]
 			isAlcohol: orderItem.isAlcohol,
 			serveType: orderItem.serveType,
 			taxType: orderItem.taxType,
+			temp: orderItem.temp || '',
+			side: orderItem.side || '',
 			note: orderItem.note || '',
+			serverNote: orderItem.serverNote || '',
 			options: JSON.parse(JSON.stringify(orderItem.options)),
 			modifiers: JSON.parse(JSON.stringify(orderItem.modifiers))
 		};
@@ -1683,9 +1698,10 @@ OrderItemGroup[item tight]
 		var optionsText = '';
 		SV.forEach(this.model.options, (option) => { optionsText += ' ' + option.value });
 		this.options.innerHTML = optionsText;
-		this.note.innerHTML = (this.model.note || '').replace('\n', ' - ');
+		this.note.innerHTML = ((this.model.temp ? this.model.temp + ' - ' : '') + (this.model.side ? this.model.side + ' - ' : '') + (this.model.note || '').replace('\n', ' - ')).trim();
+		this.note.innerHTML += this.note.innerHTML ? ' - ' : '';
+		this.note.innerHTML += (this.model.serverNote || '').replace('\n', ' - ');
 		this.list.update(this.data);
-
 
 OrderItem[row row-flex tight]
 	:events
@@ -1720,7 +1736,7 @@ OrderItem[row row-flex tight]
 	
 
 
-OrderItemDetails[col-flex]
+OrderItemDetails
 	#header:SimpleHeader({ text: 'Order Item Details', close: true, del: true})
 		events:
 			close:
@@ -1728,8 +1744,42 @@ OrderItemDetails[col-flex]
 			delete:
 				window.deleteOrderItem.delete(this.data);
 				this.emit('close');
+	#left:OrderItemDetailsLeft[col-left]$(update=data)
+	#legend:OrderItemLegend[col-left]
+	#show:function
+		this.modal.show();
+	#init:function
+		this.modal = Modal.createModal(this);
+		this.header.node.insertBefore(SV.el('div', { className: 'row-nofill touch material-icons', innerHTML: 'reply',
+			events: { click: () => { 
+				hub.clearTicketSearch();
+				this.left.selectTicketListModal.show();
+		}}}), this.header.close);
+
+
+OrderItemLegend
+	:style
+		line-height: 1em;
+		border: none;
+	:h4 'Temp'
+	:div 'r: Rare'
+	:div 'mr: Medium Rare'
+	:div 'm: Medium'
+	:div 'mw: Medium Well'
+	:div 'w: Well'
+	:h4 'Side'
+	:div 'ff: Crinkle Fries'
+	:div 'hff: Hand Cut Fries'
+	:div 'spff: Sweet Potato Fries'
+
+OrderItemDetailsLeft[col-flex]
+	:style
+		border: none;
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
-	#noteInput:Input({ prop: 'note', label: 'Note', isTextArea: true })$(update=data)
+	#tempInput:Input({ prop: 'temp', label: 'Temp' })$(update=data)
+	#sideInput:Input({ prop: 'side', label: 'Side' })$(update=data)
+	#noteInput:Input({ prop: 'note', label: 'Kitchen Note', isTextArea: true })$(update=data)
+	#serverNoteInput:Input({ prop: 'serverNote', label: 'Server Note', isTextArea: true })$(update=data)
 	#quantityInput:Input({ prop: 'quantity', label: 'Quantity', number: true  })$(update=data)[number]
 		events:
 			changed:
@@ -1752,10 +1802,7 @@ OrderItemDetails[col-flex]
 			selected(option):
 				this.selectOptionsView.update(option);
 				this.selectOptionsViewModal.show();
-	#show:function
-		this.modal.show();
 	#init:function
-		this.modal = Modal.createModal(this);
 		hub.on('ticketFilterChanged', () => this.update(hub.ticketFilter.selectedOrderItem));
 		this.selectOptionsView = buildComponent('SelectOptionsView');
 		this.selectOptionsView.on('selected', (value) => { 
@@ -1783,11 +1830,6 @@ OrderItemDetails[col-flex]
 			style: { marginTop: '1em' },
 			events: { click: () => { this.selectTicketListModal.hide();  }}});
 		this.selectTicketListModal.node.style.zIndex = 3;
-		this.header.node.insertBefore(SV.el('div', { className: 'row-nofill touch material-icons', innerHTML: 'reply',
-			events: { click: () => { 
-				hub.clearTicketSearch();
-				this.selectTicketListModal.show();
-		}}}), this.header.close);
 		this.render();
 	#render:function
 		this.node.classList.toggle('hide', !this.data);
@@ -1893,7 +1935,7 @@ function updateRec() {
 	ticketList.node.classList.toggle('hide', !rec);
 	if(rec) {
 		ticketList.update(rec.tickets);
-		ticketDetails.orderItemDetails.selectTicketList.update(rec.tickets);
+		ticketDetails.orderItemDetails.left.selectTicketList.update(rec.tickets);
 	}
 }
 
