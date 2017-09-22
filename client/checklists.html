@@ -55,7 +55,7 @@ ChecklistItem[item tight]
 		this.updateFilter();
 
 ChecklistDetails[col col-left col-flex wide]
-	#header:SimpleHeader({ text: 'Details', close: true, del: true})
+	#header:SimpleHeader({ text: 'Details', close: true, del: false})
 		events:
 			close:
 				this.close();
@@ -89,18 +89,21 @@ ChecklistGroup
 	#render:function
 		this.list.update(this.data.items);
 
-
-ChecklistGroupItem
+ChecklistGroupItem[row row-flex]
+	:style
+		padding: 16px;
+		line-height: 1em;
+		border-bottom: 1px solid #999;
 	:events
 		click:
 			console.log('click');
 			this.data.set('completedAt', this.data.completedAt ? '' : new Date().toISOString());
-	#name$(data.name)
-		style:
-			padding: 16px;
-			border-bottom: 1px solid #999;
+	#name[row-fill]$(data.name)
+	#test[row-nofill] 'Test'
 	#render:function
 		this.node.style.backgroundColor = this.data.completedAt ? '#69F0AE' : 'white';
+
+
 
 </script>
 
