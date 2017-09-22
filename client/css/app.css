@@ -100,7 +100,7 @@ body {
   box-sizing: border-box; }
 
 .label-set {
-  height: 56px;
+  min-height: 56px;
   line-height: 56px;
   padding: 0;
   margin: 0;

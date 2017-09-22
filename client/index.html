@@ -1742,7 +1742,7 @@ OrderItemDetails
 			close:
 				this.emit('close');
 			delete:
-				window.deleteOrderItem.delete(this.data);
+				window.deleteOrderItem.delete(this.left.data);
 				this.emit('close');
 	#left:OrderItemDetailsLeft[col-left]$(update=data)
 	#legend:OrderItemLegend[col-left]
@@ -1775,6 +1775,10 @@ OrderItemLegend
 OrderItemDetailsLeft[col-flex]
 	:style
 		border: none;
+	#appWarning[blink] 'If this is a STARTER that should come out FIRST, please send it to the kitchen NOW and then add and submit the rest of the order.'
+		style:
+			color: red;
+			padding: 1em;
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
 	#tempInput:Input({ prop: 'temp', label: 'Temp' })$(update=data)
 	#sideInput:Input({ prop: 'side', label: 'Side' })$(update=data)
@@ -1832,6 +1836,8 @@ OrderItemDetailsLeft[col-flex]
 		this.selectTicketListModal.node.style.zIndex = 3;
 		this.render();
 	#render:function
+		console.log('cat', menuHub, menuHub.filter.selectedCategory, menuHub.filter.selectedCategory && menuHub.filter.selectedCategory.name !== 'Starters');
+		this.appWarning.classList.toggle('hide', !menuHub.filter.selectedCategory || menuHub.filter.selectedCategory.name !== 'Starters');
 		this.node.classList.toggle('hide', !this.data);
 		if(this.data) { 
 			this.options.update(this.data.options);

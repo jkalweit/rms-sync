@@ -37,7 +37,6 @@ Header[row dark]
 Checklists[col col-left col-flex]
 	#list:List({ text: 'Checklists', ctor: 'ChecklistItem', sort: 'name' })[col-fill list tight]
 	#render:function
-		console.log('dataaaarrrr', this.data);
 		this.list.update(this.data);
 
 ChecklistItem[item tight]
@@ -65,8 +64,8 @@ ChecklistDetails[col col-left col-flex wide]
 					this.data.parent.remove(this.data.key);
 					this.close();
 				});
-	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
-	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data)
+	#name:LabeledValue({ label: 'List Name:', prop: 'name' })$(update=data)
+	#type:LabeledValue({ label: 'List Type:', prop: 'listType' })$(update=data)
 	#list:List({ ctor: 'ChecklistGroup' })[col-fill list tight scroll-y]
 	#close:function
 		this.update(null);
@@ -77,19 +76,31 @@ ChecklistDetails[col col-left col-flex wide]
 		hub.on('filterChanged', () => { this.update(hub.filter.selected); });
 	#render:function
 		this.updateFilter();
-		if(this.data) { this.list.update(this.data.groups); }
+		if(this.data) { 
+			this.list.update(this.data.groups);
+		}
 
 ChecklistGroup
-	#nameInput:Input({ prop: 'name', label: 'Group' })$(update=data)
+	#name$(data.name)
 		style:
 			background-color: #BBB;
+			padding: 16px;
 	#list:List({ ctor: 'ChecklistGroupItem' })[col-fill list tight]
 	#render:function
 		this.list.update(this.data.items);
 
 
 ChecklistGroupItem
-	#nameInput:Input({ prop: 'name', label: '' })$(update=data)
+	:events
+		click:
+			console.log('click');
+			this.data.set('completedAt', this.data.completedAt ? '' : new Date().toISOString());
+	#name$(data.name)
+		style:
+			padding: 16px;
+			border-bottom: 1px solid #999;
+	#render:function
+		this.node.style.backgroundColor = this.data.completedAt ? '#69F0AE' : 'white';
 
 </script>
 
