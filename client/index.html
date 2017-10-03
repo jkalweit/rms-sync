@@ -701,12 +701,12 @@ DrawerEdit
 		this.title.innerHTML = this.options.title;
 
 RecTotalsEdit
-	#beginningBtn:button 'Beg'
-		events:
-			click: 
-				this.beginningDrawerModal.show();
-	//#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
-	//#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
+	//#beginningBtn:button 'Beg'
+	//	events:
+	//		click: 
+	//			this.beginningDrawerModal.show();
+	#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
+	#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
 	#payouts:Input({ label: 'Payouts', prop: 'payouts', number: true })$(update=data)[number]
 	#creditTips:Input({ label: 'CC Tips', prop: 'ccTips', number: true })$(update=data)[number]
 	#cashTake:LabeledValue({ label: 'Cash Take' })[number]
@@ -749,14 +749,14 @@ RecTotalsEdit
 			difference: diff
 		};
 	#init:function
-		this.beginningDrawer = buildComponent('DrawerEdit', { title: 'Beginning Drawer' });
-		this.beginningDrawerModal = Modal.createModal(this.beginningDrawer);
-		this.beginningDrawerModal.on('hide', function() { console.log('update drawer total..'); })
-		this.beginningDrawerModal.node.style.zIndex = 3;
+		//this.beginningDrawer = buildComponent('DrawerEdit', { title: 'Beginning Drawer' });
+		//this.beginningDrawerModal = Modal.createModal(this.beginningDrawer);
+		//this.beginningDrawerModal.on('hide', function() { console.log('update drawer total..'); })
+		//this.beginningDrawerModal.node.style.zIndex = 3;
 	#render:function
 		if(this.data) {
-			var bDrawer = this.data.begginingDrawer || new SyncNode({});
-			this.beginningDrawer.update(bDrawer);
+			//var bDrawer = this.data.beginningDrawer || new SyncNode({});
+			//this.beginningDrawer.update(bDrawer);
 			var calcs = this.getRecCalcs();
 			this.sales.value.innerHTML = SV.formatCurrency(calcs.sales.total);
 			this.cashTake.value.innerHTML = SV.formatCurrency(calcs.cashTake);
@@ -1849,6 +1849,7 @@ OrderItemLegend
 	:OrderItemLegendRow({ abbreviation: 'MOZ', definition: 'Mozzarella Sticks' })
 	:OrderItemLegendRow({ abbreviation: 'VEG', definition: 'Grilled Veggies' })
 	:OrderItemLegendRow({ abbreviation: 'SLD', definition: 'Salad' })
+	:OrderItemLegendRow({ abbreviation: 'OK', definition: 'Okra' })
 
 OrderItemDetailsLeft[col-flex]
 	:style
