@@ -317,6 +317,7 @@ function buildComponent(componentName, options) {
 
 
 	var componentInstance = new component.ctor();
+	componentInstance.options = options;
 	componentInstance.node.className += ' ' + component.classes;
 	var lines = component.code.split('\n');
 	var el;

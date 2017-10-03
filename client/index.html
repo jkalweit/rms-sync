@@ -3,19 +3,24 @@
 <link rel="stylesheet" type="text/css" href="/css/app.css">
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="/bower_components/moment/moment.js"></script>
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 <script type="text/javascript" src="/SyncNode.js"></script>
 <script type="text/javascript" src="/SyncNodeSocket.js"></script>
 <script type="text/javascript" src="/SyncView.js"></script>
 <script type="text/javascript" src="/parse.js"></script>
 <link rel="import" id="components.html" href="/components.html">
 <link rel="import" id="kitchenComponents.html" href="/kitchenComponents.html">
+
+<style>
+	.drawer-p {
+		height: 56px;
+		line-height: 56px;
+		padding: 0;
+		margin: 0;
+	}
+</style>
+
 </head>
 <body>
-
-<script type="text/javascript">
-  Stripe.setPublishableKey('pk_test_HgozEWRWusGTiLHoVNbIvAtW');
-</script>
 
 <script id="view" type="text/other">
 
@@ -406,6 +411,7 @@ DeleteOrderItem
 		if(reason) {
 			var message = this.header.text.innerHTML + ': ' + reason + ': ' + this.note.input.value;
 			SV.sendToAdmin(message);
+			this.note.input.value = '';
 		}
 		var ticket = this.itemToDelete.parent.parent;
 		if(this.itemToDelete.creditKey) sync.data.credits.remove(this.itemToDelete.creditKey);
@@ -442,6 +448,7 @@ CreditCardDetails
 	
 	#submit:function
 		console.log('Submit!');
+		/*
 		var data = this.parseCC('%B4242424242424242^KALWEIT/JUSTIN ^1812');	
 		Stripe.card.createToken(data.cc, (status, response) => {
 			console.log('response:', status, response);
@@ -454,6 +461,7 @@ CreditCardDetails
 			}
 		});
 		console.log('Submitted');
+		*/
 
 Disable[flex hide]
 	:style
@@ -660,10 +668,45 @@ Table[item]
 			this.emit('selected', this.data.name);
 	#nameSpan$(data.name)
 
+Drawer
+	#d100:Input({ prop: 'd100', number: true })$(update=data)[number]
+		events:
+			changed:
+				console.log('update drawer');
+	#d50:Input({ prop: 'd50', number: true })$(update=data)[number]
+	#d20:Input({ prop: 'd20', number: true })$(update=data)[number]
+	#d10:Input({ prop: 'd10', number: true })$(update=data)[number]
+	#d5:Input({ prop: 'd5', number: true })$(update=data)[number]
+	#d1:Input({ prop: 'd1', number: true })$(update=data)[number]
+	#dChange:Input({ prop: 'dChange', number: true })$(update=data)[number]
+	#dTotal:p[drawer-p]
+	#updateTotal:function
+		console.log('total', this.d100.value);
+
+
+DrawerLabels
+	:p[drawer-p] '100s'
+	:p[drawer-p] '50s'
+	:p[drawer-p] '20s'
+	:p[drawer-p] '10s'
+	:p[drawer-p] '5s'
+	:p[drawer-p] '1s'
+	:p[drawer-p] 'Change'
+
+DrawerEdit
+	#title:h2[group]
+	#labels:DrawerLabels[left]
+	#drawer:Drawer[left]
+	#init:function
+		this.title.innerHTML = this.options.title;
 
 RecTotalsEdit
-	#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
-	#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
+	#beginningBtn:button 'Beg'
+		events:
+			click: 
+				this.beginningDrawerModal.show();
+	//#beginning:Input({ label: 'Beginning', prop: 'beginning', number: true })$(update=data)[number]
+	//#ending:Input({ label: 'Ending', prop: 'ending', number: true })$(update=data)[number]
 	#payouts:Input({ label: 'Payouts', prop: 'payouts', number: true })$(update=data)[number]
 	#creditTips:Input({ label: 'CC Tips', prop: 'ccTips', number: true })$(update=data)[number]
 	#cashTake:LabeledValue({ label: 'Cash Take' })[number]
@@ -705,8 +748,15 @@ RecTotalsEdit
 			totalTake: totalTake,
 			difference: diff
 		};
+	#init:function
+		this.beginningDrawer = buildComponent('DrawerEdit', { title: 'Beginning Drawer' });
+		this.beginningDrawerModal = Modal.createModal(this.beginningDrawer);
+		this.beginningDrawerModal.on('hide', function() { console.log('update drawer total..'); })
+		this.beginningDrawerModal.node.style.zIndex = 3;
 	#render:function
 		if(this.data) {
+			var bDrawer = this.data.begginingDrawer || new SyncNode({});
+			this.beginningDrawer.update(bDrawer);
 			var calcs = this.getRecCalcs();
 			this.sales.value.innerHTML = SV.formatCurrency(calcs.sales.total);
 			this.cashTake.value.innerHTML = SV.formatCurrency(calcs.cashTake);
@@ -720,7 +770,6 @@ RecSettings
 	#totals:RecTotalsEdit
 		style:
 			width: 50%;
-			//float: left;
 	#close[btn] 'Ok'
 		events:
 			click:
@@ -1751,6 +1800,7 @@ OrderItemDetails
 		this.modal.show();
 	#init:function
 		this.modal = Modal.createModal(this);
+		this.modal.mainView.style.maxWidth = '800px';
 		this.header.node.insertBefore(SV.el('div', { className: 'row-nofill touch material-icons', innerHTML: 'reply',
 			events: { click: () => { 
 				hub.clearTicketSearch();
@@ -1758,20 +1808,47 @@ OrderItemDetails
 		}}}), this.header.close);
 
 
+OrderItemLegendRow[row-flex]
+	#abbreviation[row-nofill]
+		style:
+			text-align: right;
+			width: 4em;
+			margin-right: 1em;
+	#definition[row-fill]
+		style:
+			color: #888;
+	#init:function
+		this.abbreviation.innerHTML = this.options.abbreviation;
+		this.definition.innerHTML = this.options.definition;
+
 OrderItemLegend
 	:style
 		line-height: 1em;
 		border: none;
+		width: 350px;
 	:h4 'Temp'
-	:div 'r: Rare'
-	:div 'mr: Medium Rare'
-	:div 'm: Medium'
-	:div 'mw: Medium Well'
-	:div 'w: Well'
+	:OrderItemLegendRow({ abbreviation: 'R', definition: 'Rare' })
+	:OrderItemLegendRow({ abbreviation: 'MR', definition: 'Medium Rare' })
+	:OrderItemLegendRow({ abbreviation: 'M', definition: 'Medium' })
+	:OrderItemLegendRow({ abbreviation: 'MW', definition: 'Medium Well' })
+	:OrderItemLegendRow({ abbreviation: 'W', definition: 'Well' })
 	:h4 'Side'
-	:div 'ff: Crinkle Fries'
-	:div 'hff: Hand Cut Fries'
-	:div 'spff: Sweet Potato Fries'
+	:OrderItemLegendRow({ abbreviation: 'NOSD', definition: 'No Side' })
+	:OrderItemLegendRow({ abbreviation: 'FF', definition: 'Crinkle Fries' })
+	:OrderItemLegendRow({ abbreviation: 'HFF', definition: 'Hand Cut Fries' })
+	:OrderItemLegendRow({ abbreviation: 'SPFF', definition: 'Sweet Potato Fries' })
+	:OrderItemLegendRow({ abbreviation: 'BP', definition: 'Baked Potato' })
+	:OrderItemLegendRow({ abbreviation: 'PUB', definition: 'Pub Chips' })
+	:OrderItemLegendRow({ abbreviation: 'SLAW', definition: 'Slaw' })
+	:h4 'Premium Side'
+	:OrderItemLegendRow({ abbreviation: 'LDBP', definition: 'Loaded Baked Potato' })
+	:OrderItemLegendRow({ abbreviation: 'BCFF', definition: 'Bacon Cheese Fries' })
+	:OrderItemLegendRow({ abbreviation: 'PKLS', definition: 'Pickles' })
+	:OrderItemLegendRow({ abbreviation: 'MAC', definition: 'Mac Bites' })
+	:OrderItemLegendRow({ abbreviation: 'OR', definition: 'Onion Rings' })
+	:OrderItemLegendRow({ abbreviation: 'MOZ', definition: 'Mozzarella Sticks' })
+	:OrderItemLegendRow({ abbreviation: 'VEG', definition: 'Grilled Veggies' })
+	:OrderItemLegendRow({ abbreviation: 'SLD', definition: 'Salad' })
 
 OrderItemDetailsLeft[col-flex]
 	:style
@@ -1981,6 +2058,7 @@ SV.onLoad(() => {
 		window.adminPin = buildComponent('AdminPin');
 		window.deleteOrderItem = buildComponent('DeleteOrderItem');
 
+		var test = false;
 		sync.on('updated', (data) => {
 			console.log('data', data);
 			menuHub.update(data.menu);
@@ -1989,6 +2067,10 @@ SV.onLoad(() => {
 			ticketDetails.controls.applyCreditModal.update(data);
 			spillSheet.update(data.spillSheet);
 			updateRec();
+			if(!test) {
+				test = true;
+				header.recSettingsModal.show();
+			}
 		});
 
 		
@@ -2007,7 +2089,6 @@ SV.onLoad(() => {
 			updateRec();
 		});
 			
-		console.log('selecting printer', window.recSettings.currentPrinter);
 		header.printerSelect.select(window.recSettings.currentPrinter);
 });
 
