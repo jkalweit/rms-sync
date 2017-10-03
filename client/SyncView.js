@@ -345,8 +345,8 @@ class SV {
 			itemsSorted[key++] = item;
 		});
 		small.orderItems = itemsSorted;
-		console.log('Small Sorted', printer, small);
-		//io().emit('print receipt', small, printer);
+		console.log('Small Sorted2', printer, small);
+		io().emit('print receipt', small, printer);
 	}
 	
 	static printKitchen(kitchenOrder, printer) {

@@ -134,7 +134,7 @@ KitchenOrder[left]
 		this.kitchenTime.innerHTML = moment(this.getDuration(submitted, ready)).format('m:ss');
 		this.orderTime.innerHTML = moment(this.getDuration(submitted, now)).format('m:ss');
 		var isOrderUp =	!this.data.completedAt.Server && !!this.data.completedAt.Grill && !!this.data.completedAt.Line;
-		uhis.node.style.backgroundColor = isOrderUp ? '#FF0' : '#FFF';
+		this.node.style.backgroundColor = isOrderUp ? '#FF0' : '#FFF';
 	#render:function
 		this.header.innerHTML = this.data.table + ' ' + this.data.name;
 		this.list.update(this.data.orderItems);
