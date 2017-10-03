@@ -338,7 +338,15 @@ class SV {
 	static printReceipt(receipt, printer) {
 		var small = SV.removeCrap(receipt);
 		console.log('Small', printer, small);
-		io().emit('print receipt', small, printer);
+		var itemsArr = SV.toArray(small.orderItems, 'name');
+		var itemsSorted = {};
+		var key = 0;
+		itemsArr.forEach(function (item) {
+			itemsSorted[key++] = item;
+		});
+		small.orderItems = itemsSorted;
+		console.log('Small Sorted', printer, small);
+		//io().emit('print receipt', small, printer);
 	}
 	
 	static printKitchen(kitchenOrder, printer) {
