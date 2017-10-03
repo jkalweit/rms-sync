@@ -15,50 +15,50 @@ class Response {
 //
 //
 class SyncNodeServer {
-    constructor(namespace, io, defaultData) {
-        if (defaultData === void 0) { defaultData = {}; }
+	constructor(namespace, io, defaultData) {
+		if (defaultData === void 0) { defaultData = {}; }
 		this.backupCount = 0;
-		this.numBackups = 9;
-        this.namespace = namespace;
-        this.directory = '../data';
-        this.io = io;
-        this.get((data) => {
-            this.data = data;
-            if (!this.data) {
-                this.data = JSON.parse(JSON.stringify(defaultData)); // Use a copy for immutability
-            }
-            this.start();
-        });
-    }
-    start() {
-        this.ioNamespace = this.io.of(this.namespace);
-        this.ioNamespace.on('connection', (socket) => {
-            console.log('someone connected to ' + this.namespace);
-            socket.on('getLatest', (clientVersion) => {
-                console.log('getLatest', this.data.version, clientVersion);
-                if (!clientVersion || clientVersion !== this.data.version) {
-                    socket.emit('latest', this.data);
-                }
-                else {
-                    console.log('already has latest.');
-                    socket.emit('latest', null);
-                }
-            });
-            socket.on('update', (request) => {
-                var merge = request.data;
-		if(request.concurrencyVersion !== this.data.version) {
-			// Probably should stop here and send a concurency error response to client:
-			console.error('WARNING: Server version NOT EQUAL TO concurrencyVersion', request.concurrencyVersion, this.data.version);
-		}
-                this.doMerge(this.data, merge);
-                this.persist();
-                socket.emit('updateResponse', new Response(request.requestGuid));
-                socket.broadcast.emit('update', merge);
-                if (this.onMerge)
-                    this.onMerge(merge);
-            });
-        });
-    }
+		this.numBackups = 0;
+		this.namespace = namespace;
+		this.directory = '../data';
+		this.io = io;
+		this.get((data) => {
+			this.data = data;
+			if (!this.data) {
+				this.data = JSON.parse(JSON.stringify(defaultData)); // Use a copy for immutability
+			}
+			this.start();
+		});
+	}
+	start() {
+		this.ioNamespace = this.io.of(this.namespace);
+		this.ioNamespace.on('connection', (socket) => {
+			console.log('someone connected to ' + this.namespace);
+			socket.on('getLatest', (clientVersion) => {
+				console.log('getLatest', this.data.version, clientVersion);
+				if (!clientVersion || clientVersion !== this.data.version) {
+					socket.emit('latest', this.data);
+				}
+				else {
+					console.log('already has latest.');
+					socket.emit('latest', null);
+				}
+			});
+			socket.on('update', (request) => {
+				var merge = request.data;
+				if (request.concurrencyVersion !== this.data.version) {
+					// Probably should stop here and send a concurency error response to client:
+					console.error('WARNING: Server version NOT EQUAL TO concurrencyVersion', request.concurrencyVersion, this.data.version);
+				}
+				this.doMerge(this.data, merge);
+				this.persist();
+				socket.emit('updateResponse', new Response(request.requestGuid));
+				socket.broadcast.emit('update', merge);
+				if (this.onMerge)
+					this.onMerge(merge);
+			});
+		});
+	}
 	get(callback) {
 		var path = this.buildFilePath() + '.json';
 		fs.readFile(path, 'utf8', (err, data) => {
@@ -94,12 +94,14 @@ class SyncNodeServer {
 					console.error('Failed to write ' + path + ': ' + err);
 				}
 			});
-			var backupPath = path + ((this.backupCount++ % this.numBackups) + 1).toString() + '.json';
-			fs.writeFile(backupPath, str, (err) => {
-				if (err) {
-					console.error('Failed to write backup ' + backupPath + ': ' + err);
-				}
-			});	
+			if (this.numBackups > 0) {
+				var backupPath = path + ((this.backupCount++ % this.numBackups) + 1).toString() + '.json';
+				fs.writeFile(backupPath, str, (err) => {
+					if (err) {
+						console.error('Failed to write backup ' + backupPath + ': ' + err);
+					}
+				});
+			}
 		});
 	}
 
@@ -107,23 +109,23 @@ class SyncNodeServer {
 		return path.join(this.directory, this.namespace);
 	}
 	isObject(val) {
-		return typeof val === 'object' && val != null;	
+		return typeof val === 'object' && val != null;
 	}
 	doMerge(obj, merge) {
-		if(!this.isObject(merge)) {
+		if (!this.isObject(merge)) {
 			// not an object, end of recursion
 			return merge;
-		} else if(!this.isObject(obj)) {
+		} else if (!this.isObject(obj)) {
 			// merge is an object, so make sure obj is an object:
 			obj = {};
 		}
-		Object.keys(merge).forEach((key) => {			
+		Object.keys(merge).forEach((key) => {
 			if (key === '__remove') {
 				var propsToRemove = merge[key];
-				if(!Array.isArray(propsToRemove) && typeof propsToRemove === 'string') {
+				if (!Array.isArray(propsToRemove) && typeof propsToRemove === 'string') {
 					var arr = [];
-				        arr.push(propsToRemove);
-			       		propsToRemove = arr; 
+					arr.push(propsToRemove);
+					propsToRemove = arr;
 				}
 				propsToRemove.forEach((prop) => {
 					delete obj[prop];
