@@ -148,22 +148,47 @@ KitchenOrder[left]
 		}
 
 
-KitchenOrderItem[row tight]
+KitchenOrderItemTop[row-flex tight]
 	:style
-		line-height: 20px;
-	#temp[margin1]$(data.temp)
+		line-height: 1em;
+		margin-bottom: .2em;
+	#temp[row-nofill]$(data.temp)
 		style:
 			display: inline-block;
 			width: 2em;
-	#nameSpan
+			color: #C00;
+			margin-left: 4px;
+			margin-right: 8px;
+	#nameSpan[row-fill]
+	#side[row-nofill right margin1]$(data.side)
 		style:
-			display: inline-block;
-	#side[right margin1]$(data.side)
-	#options[margin4 whitespace-pre]
-	#noteSpan$(data.note)[italic margin4 whitespace-pre]
+			max-width: 6em;
+			color: #070;
 	#render:function
 		var quantity = this.data.quantity != 1 ? this.data.quantity + 'x' : '';
 		this.nameSpan.innerHTML = `<span style="color: #F00; font-weight: bold; display: inline-block;">${quantity}</span><span class="bold">${this.data.name}</span>`
+
+KitchenOrderItem
+	:style
+		margin-top: 1em;
+		line-height: 1em;
+		border-bottom: 1px solid #DDD;
+	#top:KitchenOrderItemTop$(update=data)
+	#options[margin4 whitespace-pre]
+	#noteSpan[italic margin4 whitespace-pre]
+	#render:function
+		var note = this.data.note;
+		if(window.recSettings.kitchenStation === 'Server') {
+			if(this.data.serverNote && this.data.serverNote.trim()) {
+				if(note.trim()) { note += '\n'; }
+				note += '<span style="color: blue">' + this.data.serverNote + '</span>';	
+			}
+		}
+		note = note || '';
+		note = note.replace(/no/gi, '<span style="color: red; font-weight: bold;">NO</span>');	
+		note = note.replace(/add/gi, '<span style="color: green; font-weight: bold;">ADD</span>');	
+		note = note.replace(/only/gi, '<span style="color: orange; font-weight: bold;">ONLY</span>');	
+		this.noteSpan.innerHTML = note;
 		var optionsText = '';
 		/*
 		SV.forEach(this.data.options, (option) => { 

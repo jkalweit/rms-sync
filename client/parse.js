@@ -27,6 +27,13 @@ class Input extends SyncView {
 				focus: () => {
 					this.input.select();
 				},
+				input: () => {
+					if(this.options.max) {
+						if(this.input.value.length > this.options.max) {
+							this.input.value = this.input.value.substr(0, this.options.max);
+						}
+					}
+				},
 				blur: () => {
 					var value = this.input.value;			
 					if(this.options.validator) {

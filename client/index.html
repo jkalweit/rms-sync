@@ -1704,10 +1704,10 @@ OrderItemGroup[item tight]
 			isAlcohol: orderItem.isAlcohol,
 			serveType: orderItem.serveType,
 			taxType: orderItem.taxType,
-			temp: orderItem.temp || '',
-			side: orderItem.side || '',
-			note: orderItem.note || '',
-			serverNote: orderItem.serverNote || '',
+			temp: orderItem.temp,
+			side: orderItem.side,
+			note: orderItem.note,
+			serverNote: orderItem.serverNote,
 			options: JSON.parse(JSON.stringify(orderItem.options)),
 			modifiers: JSON.parse(JSON.stringify(orderItem.modifiers))
 		};
@@ -1859,7 +1859,7 @@ OrderItemDetailsLeft[col-flex]
 			color: red;
 			padding: 1em;
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data)
-	#tempInput:Input({ prop: 'temp', label: 'Temp' })$(update=data)
+	#tempInput:Input({ prop: 'temp', label: 'Temp', max: 2 })$(update=data)
 	#sideInput:Input({ prop: 'side', label: 'Side' })$(update=data)
 	#noteInput:Input({ prop: 'note', label: 'Kitchen Note', isTextArea: true })$(update=data)
 	#serverNoteInput:Input({ prop: 'serverNote', label: 'Server Note', isTextArea: true })$(update=data)
