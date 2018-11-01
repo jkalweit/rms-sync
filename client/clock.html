@@ -16,38 +16,14 @@
 <script id="view" type="text/other">
 
 #hub:Hub
-#header:Header
-#weeksList:WeeksList[col-flex]
+#main:Main
 
 Hub
-	#search:function(value)
-		//this.filter.search = SV.normalize(value);
-		//hub.emit('filterChanged', this.filter);
-	#selectDay:function(weekKey, dayKey)	
-		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[weekKey] : null;
-		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
-		this.filter.selectedShift = null;
-		hub.emit('filterChanged', this.filter);
-	#selectShift:function(weekKey, dayKey, shiftKey)	
-		this.filter.selectedWeek = this.data ? this.data.schedules.weeks[weekKey] : null;
-		this.filter.selectedDay = this.filter.selectedWeek ? this.filter.selectedWeek.days[dayKey] : null;
-		this.filter.selectedShift = this.filter.selectedDay ? this.filter.selectedDay.shifts[shiftKey] : null;
-		hub.emit('filterChanged', this.filter);
-	#setMinDate:function(min)
-		this.filter.minDate = min;
-		hub.emit('filterChanged', this.filter);
-	#setUser:function(name)
-		this.filter.user = name;
-		hub.emit('filterChanged', this.filter); 
-	#setUser2:function(name)
-		this.filter.user2 = name;
-		hub.emit('filterChanged', this.filter); 
-	#toggleKitchen:function
-		this.filter.hideKitchen = !this.filter.hideKitchen;
-		console.log('hideKitchen', this.filter.hideKitchen);
-		hub.emit('filterChanged'); 
+	#editShift:function(shift)
+		this.filter.selectedShift = shift;
+		this.emit('filterChanged', this.filter);		
+		window.shiftDetails.show();
 	#userDataList:datalist
-	#areaList:datalist
 	#updateNameDataList:function(users)
 		this.userDataList.innerHTML = '';
 		SV.forEach(users, (user) => {
@@ -61,260 +37,144 @@ Hub
 				hub.emit('filterChanged', this.filter); 
 			}
 		});
-	#render:function	
-		weeksList.update(this.data.schedules.weeks);
-		this.selectShift((this.filter.selectedWeek || {}).key, (this.filter.selectedDay || {}).key, (this.filter.selectedShift || {}).key);	
-
-
-
-Header[row row-flex dark]
-	:style
-		height: 56px;
-	#title[margin1 row-nofill] 'Timeclock'
-	#userSelect:input[row-nofill]
-		attributes:
-			list: userDataList;	
-		style:
-			width: 239px;
-		events:
-			input(e):
-				hub.setUser(e.target.value);
-	#dateSelect:input
-		events:
-			change:
-				hub.setMinDate(this.dateSelect.value);
-	#goBack:a '<-- Back 1 week'
-		style:
-			margin-left: 16px;
-		events:
-			click:
-				var newMin = moment(hub.filter.minDate).add(-1, 'weeks').format('YYYY-MM-DD');
-				this.dateSelect.value = newMin;
-				hub.setMinDate(newMin);
-	#forwardBack:a 'Forward 1 week -->'
-		style:
-			margin-left: 32px;
-		events:
-			click:
-				var newMin = moment(hub.filter.minDate).add(1, 'weeks').format('YYYY-MM-DD');
-				this.dateSelect.value = newMin;
-				hub.setMinDate(newMin);
-	#toggleKitchen:a 'Toggle Kitchen'
-		style:
-			margin-left: 16px;
-		events:
-			click:
-				hub.toggleKitchen();
-	#init:function
-		var curr = SV.getDayOfWeek(0).format('YYYY-MM-DD');
-		this.dateSelect.type = 'date';
-		this.dateSelect.value = curr;
-		hub.setMinDate(curr);
 	#render:function
-		
-		
+		console.log('render....', this.filter);
+		if(this.filter.selectedShift) {
+			console.log('render.... here', this.filter.selectedShift);
+			this.filter.selectedShift = this.data.timeclock.clockedPeriods[this.filter.selectedShift.key];
+			console.log('render.... here2', this.filter.selectedShift);
+			this.emit('filterChanged', this.filter);		
+		}
 
+Shift
+	:style
+		background-color: white;
+		padding: .5em;
+		border: 1px solid black;
+	#name$(data.name)
+		style:
+			display: inline-block;
+			width: 10em;
+	#clockIn
+		style:
+			display: inline-block;
+			width: 7em;
+	#clockOut
+		style:
+			display: inline-block;
+			width: 7em;
+	#hours
+		style:
+			display: inline-block;
+			width: 3em;
+	#clockOutBtn:button 'Clock Out'
+		style:
+			display: inline-block;
+			width: 7em;
+		events:
+			click:
+				hub.emit('clockOut', this.data);
+	#editBtn:button 'Edit'
+		style:
+			display: none;
+		events:
+			click:
+				hub.editShift(this.data);
+				//hub.emit('editShift', this.data);
+	#init:function
+		hub.on('filterChanged', function() {
+			this.editBtn.style.display = hub.filter.adminMode ? 'inline-block' : 'none';
+		}.bind(this)); 
+	#render:function
+		var shift = this.data;
+		this.clockIn.innerHTML = moment(shift.clockIn).format('ddd hh:mma');
+		this.clockIn.title = moment(shift.clockIn).format('YYYY/MM/DD ddd hh:mma');
+		this.clockOut.innerHTML = shift.clockOut ? moment(shift.clockOut).format('ddd hh:mma') : '';
+		this.clockOut.title = shift.clockOut ? moment(shift.clockOut).format('YYYY/MM/DD ddd hh:mma') : '';
+		this.clockOutBtn.style.display = shift.clockOut ? 'none' : 'inline-block';
+		this.node.style.backgroundColor = shift.clockOut ? 'EEE' : 'DFD';
 
-WeeksList
-	#list:List({ ctor: 'WeekDetails', sort: 'startDate' })
-	#updateFilter:function
-		var min = moment(hub.filter.minDate);
-		var filtered = SV.filterMap(this.data, (week) => {
-			return min.isBefore(week.startDate) || min.isSame(week.startDate);	
+		var duration = ClockUtils.getHours(shift);
+		this.hours.innerHTML = duration != null ? duration.toFixed(2) : '';
+		this.editBtn.style.backgroundColor = (this.data.note && !(this.data.isNoteHandled)) ? 'red' : '#ddd';
+
+OpenShifts
+	#title:h3 'Clocked In'
+	#list:List({ ctor: 'Shift', sort: 'clockIn', direction: 'reverse' })[list tight]
+	#render:function
+		this.list.update(this.data);
+
+Shifts
+	#list:List({ ctor: 'Week', sort: 'key', direction: 'reverse' })[list tight]
+	#render:function
+		var groups = SV.group(this.data, function(shift) {
+			return SV.getDayOfWeek(0, moment(shift.clockIn)).format('YYYY-MM-DD');
 		});
-		this.list.update(filtered);	
-	#init:function
-		hub.on('filterChanged', () => { this.updateFilter() });
+		this.list.update(groups);
+
+
+WeekPerson
+	#title:h5 'Name'
+	#list:List({ ctor: 'Shift', sort: 'clockIn', direction: 'reverse' })[list tight]
 	#render:function
-		this.updateFilter();
-		
-WeekDetails[col-flex]
+		this.list.update(this.data);
+		var hours = 0;
+		SV.forEach(this.data, function(shift) { 
+			var shiftHours = ClockUtils.getHours(shift);
+			hours += shiftHours !== null ? shiftHours : 0;	
+		});
+		this.title.innerHTML = this.data.key + ' ' + hours.toFixed(2);
+
+Week
 	:style
-		display: none;
-		height: auto;
-		width: 100%;
-		background-color: #FFF;
-	#header:SimpleHeader({ text: '', settings: true, repeat: true, del: true })[light tight]
+		margin-bottom: 3em;
+	#title:h4 'Week'
+	#reportBtn:button 'Report'
+		style:
+			display: none;
 		events:
-			settings:
+			click:
 				window.weekTotals.update(this.data);
 				window.weekTotals.show();
-			repeat:
-				this.duplicateWeek();
-			delete:
-				Modal.confirm('Delete?', '', () => {
-					this.data.parent.remove(this.data.key);
-				});
-	#list:List({ ctor: 'Day', sort: 'startDate' })[row-flex]$(update=data.days)
-	#addShift:function(day, sortOrder, shift, area, position, name)
-		var shift = {
-			key: SyncNode.guidShort(),
-			sortOrder: sortOrder,
-			shift: shift,
-			area: area,
-			position: position,
-			name: name || '',
-			note: ''
-		};
-		day.shifts.set(shift.key, shift);	
-	#addDay:function
-		var startDate = SV.getDayOfWeek(0, moment(this.data.startDate));
-		var startDateStr = startDate.toISOString();
-		SV.forEach(this.data.days, (day) => {
-			if(day.startDate >= startDateStr) {
-				startDate = moment(day.startDate).add(1, 'days');
-				startDateStr = startDate.toISOString();
-			}
-		});
-		var day = {
-			key: SyncNode.guidShort(),
-			startDate: startDateStr,
-			name: '',
-			shifts: {}
-		};
-		this.data.days.set(day.key, day);
-		day = this.data.days[day.key];
-		var sortOrder = 0;
-		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Grill', 'Matt');
-		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Fryer', 'Jeremy');
-		this.addShift(day, sortOrder++, 'Lunch', 'Kitchen', 'Line', 'Sarah');
-		this.addShift(day, sortOrder++, 'Lunch', 'Front', 'Server 1');
-		this.addShift(day, sortOrder++, 'Lunch', 'Front', 'Server 2');
-		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Grill', 'Matt');
-		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Fryer', 'Jeremy');
-		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Line', 'Sarah');
-		this.addShift(day, sortOrder++, 'Dinner', 'Kitchen', 'Dishes');
-		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Server 1');
-		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Server 2');
-		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Runner');
-		this.addShift(day, sortOrder++, 'Dinner', 'Front', 'Bartender');
-	#duplicateWeek:function
-		var week = ClockUtils.duplicateWeek(this.data); 
-		this.data.parent.set(week.key, week);
-	#sendSMS:function
-		var employees = {};
-		SV.forEach(this.data.days, (day) => {
-			SV.forEach(day.shifts, (shift) => {
-				if(shift.name) {
-					if(!employees[shift.name]) {
-						employees[shift.name] = { name: shift.name, shifts: [] };
-					}
-					var emp = employees[shift.name];
-					emp.shifts.push(shift);
-				}
-			});
-		});
-		var smsHeader = this.header.text.innerHTML.trim();
-		SV.forEach(employees, (emp) => {
-			var member = SV.findFirst(window.membersSync.data, (member) => { 
-				return member.data.info.name.trim().toLowerCase() === emp.name.trim().toLowerCase();
-			});
-			if(!member) {
-				console.log('WARNING: member not found: ' + emp.name);
-			} else if (!member.data.info.mobilePhone) {
-				console.log('WARNING: no mobile phone for member: ' + emp.name, member);
-			} else {
-				var msg = emp.name + '\n' + smsHeader + '\n';
-				SV.forEach(emp.shifts, (shift) => {
-					msg += moment(shift.parent.parent.startDate).format('M/D ddd') + ' ';
-					msg += shift.shift + ': ' + shift.position + '\n';
-				});
-				console.log('Sending schedule:\n' + member.data.info.mobilePhone + '\n' + msg);
-				SV.sendText({ phone: member.data.info.mobilePhone, body: msg }); 
-			}
-		});
+	#list:List({ ctor: 'WeekPerson', sort: 'name' })[list tight]
 	#updateFilter:function
-		this.sendSMSBtn.style.display = hub.filter.adminMode ? 'block' : 'none';
-		this.header.settings.style.display = hub.filter.adminMode ? 'block' : 'none';
-		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
-		this.header.repeat.style.display = hub.filter.adminMode ? 'block' : 'none';
+		this.reportBtn.style.display = hub.filter.adminMode ? 'flex' : 'none';
 	#init:function
-		hub.on('filterChanged', () => { this.updateFilter(); });
-		this.sendSMSBtn = SV.el('div', {
-				className: 'touch material-icons', innerHTML: 'mail_outline', 
-				events: {
-					click: () => {
-						Modal.confirm('Send Schedules', 
-							'Send schedules for week ' + this.header.text.innerHTML  + '?', () => {
-							this.sendSMS();
-						});
-				}}});
-		this.header.node.insertBefore(this.sendSMSBtn, this.header.repeat);
+		hub.on('filterChanged', this.updateFilter);
 	#render:function
-		this.node.style.display = this.data ? 'flex' : 'none';
-		if(!this.data) {
-			return;
-		}
-		this.updateFilter();
-		this.header.text.innerHTML = moment(this.data.startDate).format('MMM Do') + ' - ' + moment(this.data.startDate).add(6, 'days').format('MMM Do, YYYY');
+		this.title.innerHTML = 'Week: ' + this.data.key;
+		this.list.update(SV.group(this.data, 'name'));
 
-Day[row-fill]
+Main
 	:style
-		border-right: 1px solid #000;
-	:events
-		click:
-			//this.data.parent.remove(this.data.key);
-	#header:SimpleHeader({ text: '', settings: true, add: true })[tight]
-		events:
-			settings:
-				this.editDetails();
-			add:
-				this.addShift();
-	#daily$(data.daily)
+		background-color: white;
+		padding: 1em;
+		max-width: 650px;
+		margin: 1em auto;
+		border: 1px solid black;
+	#clockIn:button 'Clock In'
 		style:
-			padding: 8px;
-			font-size: 12px;
-			height: 4em;
-			white-space: pre-wrap;
+			margin-bottom: .5em;
+			padding: 1em;
+			font-size: 2em;
+			width: 100%;
+			border-radius: 15px;
 		events:
 			click:
-				this.editDetails();
-	#list:List({ ctor: 'Shift', sort: 'sortOrder' })[list]$(update=data.shifts)
-	#editDetails:function
-		var day = this.data;
-		var week = day.parent.parent;
-		hub.selectDay(week.key, day.key);
-		dayDetails.show();
-	#addShift:function
-		var sortOrder = 0;
-		SV.forEach(this.data.shifts, (shift) => { if (shift.sortOrder >= sortOrder) sortOrder = shift.sortOrder + 1; });
-		var shift = {
-			key: SyncNode.guidShort(),
-			shift: 'Dinner',
-			area: 'Kitchen',
-			sortOrder: sortOrder,
-			position: '',
-			name: '',
-			note: ''
-		};
-		this.data.shifts.set(shift.key, shift);
-		shift = this.data.shifts[shift.key];
-		var day = shift.parent.parent;
-		var week = day.parent.parent;
-		hub.selectShift(week.key, day.key, shift.key);
-		window.shiftDetails.show();
-	#updateFilter:function
-		this.header.add.style.display = hub.filter.adminMode ? 'block' : 'none';
-	#updateHighlight:function
-		var dayStart = moment(this.data.startDate).add(4, 'hours'); // start day at 4am
-		var dayEnd = moment(this.data.startDate).add(28, 'hours'); // end day at 4am the next day
-		var now = moment();
-		var isToday = (SV.durationAsHours(dayStart, now) > 0) && (SV.durationAsHours(now, dayEnd) >= 0);
-		this.node.style.border = isToday ? '3px solid #FF0' : '1px solid #000';
-		this.node.style.backgroundColor = (SV.durationAsHours(dayEnd, now) < 0) ? '#FFF' : '#BBB';
-		if(SV.durationAsHours(dayStart, now) <= 0) { 
-			this.node.style.backgroundColor = '#FFF';
-		}
+				userList.show();
+	#addBtn:button 'Edit Staff'
+		style:
+			float: right;
+		events:
+			click:
+				window.location.href = '/members.html';
+	#shifts:Shifts
 	#init:function
-		hub.on('filterChanged', () => { this.updateFilter(); });
-		setInterval(() => { this.updateHighlight(); }, 60000 );
+		var curr = SV.getDayOfWeek(0).format('YYYY-MM-DD');
 	#render:function
-		this.updateHighlight();
-		this.header.text.innerHTML = moment(this.data.startDate).format('M/D ddd') + ' ' + this.data.name;
-		//this.note.style.backgroundColor = (this.data.note && this.data.note.trim() !== '') ? '#0A0' : 'transparent';
-
-
-Shift[item super-tight row row-flex]
+		this.shifts.update(this.data.timeclock.clockedPeriods);
+		
+ShiftOld[item super-tight row row-flex]
 	:style
 		font-size: 12px;
 		padding-left: 0px;
@@ -325,22 +185,6 @@ Shift[item super-tight row row-flex]
 			var week = day.parent.parent;
 			hub.selectShift(week.key, day.key, shift.key);
 			window.shiftDetails.show();
-		mouseover:
-			/*
-			this.mouseoverTimeout = setTimeout(() => {
-				this.mouseoverTimeout = null;
-				hub.setUser2(this.data.name);	
-			}, 200);
-			*/
-		mouseout:
-			/*
-			if(this.mouseoverTimeout) {
-				clearTimeout(this.mouseoverTimeout);
-				this.mouseoverTimeout = null;
-			} else {
-				hub.setUser2('');	
-			}
-			*/
 	#handle[row-nofill super-tight touch material-icons] 'reorder'
 		style:
 			width: 1em;
@@ -454,25 +298,87 @@ Shift[item super-tight row row-flex]
 		this.note.innerHTML = this.data.position + ' ' + this.data.note;
 		this.updateFilter();
 
+User
+	:style
+		padding: .5em;
+		border: 1px solid black;	
+	:events
+		click:
+			hub.emit('userSelected', this.data);
+	#name $(data.data.info.name)
 
-
-DayDetails
-	#header:SimpleHeader({ text: 'Day Details', close: true })
-		events:
-			close:
-				this.emit('close');
-	#dailyInput:Input({ label: 'Daily', prop: 'daily', isTextArea: true })$(update=data)
-	//#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
-	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
-	#show:function()
+UserList
+	#list:List({ ctor: 'User', sort: 'data.info.name' })[list tight]
+		style:
+			column-count: 2;
+			-moz-column-count: 2;
+			-o-column-count: 2;
+			-webkit-column-count: 2;
+	#show:function
 		this.modal.show();
+	#init:function	
+		this.modal = Modal.createModal(this);
+		hub.on('userSelected', function(user) {
+			this.modal.hide();
+			hub.emit('clockIn', user);
+		}.bind(this));
+	#render:function
+		this.list.update(this.data);
+
+ClockIn
+	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
+	#clockInBtn[btn] 'Clock In'
+		events:
+			click:
+				hub.data.timeclock.clockedPeriods.set(this.data.key, this.data);
+				this.modal.hide();
+	#cancelBtn[btn] 'Cancel'
+		events:
+			click:
+				this.modal.hide();
 	#init:function
 		this.modal = Modal.createModal(this);
-		hub.on('filterChanged', () => { this.update(hub.filter.selectedDay); });
-		this.dailyInput.input.style.height = '3em';
-		this.dailyInput.input.style.fontSize = '12px';
+		hub.on('clockIn', function(user) { 
+			var shift = {
+				key: SyncNode.guidShort(),
+				name: user.data.info.name,
+				clockIn: new Date().toISOString(),
+				note: ''
+			};
+			this.update(shift);
+			this.modal.show();
+		}.bind(this));	
+
+ClockOut
+	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
+	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
+	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
+	#clockOut:LabeledValue({ label: 'Clock Out' })
+	#tipsInput:Input({ label: 'Tips', prop: 'tips', number: true })$(update=data)
+	#clockOutBtn[btn] 'Clock Out'
+		events:
+			click:
+				this.modal.hide();
+				this.data.set('clockOut', this.clockOutTime);
+	#cancelBtn[btn] 'Cancel'
+		events:
+			click:
+				this.data.clockOut = '';
+				this.modal.hide();
+	#init:function
+		this.modal = Modal.createModal(this);
+		hub.on('clockOut', function(shift) { 
+			this.clockOutTime = new Date().toISOString(),
+			this.update(shift);
+			this.modal.show();
+			//this.tipsInput.focus();
+		}.bind(this));
+	#show:function
+		this.modal.show();
 	#render:function
-		if(!this.data) this.modal.hide();
+		this.clockOut.value.innerHTML = moment(this.clockOutTime).format('h:mma');
 
 
 
@@ -487,188 +393,62 @@ ShiftDetails
 					this.emit('close');
 				});
 	#nameInput:Input({ label: 'Name', prop: 'name', datalist: 'userDataList'  })$(update=data)
-	#positionInput:Input({ label: 'Position', prop: 'position', datalist: 'areaList' })$(update=data)
-	#areaInput:Input({ label: 'Area', prop: 'area' })$(update=data)
 	#noteInput:Input({ label: 'Note', prop: 'note', isTextArea: true })$(update=data)
 	#noteHandled:ToggleButton({ prop: 'isNoteHandled', trueText: 'Note Handled', falseText: 'NOTE NOT HANDLED' })$(update=data)
 	#tipsInput:Input({ label: 'Tips', prop: 'tips', number: true })$(update=data)
-	#disabled:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Active' })$(update=data)
-	#checklistsCount:LabeledValue({ label: 'Checklists' })
-	#checklists:List({ ctor: 'ShiftChecklist' })
-		events:
-			viewAdded:function(view)
-				view.on('selected', (checklist) => {
-					window.checklistDetails.update(checklist);
-					window.checklistDetails.show();
-				});	
-	#addChecklistBtn[btn] 'Add Checklist'
-		events:
-			click:
-				window.checklists.show();
 	#clockIn:LabeledValue({ label: 'Clock In', prop: 'clockIn', formatter: SV.formatTime})$(update=data)
 	#clockInEdit:Input({ label: 'Clock In', prop: 'clockIn', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
 	#clockOut:LabeledValue({ label: 'Clock Out', prop: 'clockOut', formatter: SV.formatTime})$(update=data)
 	#clockOutEdit:Input({ label: 'Clock Out', prop: 'clockOut', validator: Input.DateValidator, parser: Input.DateParser, formatter: SV.formatDate})$(update=data)
-	#clockInBtn[btn] 'Clock In'
-		events:
-			click:
-				if(this.data.clockIn) return;
-				var day = moment(this.data.parent.parent.startDate);
-				var now = moment();
-				if(this.data.shift === 'Lunch') day.add('10', 'hours');
-				else if(this.data.shift === 'Dinner') day.add('17', 'hours');
-				var diff = SV.durationAsHours(day, now);
-				diff = diff < 0 ? diff * -1 : diff;
-				//if(diff >= 5) {
-				//	Modal.showNotification('Incorrect Shift', 'Did you pick the correct day? Lunch or Dinner? Leave a note if necessary.');
-				//} else {
-					this.data.set('clockIn', new Date().toISOString());
-					this.emit('close');
-				//}
-	#clockOutBtn[btn] 'Clock Out'
-		events:
-			click:
-				if(!this.data.clockIn || this.data.clockOut) return;				
-				var allComplete = true;
-				SV.forEach(this.data.checklists, (checklist) => {
-					SV.forEach(checklist.items, (item) => {
-						console.log('item', item)
-						if(!item.isComplete) {
-							allComplete = false;
-						}
-					});
-				});
-				if(!allComplete) {
-					Modal.confirm('Unfinished Checklists', 'You have unfinished checklists, clock out anyway?', () => {
-						this.doClockOut();
-						console.log('Clocked out with unfinished checklist(s): ' + this.data.name);
-						SV.sendToAdmin('Clocked out with unfinished checklist(s): ' + this.data.name);
-					});
-				} else {
-					this.doClockOut();
-				}
-	#doClockOut:function
-			this.data.set('clockOut', new Date().toISOString());
-			this.emit('close');
 	#show:function
 		this.modal.show();
 	#updateFilter:function
-		this.disabled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.header.del.style.display = hub.filter.adminMode ? 'block' : 'none';
-		this.areaInput.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.noteHandled.node.style.display = hub.filter.adminMode ? 'block' : 'none';
 		this.clockInEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
 		this.clockOutEdit.node.style.display = hub.filter.adminMode ? 'flex' : 'none';
-		this.addChecklistBtn.style.display = hub.filter.adminMode ? 'block' : 'none';
 	#init:function
-		hub.on('filterChanged', () => {  });
 		this.modal = Modal.createModal(this);
-		hub.on('filterChanged', () => { 
-			this.update(hub.filter.selectedShift); 
-			this.updateFilter();	
-		});
-	#render:function
-		if(!this.data) { this.modal.hide(); return; }
-		this.clockInBtn.classList.toggle('disabled', this.data.clockIn);
-		this.clockOutBtn.classList.toggle('disabled', !this.data.clockIn || this.data.clockOut);
-		this.checklists.update(this.data.checklists || {});
-		if(window.checklistDetails.modal.isShown) {
-			window.checklistDetails.update(this.data.checklists[window.checklistDetails.data.key]);
-		}
-	
-	
-ShiftChecklist[item tight]
-	:style
-		margin-left: 32px;
-	:events
-		click:
-			this.emit('selected', this.data);
-	#nameSpan$(data.name)
-	#render:function
-		var allComplete = true;
-		SV.forEach(this.data.items, (item) => {
-			if(!item.isComplete) {
-				allComplete = false;
+		hub.on('filterChanged', function() { 
+			console.log('changed');
+			if(hub.filter.selectedShift) {
+				console.log('update!', hub.filter.selectedShift);
+				this.update(hub.filter.selectedShift);
+				this.updateFilter();	
 			}
-		});
-		this.node.style.color = allComplete ? '#0C0' : '#C00';
-
-
-Checklists
-	#header:SimpleHeader({ text: 'Checklists', close: true })
-		events:
-			close:
-				this.emit('close');
-	#checklists:List({ ctor: 'Checklist' })
-		events:
-			viewAdded:function(view)
-				view.on('selected', (item) => {
-					this.emit('selected', item);
-				});
-	#show:function
-		this.modal.show();
-	#init:function
-		this.modal = Modal.createModal(this);
-	#render:function
-		if(!this.data) { this.modal.hide(); return; }
-		if(this.data) this.checklists.update(this.data);
-
-Checklist[item tight]
-	:events
-		click:
-			this.emit('selected', this.data);
-	#nameSpan$(data.name)
-	#render:function
-		//this.node.style.color = this.data.isDisabled ? '#777' : '#000';
+		}.bind(this));
+		/*
+		hub.on('editShift', function(shift) { 
+			this.update(shift); 
+			this.updateFilter();	
+			this.show();
+		}.bind(this));
+		*/
 	
-ChecklistDetails
-	#header:SimpleHeader({ text: '', close: true, del: false })
-		events:
-			close:
-				this.modal.hide();
-			delete:
-				console.log('del');
-				this.data.parent.remove(this.data.key);
-	#note:p$(data.note)
-	#list:List({ ctor: 'ChecklistItem', sort: 'name'})[col-fill list scroll-y]
-	#show:function
-		this.modal.show();
-	#init:function
-		this.modal = Modal.createModal(this);
-	#render:function
-		this.header.text.innerHTML = this.data.name;
-		this.list.update(this.data.items);
-
-ChecklistItem[item tight row row-flex]
-	:events
-		click:
-			this.data.set('isComplete', !this.data.isComplete);
-			this.data.set('completedAt', this.data.isComplete ? new Date().toISOString() : null);
-	#nameSpan[row-fill]$(data.name)
-	#noteSpan[row-fill]$(data.note)
-		style:
-			white-space: pre-wrap;
-	#completedAt[row-nofill]
-		style:
-			width: 5em;
-	#init:function
-	#render:function
-		this.completedAt.innerHTML = this.data.completedAt ? moment(this.data.completedAt).format('h:mma') : '';	
-		this.node.style.textDecoration = this.data.isComplete ? 'line-through' : 'none';
-
-
-
 WeekTotals
 	#header:SimpleHeader({ text: 'Week Totals', close: true })
 		events:
 			close:
 				this.emit('close');
-	#list:List({ ctor: 'WeekTotalsEmployee', sort: 'key' })[list tight]
+	#list:List({ tag: 'table', ctor: 'WeekTotalsEmployee', sort: 'key' })[list tight]
 		style:
 			-webkit-user-select: auto;
 			-moz-user-select: auto;
 			-ms-user-select: auto;
 			user-select: auto;
+	#nameSpan 'Totals:'
+		style:
+			width: 20em;
+			float: left;
+			text-align: right;
+	#hours
+		style:
+			width: 5em;
+			float: left;
+	#tips
+		style:
+			width: 5em;
+			float: left;
 	#show:function
 		this.modal.show();
 	#init:function
@@ -678,29 +458,16 @@ WeekTotals
 			this.modal.hide()
 			return;			
 		};
-		var employees = {};
-		SV.forEach(this.data.days, (day) => {
-			SV.forEach(day.shifts, (shift) => {
-				if(shift.name) {
-					if(!employees[shift.name]) {
-						employees[shift.name] = { key: shift.name, hours: 0, tips: 0, shouldReportTips: false };
-					}
-					var emp = employees[shift.name];
-					var clockIn;
-					var clockOut;
-					var hours = 0;
-					if(shift.area === 'Front') emp.shouldReportTips = true;
-					if(shift.clockIn) clockIn = moment(shift.clockIn);
-					if(shift.clockOut) clockOut = moment(shift.clockOut);
-					if(clockIn && clockOut) {
-						hours = parseFloat(SV.durationAsHours(clockIn, clockOut).toFixed(2));
-						emp.hours += hours;
-						if(shift.tips) emp.tips += shift.tips;
-					};
-				}
-			});
+		this.list.update(SV.group(this.data, 'name'));
+		var hours = 0;
+		var tips = 0;
+		SV.forEach(this.data, function(shift) { 
+			var shiftHours = ClockUtils.getHours(shift);
+			hours += shiftHours !== null ? shiftHours : 0;	
+			tips += shift.tips ? shift.tips : 0;
 		});
-		this.list.update(employees);
+		this.hours.innerHTML = SV.formatCurrency(hours);
+		this.tips.innerHTML = tips ? SV.formatCurrency(tips) : '';
 
 WeekTotalsEmployee
 	:style
@@ -718,9 +485,15 @@ WeekTotalsEmployee
 			width: 5em;
 			float: left;
 	#render:function
-		this.hours.innerHTML = SV.formatCurrency(this.data.hours);
-		this.tips.innerHTML = SV.formatCurrency(this.data.tips);
-		this.tips.style.color =  this.data.shouldReportTips ? '#000' : '#CCC';
+		var hours = 0;
+		var tips = 0;
+		SV.forEach(this.data, function(shift) { 
+			var shiftHours = ClockUtils.getHours(shift);
+			hours += shiftHours !== null ? shiftHours : 0;	
+			tips += shift.tips ? shift.tips : 0;
+		});
+		this.hours.innerHTML = SV.formatCurrency(hours);
+		this.tips.innerHTML = tips ? SV.formatCurrency(tips) : '';
 	
 
 
@@ -739,41 +512,41 @@ var sync = new SyncNodeSocket('/data', {});
 window.membersSync = new SyncNodeSocket('/members', {});
 
 SV.onLoad(() => { 
-		importCode('components.html'); 
+    importCode2('/components.html', function() { 
 		parse(SV.id('view').innerHTML); 
 		
 		window.shiftDetails = buildComponent('ShiftDetails');
-		window.dayDetails = buildComponent('DayDetails');
+		window.clockIn = buildComponent('ClockIn');
+		window.clockOut = buildComponent('ClockOut');
 		window.weekTotals = buildComponent('WeekTotals');
-		window.checklists = buildComponent('Checklists');
-		window.checklists.on('selected', (checklist) => {
-			var shift = shiftDetails.data;
-			if(!shift) return;
-			var copy = JSON.parse(JSON.stringify(checklist));
-			if(!shift.checklists) shift.set('checklists', {});
-			shift.checklists.set(copy.key, copy);
-		});
-		window.checklistDetails = buildComponent('ChecklistDetails');
+		window.userList = buildComponent('UserList');
 		
 		window.membersSync.on('updated', (data) => {
 			var users = SV.filterMap(data, (member) => { return member.data.info.isStaff });
 			hub.updateNameDataList(users);
+			window.userList.update(users);
 		});
 
 		sync.on('updated', (data) => {
 			console.log('data', data);
-			if(!data.schedules) {
-				data.set('schedules', {
-					key: SyncNode.guidShort(),
-					weeks: {}
-				});
-			}
 			hub.update(data);
-			checklists.update(data.checklists || {});
+			main.update(data);
 		});
+    });
 });
 
 class ClockUtils {
+		static getHours(shift) {
+			var clockIn;
+			var clockOut;
+			if(shift.clockIn) clockIn = moment(shift.clockIn);
+			if(shift.clockOut) clockOut = moment(shift.clockOut);
+			if(clockIn && clockOut) {
+				return SV.durationAsHours(clockIn, clockOut);
+			} else {
+				return null;
+			}
+		}
 		static duplicateDay(day) {
 			var copy = JSON.parse(JSON.stringify(day));
 			copy.key = SyncNode.guidShort();
@@ -803,6 +576,10 @@ class ClockUtils {
 			return copy;
 		}
 }
+
+io().on('reload', function() {
+		location.reload();
+});
 
 </script>
 </body>

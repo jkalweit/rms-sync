@@ -91,7 +91,8 @@ ToggleButton[btn]
 	#text:span
 	:events
 		click:
-			this.data.set(this.prop, !this.data.get(this.prop));
+			console.log('prop', this.data.get(this.prop));
+			this.data.set(this.prop, !(this.data.get(this.prop) || false));
 			this.emit('changed', this.data.get(this.prop));
 	#init:function(options)
 		this.prop = options.prop;

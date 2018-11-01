@@ -151,8 +151,8 @@ io.on('connection', (socket) => {
 		eventsServer.ioNamespace.emit('play kitchen bell');
 	});
 	socket.on('verify admin pin', (pin, guid) => {	
-		console.log('verifying pin', pin, guid, pin == config.admin.pin);
 		socket.emit('verify admin pin result', guid, pin == config.admin.pin);
+		console.log('verifying pin4', pin, guid, pin == config.admin.pin);
 	});
 });
 

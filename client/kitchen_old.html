@@ -111,10 +111,7 @@ KitchenHeader[row row-flex dark]
 			selected(station):
 				window.recSettings.set('kitchenStation', station);
 	:div[row-fill margin1] 'Kitchen'
-	:div[row-nofill touch material-icons] 'list'
-		events:
-			click:
-				window.spillSheetModal.show();
+	#temps:CoolerTemperatures
 	:div[row-nofill touch material-icons] 'settings'
 		events:
 			click:
@@ -180,15 +177,11 @@ SV.onLoad(() => {
 			
 		header.stationSelect.select(window.recSettings.kitchenStation);
 
-		var spillSheet = buildComponent('SpillSheet');
-		window.spillSheetModal = Modal.createModal(spillSheet);
-
 		sync.on('updated', (data) => {
 			if(!data.kitchen) data.set('kitchen', {});
 			if(!data.kitchen.orders) data.kitchen.set('orders', {});
 			header.update(data);
 			kitchenOrders.update(data.kitchen.orders);
-			spillSheet.update(data.spillSheet);
 		});
 		
 	

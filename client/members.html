@@ -16,7 +16,7 @@
 #header:Header
 #memberList:MemberList
 #memberDetails:MemberDetails
-#loyaltyPointsList:LoyaltyPointsList
+//#loyaltyPointsList:LoyaltyPointsList
 
 Hub
 	#init:function
@@ -67,7 +67,7 @@ MemberList[col col-left col-flex]
 					memberSince: addedAt,
 					email: '',
 					phone: '',
-					isStaff: false,
+					isStaff: true,
 					note: ''
 				},
 				loyalty: {
@@ -112,14 +112,11 @@ MemberDetails[col col-left col-flex wide]
 					this.close();
 				});
 	#key:LabeledValue({ prop: 'key', label: 'Id' })$(update=data)
-	#stripeId:LabeledValue({ prop: 'stripeId', label: 'Stripe Id' })$(update=data)
 	#nameInput:Input({ prop: 'name', label: 'Name' })$(update=data.data.info)
 	#mobileInput:Input({ prop: 'mobilePhone', label: 'Mobile' })$(update=data.data.info)
 	#emailInput:Input({ prop: 'email', label: 'Email' })$(update=data.data.info)
 	#noteInput:Input({ prop: 'note', label: 'Note' })$(update=data.data.info)
 	#disableToggle:ToggleButton({ prop: 'isDisabled', trueText: 'Disabled', falseText: 'Enabled' })$(update=data.data.info)
-	#isStaffToggle:ToggleButton({ prop: 'isStaff', trueText: 'Staff', falseText: 'Not Staff' })$(update=data.data.info)
-	#isPayrollToggle:ToggleButton({ prop: 'isNotHourly', trueText: 'Not Hourly', falseText: 'Hourly' })$(update=data.data.info)
 	#close:function
 		this.update(null);
 	#updateFilter:function	
@@ -168,8 +165,8 @@ SV.startReloader();
 var sync = new SyncNodeSocket('/members', {});
 
 
-SV.onLoad(() => { 
-		importCode('components.html'); 
+SV.onLoad(function() { 
+		importCode2('components.html', function() { 
 		parse(SV.id('view').innerHTML); 
 
 		var test2 = false;
@@ -178,6 +175,7 @@ SV.onLoad(() => {
 			if(!test2) { test2 = true; hub.select(SV.toArray(data)[0].key); }
 			memberList.update(data);
 		});
+});
 });
 
 </script>
